@@ -556,6 +556,24 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width
   box-shadow: var(--shadow);
 }
 
+/* ---------- ads ---------- */
+.ad-slot {
+  margin: 10px 0 26px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 8px 10px 10px;
+  text-align: center;
+}
+.ad-slot-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
 /* ---------- how-it-works cards ---------- */
 .steps-grid {
   display: grid;

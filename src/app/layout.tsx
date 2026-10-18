@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { getSettings, type SiteSettings } from "@/lib/settings";
 import Navbar from "@/components/Navbar";
@@ -40,10 +41,19 @@ async function safeSettings(): Promise<SiteSettings> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const s = await safeSettings();
   const announcement = s.announcement.trim();
+  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "";
 
   return (
     <html lang="en">
       <body>
+        {adsenseClient && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
         <CsrfBootstrap />
         {announcement && (
           <div className="announcement">

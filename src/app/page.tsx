@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import DealCard, { type Deal } from "@/components/DealCard";
 import HomeActionTabs from "@/components/HomeActionTabs";
+import AdSlot from "@/components/AdSlot";
 import { getSettings, whatsappLink, telegramLink } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -178,6 +179,11 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Ad slot */}
+      <div className="container">
+        <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME} format="horizontal" />
+      </div>
 
       {/* Fresh drops */}
       {showLatest.length > 0 && (

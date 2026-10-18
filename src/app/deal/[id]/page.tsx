@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { discountPct } from "@/components/DealCard";
 import SubmitOrderProofForm from "@/components/SubmitOrderProofForm";
+import AdSlot from "@/components/AdSlot";
 
 export const dynamic = "force-dynamic";
 
@@ -236,6 +237,11 @@ export default async function DealPage({
             <SubmitOrderProofForm initialDealId={deal.id} />
           )}
         </div>
+      </div>
+
+      {/* Ad slot */}
+      <div className="mt">
+        <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_DEAL} format="horizontal" />
       </div>
 
       {/* Reviews */}

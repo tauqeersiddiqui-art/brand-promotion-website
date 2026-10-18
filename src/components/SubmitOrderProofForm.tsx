@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSessionUser } from "./useSessionUser";
+import LoginRequired from "./LoginRequired";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -25,6 +28,8 @@ type DealOption = {
 };
 
 export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?: number }) {
+  const { user, loading: authLoading } = useSessionUser();
+  const pathname = usePathname();
   const [deals, setDeals] = useState<DealOption[]>([]);
   const [mediatorOptions, setMediatorOptions] = useState<string[]>([]);
   const [dealId, setDealId] = useState<number | string>(initialDealId || "");
@@ -69,6 +74,14 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
     // Ensure the CSRF cookie exists before the first submit.
     fetch("/api/csrf").catch(() => {});
   }, []);
+
+  // Prefill contact details from the logged-in account (never overwrite typing).
+  useEffect(() => {
+    if (!user) return;
+    setFullName((v) => v || user.name || "");
+    setEmail((v) => v || user.email || "");
+    setPhone((v) => v || user.phone || "");
+  }, [user]);
 
   // Sync platform/price when a campaign is selected.
   // `total` is deliberately not a dependency: including it re-filled the field
@@ -239,6 +252,24 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
           </button>
         </div>
       </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div className="card" style={{ textAlign: "center", padding: "40px 20px" }}>
+        <p className="muted" style={{ margin: 0 }}>Checking login status…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <LoginRequired
+        title="Log in to submit your order proof"
+        description="Order proofs must be linked to a free account so you can track approval and receive your cashback payout. It takes 30 seconds to sign up."
+        next={pathname && pathname !== "/" ? pathname : "/#submit-order"}
+      />
     );
   }
 

@@ -231,6 +231,29 @@ async function req(jar, path, opts = {}) {
     globalThis.__smokeDealId = dealId;
   }
 
+  section("Auth gate: login required for orders");
+  {
+    const meAnon = await req(guest, "/api/auth/me");
+    check(
+      "GET /api/auth/me guest -> user null",
+      meAnon.status === 200 && meAnon.json?.user === null,
+      `got ${meAnon.status} ${meAnon.text.slice(0, 120)}`
+    );
+
+    const anonOrd = await req(guest, "/api/orders", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
+      body: JSON.stringify({
+        external_order_id: `SMOKE-ANON-${Date.now()}`,
+        reviewer_name: "Anon",
+        full_name: "Anon User",
+        email: "anon@example.com",
+        phone: "9876543210",
+      }),
+    });
+    check("orders without login -> 401", anonOrd.status === 401, `got ${anonOrd.status} ${anonOrd.text.slice(0, 120)}`);
+  }
+
   section("User signup + order funnel");
   let orderCode = null;
   let orderId = null;
@@ -241,6 +264,13 @@ async function req(jar, path, opts = {}) {
       body: JSON.stringify({ name: "Smoke Tester", email, password: "SmokeTest@123" }),
     });
     check("signup 200", su.status === 200, `got ${su.status} ${su.text.slice(0, 150)}`);
+
+    const meUser = await req(guest, "/api/auth/me");
+    check(
+      "GET /api/auth/me logged-in -> user",
+      meUser.status === 200 && meUser.json?.user?.email === email,
+      `got ${meUser.status} ${meUser.text.slice(0, 120)}`
+    );
 
     const deals = await req(guest, "/api/deals?limit=1");
     const firstDealId = deals.json?.deals?.[0]?.id;
@@ -277,6 +307,60 @@ async function req(jar, path, opts = {}) {
       }),
     });
     check("unknown campaign -> 4xx not 500", badDeal.status >= 400 && badDeal.status < 500, `got ${badDeal.status}`);
+
+    // Regression: a freshly uploaded screenshot must not be rejected as its
+    // own duplicate. The old check hashed against the uploads table, where the
+    // row for this very screenshot always matched, so every submission with a
+    // screenshot was hard-rejected. Trailing bytes make the hash unique per run.
+    const pngBase = fs.readFileSync(path.join(process.cwd(), "public", "brandreviewer-telegram-qr.png"));
+    const png = Buffer.concat([pngBase, Buffer.from([Date.now() & 0xff, (Date.now() >> 8) & 0xff])]);
+    const fd = new FormData();
+    fd.append("file", new Blob([png], { type: "image/png" }), "smoke-dup.png");
+    const up = await req(guest, "/api/upload", {
+      method: "POST",
+      headers: { "x-csrf-token": guest.get("bp_csrf_js") },
+      body: fd,
+    });
+    check("screenshot upload 200", up.status === 200 && !!up.json?.url, `got ${up.status} ${up.text.slice(0, 150)}`);
+    const shotUrl = up.json?.url;
+
+    if (shotUrl) {
+      const shotOrd = await req(guest, "/api/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
+        body: JSON.stringify({
+          deal_id: firstDealId,
+          external_order_id: `SMOKE-SHOT-${Date.now()}`,
+          reviewer_name: "Smoke Tester",
+          full_name: "Smoke Tester",
+          email,
+          phone: "9876543210",
+          quantity: 1,
+          unit_price: 500,
+          order_screenshot_url: shotUrl,
+          price_screenshot_url: shotUrl,
+        }),
+      });
+      check("order with fresh screenshot accepted", shotOrd.status === 200, `got ${shotOrd.status} ${shotOrd.text.slice(0, 200)}`);
+
+      const dupOrd = await req(guest, "/api/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
+        body: JSON.stringify({
+          deal_id: firstDealId,
+          external_order_id: `SMOKE-DUP-${Date.now()}`,
+          reviewer_name: "Smoke Tester",
+          full_name: "Smoke Tester",
+          email,
+          phone: "9876543210",
+          quantity: 1,
+          unit_price: 500,
+          order_screenshot_url: shotUrl,
+          price_screenshot_url: shotUrl,
+        }),
+      });
+      check("reused screenshot rejected (400)", dupOrd.status === 400, `got ${dupOrd.status} ${dupOrd.text.slice(0, 150)}`);
+    }
   }
 
   section("Tracking");

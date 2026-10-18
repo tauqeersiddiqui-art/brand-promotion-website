@@ -98,14 +98,14 @@ export function calculateOcrConfidence(
     warnings.push("OCR extracted date but no form date provided for comparison");
   }
 
-  // 5. Image perceptual hash uniqueness (anti-fraud)
-  // This will be checked separately via checkImageHash()
+  // 5. Screenshot reuse detection (anti-fraud)
+  // Checked separately by validateOrderSubmission() against existing orders.
 
   const details = {
     orderIdMatch,
     amountMatch,
     dateValid,
-    imageHashUnique: true, // Default, will be updated by checkImageHash
+    imageHashUnique: true, // Default, updated by validateOrderSubmission
   };
 
   return {
@@ -114,22 +114,6 @@ export function calculateOcrConfidence(
     errors,
     warnings,
     details,
-  };
-}
-
-/**
- * Check perceptual hash for duplicate screenshot detection
- */
-export function checkImageHash(pHash: string): { unique: boolean; existingOrderId?: number } {
-  if (!pHash) return { unique: true };
-
-  const existing = db
-    .prepare("SELECT id FROM uploads WHERE p_hash = ? AND p_hash != '' LIMIT 1")
-    .get(pHash) as { id: number } | undefined;
-
-  return {
-    unique: !existing,
-    existingOrderId: existing?.id,
   };
 }
 
@@ -362,11 +346,11 @@ export async function validateOrderSubmission(
 }> {
   // Get OCR data from upload records
   const orderUpload = orderScreenshotUrl.startsWith("/uploads/")
-    ? db.prepare("SELECT ocr_order_id, ocr_amount, ocr_date, p_hash FROM uploads WHERE url = ?").get(orderScreenshotUrl)
+    ? db.prepare("SELECT ocr_order_id, ocr_amount, ocr_date FROM uploads WHERE url = ?").get(orderScreenshotUrl)
     : null;
 
   const priceUpload = priceScreenshotUrl.startsWith("/uploads/")
-    ? db.prepare("SELECT ocr_amount, p_hash FROM uploads WHERE url = ?").get(priceScreenshotUrl)
+    ? db.prepare("SELECT ocr_amount FROM uploads WHERE url = ?").get(priceScreenshotUrl)
     : null;
 
   const ocrOrderId = (orderUpload as any)?.ocr_order_id || "";
@@ -379,13 +363,22 @@ export async function validateOrderSubmission(
     0;
   const ocrDate = (orderUpload as any)?.ocr_date || "";
 
-  // Check image hashes
+  // Duplicate-screenshot detection. Compare against *existing orders*, not the
+  // uploads table: every screenshot has its own `uploads` row carrying its own
+  // p_hash, so a hash lookup there always matched the row belonging to this
+  // very screenshot and hard-rejected every genuine submission.
   let imageHashUnique = true;
-  if (orderUpload && (orderUpload as any).p_hash) {
-    const hashCheck = checkImageHash((orderUpload as any).p_hash);
-    imageHashUnique = hashCheck.unique;
-    if (!hashCheck.unique) {
-      console.warn(`Duplicate screenshot detected: order ${hashCheck.existingOrderId}`);
+  for (const shotUrl of [orderScreenshotUrl, priceScreenshotUrl]) {
+    if (!shotUrl || !shotUrl.startsWith("/uploads/")) continue;
+    const usedBy = db
+      .prepare(
+        "SELECT id FROM orders WHERE order_screenshot_url = ? OR price_screenshot_url = ? LIMIT 1"
+      )
+      .get(shotUrl, shotUrl) as { id: number } | undefined;
+    if (usedBy) {
+      imageHashUnique = false;
+      console.warn(`Duplicate screenshot detected: already used by order ${usedBy.id}`);
+      break;
     }
   }
 

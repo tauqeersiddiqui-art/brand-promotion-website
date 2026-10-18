@@ -10,7 +10,7 @@ import path from "path";
 import { sanitizeText, sanitizePhone, sanitizeUpiId, sanitizeIfsc, sanitizeAccountNumber, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
-import { checkMaxClaimsPerUser, checkCooldownAfterRejection, checkDailyClaimLimit, checkDuplicateOrderInReimbursements, checkImageHash, computeImageHash } from "@/lib/ocr-validation";
+import { checkMaxClaimsPerUser, checkCooldownAfterRejection, checkDailyClaimLimit, checkDuplicateOrderInReimbursements } from "@/lib/ocr-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -247,7 +247,6 @@ export async function POST(req: Request) {
   let ocrStatus = "pending";
   let has5StarRating = false;
   let hasVerifiedPurchase = false;
-  let reviewScreenshotPHash = "";
 
   if (reviewScreenshotUrl && /^\/uploads\/[A-Za-z0-9._-]+$/.test(reviewScreenshotUrl)) {
     try {
@@ -270,12 +269,18 @@ export async function POST(req: Request) {
           has5StarRating = ocr.has5StarRating || false;
           hasVerifiedPurchase = ocr.hasVerifiedPurchase || false;
         }
-        // Compute and check perceptual hash for duplicate detection
-        reviewScreenshotPHash = computeImageHash(buf);
-        const hashCheck = checkImageHash(reviewScreenshotPHash);
-        if (!hashCheck.unique) {
+        // Duplicate detection: the same review screenshot must not be reused
+        // across different orders. The old uploads-table hash check always
+        // matched this screenshot's own upload row and rejected every claim.
+        // Resubmitting the same screenshot for the *same* order is allowed.
+        const reused = db
+          .prepare(
+            "SELECT id FROM reimbursements WHERE review_screenshot_url = ? AND external_order_id != ? LIMIT 1"
+          )
+          .get(reviewScreenshotUrl, order.external_order_id) as { id: number } | undefined;
+        if (reused) {
           return bad(
-            `Duplicate review screenshot detected. This image was already used for order ID ${hashCheck.existingOrderId}.`,
+            "Duplicate review screenshot detected. This image has already been used for another order's claim.",
             409
           );
         }

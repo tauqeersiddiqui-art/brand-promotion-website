@@ -34,6 +34,13 @@ export async function POST(req: Request) {
     );
   }
 
+  // Order proofs must belong to an account. Guest submissions produced rows
+  // nobody could track or claim a cashback for.
+  const session = await getSession();
+  if (!session) {
+    return bad("Please log in to submit your order proof. Creating a free account takes 30 seconds.", 401);
+  }
+
   let body: Record<string, unknown>;
   try {
     body = (await req.json()) as Record<string, unknown>;
@@ -134,7 +141,6 @@ export async function POST(req: Request) {
   const finalUnitPrice = unitPrice > 0 ? unitPrice : deal ? deal.price_sale : 0;
   const total = Math.round(finalUnitPrice * quantity * 100) / 100;
   const orderCode = generateCode("BP");
-  const session = await getSession();
 
   // Run full OCR validation pipeline with fraud scoring
   const validation = await validateOrderSubmission(
@@ -144,21 +150,21 @@ export async function POST(req: Request) {
     total,
     orderDate,
     clickId || undefined,
-    session?.userId,
+    session.userId,
     ip,
     deviceFingerprint || undefined
   );
 
   // Reject if validation fails
   if (validation.decision.action === "reject") {
-    // The reason enumerates every OCR and fraud rule that failed, which would
-    // hand anonymous callers a live oracle for tuning submissions. Log it
-    // server-side and return a generic message.
+    // After the duplicate-check fix this is the only remaining reject path:
+    // the screenshot was already used on a previous order. The generic
+    // "our team will review it" text was misleading because nothing is saved.
     console.warn(
       `[orders] rejected external_order_id=${externalOrderId} ip=${ip} reason=${validation.decision.reason}`
     );
     return bad(
-      "We could not validate this order proof automatically. Our team will review it manually — please make sure your screenshots clearly show the Order ID and amount.",
+      "This screenshot has already been used for another order submission. Please upload a fresh screenshot of this order.",
       400
     );
   }
@@ -213,7 +219,7 @@ export async function POST(req: Request) {
       externalOrderId,
       targetProductCode,
       targetDealId,
-      session?.userId ?? null,
+      session.userId,
       clickId || null,
       reviewerName,
       fullName,
@@ -269,7 +275,7 @@ export async function POST(req: Request) {
           order_count = order_count + 1,
           last_seen_at = datetime('now'),
           user_id = COALESCE(user_id, excluded.user_id)
-      `).run(deviceFingerprint, session?.userId ?? null);
+      `).run(deviceFingerprint, session.userId);
     } catch {
       // Ignore
     }

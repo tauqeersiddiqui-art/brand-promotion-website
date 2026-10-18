@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSessionUser } from "./useSessionUser";
+import LoginRequired from "./LoginRequired";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -15,6 +18,8 @@ function getCsrfHeader(): Record<string, string> {
 }
 
 export default function ClaimCashbackForm() {
+  const { user, loading: authLoading } = useSessionUser();
+  const pathname = usePathname();
   const [externalOrderId, setExternalOrderId] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [payoutMethod, setPayoutMethod] = useState("upi");
@@ -167,6 +172,24 @@ export default function ClaimCashbackForm() {
           </button>
         </div>
       </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div className="card" style={{ textAlign: "center", padding: "40px 20px" }}>
+        <p className="muted" style={{ margin: 0 }}>Checking login status…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <LoginRequired
+        title="Log in to claim your cashback"
+        description="Claims are linked to the account that submitted the order proof so payouts go to the right person. Log in or create a free account to continue."
+        next={pathname && pathname !== "/" ? pathname : "/#claim-cashback"}
+      />
     );
   }
 

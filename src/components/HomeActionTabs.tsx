@@ -28,6 +28,7 @@ export default function HomeActionTabs() {
     <section className="container section" id="quick-actions" style={{ marginTop: 8, marginBottom: 24 }}>
       <span id="submit-order" style={{ display: "block", position: "relative", top: -90 }} />
       <span id="claim-cashback" style={{ display: "block", position: "relative", top: -90 }} />
+      <span id="track" style={{ display: "block", position: "relative", top: -90 }} />
       <div className="action-panel">
         <div style={{ textAlign: "center", marginBottom: 22 }}>
           <h2 style={{ margin: "0 0 6px" }}>Reviewer actions</h2>

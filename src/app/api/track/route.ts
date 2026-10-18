@@ -47,16 +47,20 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const q = sanitizeText((sp.get("q") || "").trim(), 80);
 
-  // Minimum length raised from 3 to 6: this endpoint is reachable without a
-  // session, so short prefixes made bulk enumeration of customer records
-  // practical.
+  // Tracking is private: only a logged-in user can look up their own orders.
+  // The endpoint used to accept anonymous queries, which made order codes and
+  // phone numbers an enumeration surface for customer records.
+  const session = await getSession();
+  if (!session) {
+    return bad("Please log in to track your orders.", 401);
+  }
+
   if (!q || q.length < 6) {
     return bad("Please enter a full Order ID, Tracking Code, or registered Phone Number.", 400);
   }
 
-  // Exact-match lookups only. The previous `phone LIKE '%q%'` branch turned the
-  // endpoint into a substring search oracle that returned up to 10 unrelated
-  // customers for a partial phone number.
+  // Scoped to the caller's own orders. Exact-match lookups only: a substring
+  // search was previously a discovery oracle for unrelated customers.
   const orders = db
     .prepare(
       `SELECT o.id, o.order_code, o.external_order_id, o.product_code, o.deal_id, o.user_id,
@@ -67,14 +71,15 @@ export async function GET(req: NextRequest) {
               COALESCE(d.image_url, '') AS deal_image
        FROM orders o
        LEFT JOIN deals d ON d.id = o.deal_id
-       WHERE o.order_code = ?
-          OR o.external_order_id = ?
-          OR o.phone = ?
-          OR o.email = ?
+       WHERE o.user_id = ?
+         AND (o.order_code = ?
+           OR o.external_order_id = ?
+           OR o.phone = ?
+           OR o.email = ?)
        ORDER BY datetime(o.created_at) DESC
        LIMIT 10`
     )
-    .all(q, q, q, q.toLowerCase()) as OrderRow[];
+    .all(session.userId, q, q, q, q.toLowerCase()) as OrderRow[];
 
   if (!orders || orders.length === 0) {
     return NextResponse.json(
@@ -83,38 +88,30 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const session = await getSession();
-
   const reimbStmt = db.prepare(
     `SELECT id, reimbursement_code, order_id, review_rating, ocr_status,
             payout_method, upi_id, amount, status, utr_number, created_at
      FROM reimbursements WHERE order_id = ?`
   );
 
-  const isOwner = (o: OrderRow) => !!session && o.user_id != null && o.user_id === session.userId;
-
   const attachReimbursements = (o: OrderRow) => {
     const rows = reimbStmt.all(o.id) as Record<string, unknown>[];
-    const owner = isOwner(o);
-    return rows.map((r) => {
-      const upi = String(r.upi_id || "");
-      // Bank account numbers, IFSC and internal admin notes are never returned
-      // here, and the payout destination is masked unless the caller owns the
-      // order. This endpoint is unauthenticated for the guest tracking flow.
-      return {
-        id: r.id,
-        reimbursement_code: r.reimbursement_code,
-        order_id: r.order_id,
-        review_rating: r.review_rating,
-        ocr_status: r.ocr_status,
-        payout_method: r.payout_method,
-        upi_id: owner || !upi ? upi : maskUpi(upi),
-        amount: r.amount,
-        status: r.status,
-        utr_number: r.utr_number,
-        created_at: r.created_at,
-      };
-    });
+    // Every returned order belongs to the caller, so the payout destination is
+    // safe to show in full. Bank account numbers, IFSC and internal admin
+    // notes are never returned.
+    return rows.map((r) => ({
+      id: r.id,
+      reimbursement_code: r.reimbursement_code,
+      order_id: r.order_id,
+      review_rating: r.review_rating,
+      ocr_status: r.ocr_status,
+      payout_method: r.payout_method,
+      upi_id: String(r.upi_id || ""),
+      amount: r.amount,
+      status: r.status,
+      utr_number: r.utr_number,
+      created_at: r.created_at,
+    }));
   };
 
   const ordersWithReimbursements = orders.map((o) => {
@@ -136,13 +133,4 @@ export async function GET(req: NextRequest) {
     orders: ordersWithReimbursements,
     reimbursements: single ? single.reimbursements : [],
   });
-}
-
-/** Mask a UPI id, keeping just enough for the owner to recognise it. */
-function maskUpi(upi: string): string {
-  const at = upi.indexOf("@");
-  if (at === -1) return `${upi.slice(0, 2)}${"*".repeat(Math.max(3, upi.length - 2))}`;
-  const name = upi.slice(0, at);
-  const visible = name.slice(0, 2);
-  return `${visible}${"*".repeat(Math.max(3, name.length - 2))}${upi.slice(at)}`;
 }

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSessionUser } from "./useSessionUser";
+import LoginRequired from "./LoginRequired";
 
 type TrackingResult = {
   found: boolean;
@@ -42,6 +45,8 @@ type TrackingResult = {
 };
 
 export default function QuickTrackForm({ initialQuery }: { initialQuery?: string }) {
+  const { user, loading: authLoading } = useSessionUser();
+  const pathname = usePathname();
   const [query, setQuery] = useState(initialQuery || "");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<TrackingResult | null>(null);
@@ -69,10 +74,30 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
   }
 
   useEffect(() => {
-    if (initialQuery) {
+    // Only auto-search once the session check confirms a logged-in user;
+    // otherwise the request would 401 for guests behind the login gate.
+    if (initialQuery && !authLoading && user) {
       handleTrack(initialQuery);
     }
-  }, [initialQuery]);
+  }, [initialQuery, authLoading, user]);
+
+  if (authLoading) {
+    return (
+      <div className="card" style={{ textAlign: "center", padding: "40px 20px" }}>
+        <p className="muted" style={{ margin: 0 }}>Checking login status…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <LoginRequired
+        title="Log in to track your orders"
+        description="Order and payout status is private to your account. Log in or create a free account to see where your submission stands."
+        next={pathname && pathname !== "/" ? pathname : "/#track"}
+      />
+    );
+  }
 
   return (
     <div className="card">

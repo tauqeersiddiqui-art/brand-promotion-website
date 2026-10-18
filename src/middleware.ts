@@ -23,7 +23,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/admin") && pathname !== "/admin/login";
   const needsAuth = pathname.startsWith("/account");
   const needsAdminApi = pathname.startsWith("/api/admin");
-  // Guest order submissions are allowed (Google-Form style); everything else needs auth.
+  // Authenticated API prefixes. Order, claim and track routes verify the
+  // session inside the handler (after CSRF) so they can return richer errors.
   const needsUserApi =
     pathname.startsWith("/api/me") ||
     pathname.startsWith("/api/refunds") ||

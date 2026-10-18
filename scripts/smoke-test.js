@@ -101,6 +101,7 @@ async function req(jar, path, opts = {}) {
   const guest = new Jar();
   const admin = new Jar();
   const email = `smoke_${Date.now()}@example.com`;
+  const email2 = `smoke_${Date.now()}_2@example.com`;
 
   section("CSRF bootstrap");
   {
@@ -375,6 +376,24 @@ async function req(jar, path, opts = {}) {
   {
     const short = await req(guest, "/api/track?q=987");
     check("short query rejected (no enumeration)", short.status === 400 || short.status === 404, `got ${short.status}`);
+  }
+
+  section("Tracking is private");
+  {
+    const anon = new Jar();
+    const r = await req(anon, "/api/track?q=BP-SMOKE-NOT-LOGGED-IN");
+    check("track without login -> 401", r.status === 401, `got ${r.status}`);
+
+    const other = new Jar();
+    await req(other, "/api/csrf");
+    const su2 = await req(other, "/api/auth/signup", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-csrf-token": other.get("bp_csrf_js") },
+      body: JSON.stringify({ name: "Smoke Other", email: email2, password: "SmokeTest@123" }),
+    });
+    check("second smoke signup 200", su2.status === 200, `got ${su2.status} ${su2.text.slice(0, 120)}`);
+    const r2 = await req(other, `/api/track?q=${encodeURIComponent(orderCode)}`);
+    check("other user cannot track foreign order", r2.status === 404, `got ${r2.status} ${r2.text.slice(0, 120)}`);
   }
 
   section("Reimbursement authorization");

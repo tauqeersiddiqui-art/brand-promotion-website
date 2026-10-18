@@ -133,8 +133,8 @@ export async function POST(req: Request) {
     .get(externalOrderId) as { id: number; order_code: string } | undefined;
 
   if (existingOrder) {
-    // Do not disclose the other customer's tracking code: /api/track accepts it
-    // anonymously, so returning it here would compose into an enumeration path.
+    // Never disclose the other customer's tracking code: returning it would
+    // hand an attacker a working lookup key for someone else's order.
     return bad("This order has already been submitted. Please track it with your Order ID instead.", 409);
   }
 

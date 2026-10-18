@@ -1,0 +1,84 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { requireAdmin, bad } from "@/lib/api-helpers";
+import { str } from "@/lib/validation";
+import { getSettings, updateSettings, type SiteSettings } from "@/lib/settings";
+import { applyRateLimit } from "@/lib/rate-limit";
+import { sanitizeHtml, sanitizeText, sanitizePhone } from "@/lib/sanitize";
+import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
+import { headers } from "next/headers";
+
+export const dynamic = "force-dynamic";
+
+async function validateRequest(req: Request): Promise<NextResponse | null> {
+  const reqHeaders = await headers();
+  const csrfToken = reqHeaders.get("x-csrf-token");
+  const cookieToken = (await getCsrfTokenFromCookies());
+  if (!csrfToken || !cookieToken || csrfToken !== cookieToken) {
+    return NextResponse.json(
+      { error: "Invalid CSRF token. Please refresh the page and try again." },
+      { status: 403 }
+    );
+  }
+
+  // Rate limiting
+  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const rl = await applyRateLimit("adminAction", ip);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `Rate limit exceeded. Try again in ${rl.retryAfter}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+    );
+  }
+  return null;
+}
+
+export async function GET() {
+  const { error } = await requireAdmin();
+  if (error) return error;
+  return NextResponse.json({ settings: getSettings() });
+}
+
+export async function PATCH(req: Request) {
+  const validationError = await validateRequest(req);
+  if (validationError) return validationError;
+
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return bad("Invalid request body.");
+  }
+  const b = body as Record<string, unknown>;
+
+  const partial: Partial<SiteSettings> = {};
+  (Object.keys(getSettings()) as (keyof SiteSettings)[]).forEach((key) => {
+    if (key in b) {
+      const maxLen = key === "rules_instructions" || key === "announcement" ? 5000 : 500;
+      // Sanitize based on field type
+      if (key === "rules_instructions" || key === "announcement") {
+        partial[key] = sanitizeHtml(str(b[key], maxLen));
+      } else if (key === "whatsapp") {
+        partial[key] = sanitizePhone(str(b[key], maxLen));
+      } else {
+        partial[key] = sanitizeText(str(b[key], maxLen), maxLen);
+      }
+    }
+  });
+
+  // Basic sanity: whatsapp should be digits after cleaning
+  if (partial.whatsapp) {
+    const clean = partial.whatsapp.replace(/[^0-9]/g, "");
+    if (clean.length < 8 || clean.length > 15)
+      return bad("WhatsApp number must be 8-15 digits (with country code).");
+    partial.whatsapp = clean;
+  }
+  if (partial.support_email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(partial.support_email))
+    return bad("Support email is not valid.");
+
+  updateSettings(partial);
+  return NextResponse.json({ ok: true, settings: getSettings() });
+}

@@ -1,0 +1,60 @@
+import { db } from "./db";
+
+export type SiteSettings = {
+  site_name: string;
+  tagline: string;
+  announcement: string;
+  whatsapp: string;
+  telegram: string;
+  support_email: string;
+  instagram: string;
+  mediators: string;
+  rules_instructions: string;
+};
+
+const DEFAULTS: SiteSettings = {
+  site_name: "Brand Promotion",
+  tagline: "India's #1 Influencer Cashback & Brand Promotion Platform",
+  announcement: "🔥 100% Cashback Campaign Live! Buy on Amazon/Flipkart, share review & get instant UPI payout.",
+  whatsapp: "919999999999",
+  telegram: "brandpromotion",
+  support_email: "support@brandpromotion.in",
+  instagram: "brandpromotion.in",
+  mediators: "Direct,Amit Mediator,Rahul Agency,Pooja Deals,VIP Campaigns,Social Reach",
+  rules_instructions: "1. Check available slots before ordering.\n2. Search product with specified keyword on Amazon/Flipkart.\n3. Upload Desktop/App Order screenshot & Price breakup screenshot.\n4. After delivery, post a genuine 5-star rating with photos.\n5. Submit reimbursement claim with Review Screenshot & UPI ID to receive 100% cashback within 24-48 hours.",
+};
+
+export function getSettings(): SiteSettings {
+  try {
+    const rows = db.prepare("SELECT key, value FROM settings").all() as {
+      key: string;
+      value: string;
+    }[];
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    return { ...DEFAULTS, ...map } as SiteSettings;
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+export function updateSettings(partial: Partial<SiteSettings>) {
+  const stmt = db.prepare(
+    "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  );
+  for (const [key, value] of Object.entries(partial)) {
+    if (key in DEFAULTS && typeof value === "string") {
+      stmt.run(key, value.slice(0, 5000));
+    }
+  }
+}
+
+export function whatsappLink(num: string, text?: string): string {
+  const clean = num.replace(/[^0-9]/g, "");
+  const t = text ? `?text=${encodeURIComponent(text)}` : "";
+  return `https://wa.me/${clean}${t}`;
+}
+
+export function telegramLink(handle: string): string {
+  const clean = handle.replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "");
+  return `https://t.me/${clean}`;
+}

@@ -345,11 +345,15 @@ label.form-label {
 }
 .deal-media {
   position: relative;
-  aspect-ratio: 16 / 10;
-  background: var(--bg-soft);
+  /* Square white tile like an Amazon product image: the whole product is
+     always visible — cover-cropping in a wide box used to cut off heads and
+     parts of the product. */
+  aspect-ratio: 1 / 1;
+  background: #ffffff;
   overflow: hidden;
+  border-bottom: 1px solid var(--border);
 }
-.deal-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.deal-media img { width: 100%; height: 100%; object-fit: contain; padding: 12px; display: block; }
 .deal-placeholder {
   position: absolute; inset: 0; display: grid; place-items: center;
   background: linear-gradient(135deg, #ede9fe, #fce7f3);

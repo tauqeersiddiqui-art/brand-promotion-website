@@ -84,7 +84,7 @@ export default async function DealPage({
         {/* Deal media & campaign info */}
         <div>
           <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-            <div className="deal-media" style={{ aspectRatio: "16/10" }}>
+            <div className="deal-media" style={{ aspectRatio: "1 / 1" }}>
               {deal.image_url ? (
                 <img src={deal.image_url} alt={deal.title} />
               ) : (

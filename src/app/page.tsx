@@ -205,7 +205,7 @@ export default function HomePage() {
 
       {/* Trust banner */}
       <section className="container section">
-        <div className="card" style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 30, alignItems: "center", background: "var(--brand-soft)", border: "1px solid var(--border)" }}>
+        <div className="card trust-banner" style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 30, alignItems: "center" }}>
           <div>
             <span className="badge badge-brand">Reviewer protection</span>
             <h3 style={{ margin: "10px 0 8px", fontSize: 20 }}>Payout security with UTR tracking</h3>

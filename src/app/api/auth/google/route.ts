@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SignJWT } from "jose";
-import { googleConfigured, googleAuthUrl } from "@/lib/google-auth";
+import { googleConfigured, googleAuthUrl, canonicalOrigin } from "@/lib/google-auth";
 import { applyRateLimit } from "@/lib/rate-limit";
 import { ENV } from "@/lib/env";
 import { headers } from "next/headers";
@@ -17,8 +17,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Too many attempts." }, { status: 429 });
   }
 
+  const origin = canonicalOrigin(req.nextUrl.origin);
+
   if (!googleConfigured()) {
-    return NextResponse.redirect(new URL("/login?error=google-not-configured", req.url));
+    return NextResponse.redirect(new URL("/login?error=google-not-configured", origin));
   }
 
   // `next` limited to internal paths to prevent open redirects
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
     .setExpirationTime("10m")
     .sign(secret);
 
-  const res = NextResponse.redirect(googleAuthUrl(req.nextUrl.origin, state));
+  const res = NextResponse.redirect(googleAuthUrl(origin, state));
   // Short-lived cookie is compared against state at callback (double-submit CSRF)
   res.cookies.set("g_oauth_state", nonce, {
     httpOnly: true,

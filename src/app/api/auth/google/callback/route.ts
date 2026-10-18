@@ -6,7 +6,7 @@ import {
   setSessionCookie,
   hashPassword,
 } from "@/lib/auth";
-import { exchangeCodeForProfile, googleConfigured } from "@/lib/google-auth";
+import { exchangeCodeForProfile, googleConfigured, canonicalOrigin } from "@/lib/google-auth";
 import { applyRateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 import { ENV } from "@/lib/env";
@@ -16,7 +16,7 @@ const secret = new TextEncoder().encode(ENV.AUTH_SECRET);
 
 function fail(req: NextRequest, reason: string) {
   return NextResponse.redirect(
-    new URL(`/login?error=${encodeURIComponent(reason)}`, req.url)
+    new URL(`/login?error=${encodeURIComponent(reason)}`, canonicalOrigin(req.nextUrl.origin))
   );
 }
 
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     return fail(req, "Security check failed (state mismatch). Please try again.");
   }
 
-  const profile = await exchangeCodeForProfile(code, req.nextUrl.origin);
+  const profile = await exchangeCodeForProfile(code, canonicalOrigin(req.nextUrl.origin));
   if ("error" in profile) return fail(req, profile.error);
 
   const email = profile.email.toLowerCase().trim();
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
     name: user.name,
   });
   const target = next || "/account";
-  const res = NextResponse.redirect(new URL(target, req.url));
+  const res = NextResponse.redirect(new URL(target, canonicalOrigin(req.nextUrl.origin)));
   await setSessionCookie(token);
   res.cookies.set("g_oauth_state", "", { path: "/", maxAge: 0 });
   return res;

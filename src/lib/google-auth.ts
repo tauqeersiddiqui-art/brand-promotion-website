@@ -20,6 +20,20 @@ export function googleConfigured(): boolean {
   return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
+/**
+ * Public origin for building OAuth redirect URIs and user-facing redirects.
+ *
+ * Behind hosting proxies (e.g. Render), the request URL points at an internal
+ * host like https://localhost:10000, which would produce redirect_uri values
+ * Google rejects. NEXT_PUBLIC_BASE_URL is the canonical public address; fall
+ * back to the request origin for local development.
+ */
+export function canonicalOrigin(fallbackOrigin: string): string {
+  const configured = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
+  if (configured) return configured.replace(/\/+$/, "");
+  return fallbackOrigin;
+}
+
 export function googleRedirectUri(origin: string): string {
   return `${origin}/api/auth/google/callback`;
 }

@@ -426,6 +426,41 @@ async function req(jar, path, opts = {}) {
     }
   }
 
+  section("Backup & restore round-trip");
+  {
+    const exp = await req(admin, "/api/admin/backup");
+    check("GET /api/admin/backup 200", exp.status === 200, `got ${exp.status}`);
+    check("backup contains deals table", Array.isArray(exp.json?.tables?.deals));
+    check("backup contains users table", Array.isArray(exp.json?.tables?.users));
+    check("backup contains settings table", Array.isArray(exp.json?.tables?.settings));
+
+    const noCsrf = await req(admin, "/api/admin/backup", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(exp.json),
+    });
+    check("restore without CSRF rejected", noCsrf.status === 403, `got ${noCsrf.status}`);
+
+    const res = await req(admin, "/api/admin/backup", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-csrf-token": admin.get("bp_csrf_js") },
+      body: JSON.stringify(exp.json),
+    });
+    check("full backup self-restore 200", res.status === 200, `got ${res.status} ${res.text.slice(0, 150)}`);
+    check("restore reports mode=full", res.json?.mode === "full", `got ${res.json?.mode}`);
+
+    const legacy = await req(admin, "/api/admin/backup", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-csrf-token": admin.get("bp_csrf_js") },
+      body: JSON.stringify(exp.json?.tables?.deals ?? []),
+    });
+    check("deals-array restore 200", legacy.status === 200, `got ${legacy.status} ${legacy.text.slice(0, 150)}`);
+    check("restore reports mode=deals", legacy.json?.mode === "deals", `got ${legacy.json?.mode}`);
+
+    const pub = await req(guest, "/api/deals");
+    check("public deals API healthy after restores", pub.status === 200 && Array.isArray(pub.json?.deals), `got ${pub.status}`);
+  }
+
   console.log(`\n${"=".repeat(46)}`);
   console.log(`PASS: ${pass}   FAIL: ${fail}`);
   if (failures.length) {

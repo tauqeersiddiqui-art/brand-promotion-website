@@ -22,6 +22,7 @@ export default async function AdminLayout({
             <a href="/admin/refunds">↩️ Refunds</a>
             <a href="/admin/users">👥 Users</a>
             <a href="/admin/settings">⚙️ Settings</a>
+            <a href="/admin/backup">💾 Backup</a>
             <a href="/" style={{ marginLeft: "auto" }}>
               ← View Site
             </a>

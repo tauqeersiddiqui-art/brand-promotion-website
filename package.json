@@ -2,6 +2,9 @@
   "name": "brand-promotion",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "description": "Brand Promotion - deals platform with admin panel, orders and refund management",
   "scripts": {
     "dev": "next dev",

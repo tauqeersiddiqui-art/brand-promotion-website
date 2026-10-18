@@ -180,15 +180,25 @@ const settingStmt = db.prepare(
 ].forEach(([k, v]) => settingStmt.run(k, v));
 
 // ---------- owner account ----------
+// ADMIN_PASSWORD (when set) is authoritative: on boot it creates the owner
+// account or syncs the password of the existing one, so a lost admin password
+// is recovered by changing the env var and restarting the service.
 const adminEmail = (process.env.ADMIN_EMAIL || "admin@brandpromotion.in").toLowerCase();
-const adminPassword = process.env.ADMIN_PASSWORD || "ChangeMe@123";
-const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(adminEmail);
+const envPassword = process.env.ADMIN_PASSWORD || "";
+const existing = db.prepare("SELECT id, email, password_hash FROM users WHERE email = ?").get(adminEmail);
 if (!existing) {
-  const hash = bcrypt.hashSync(adminPassword, 12);
+  const initialPassword = envPassword || "ChangeMe@123";
+  const hash = bcrypt.hashSync(initialPassword, 12);
   db.prepare(
     "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')"
   ).run("Administrator", adminEmail, hash);
-  console.log(`Owner account created: ${adminEmail} / ${adminPassword}`);
+  console.log(`Owner account created: ${adminEmail} / ${initialPassword}`);
+} else if (envPassword && !bcrypt.compareSync(envPassword, existing.password_hash)) {
+  db.prepare("UPDATE users SET password_hash = ?, role = 'admin' WHERE id = ?").run(
+    bcrypt.hashSync(envPassword, 12),
+    existing.id
+  );
+  console.log(`Owner password synced from ADMIN_PASSWORD for: ${adminEmail}`);
 } else {
   console.log(`Owner account already exists: ${adminEmail}`);
 }

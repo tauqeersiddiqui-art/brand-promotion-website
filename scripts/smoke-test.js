@@ -2,6 +2,36 @@
 // Usage: node scripts/smoke-test.js
 const BASE = process.env.SMOKE_BASE || "http://localhost:3000";
 
+const fs = require("fs");
+const path = require("path");
+
+// Load admin credentials from .env when not provided in the environment so the
+// test always matches the owner account configured for this instance.
+function loadDotEnv() {
+  try {
+    const raw = fs.readFileSync(path.join(process.cwd(), ".env"), "utf8");
+    for (const line of raw.split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+      if (!m) continue;
+      const key = m[1];
+      let value = m[2];
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (process.env[key] === undefined) process.env[key] = value;
+    }
+  } catch {
+    /* no .env file - rely on environment/defaults */
+  }
+}
+loadDotEnv();
+
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@brandpromotion.in").toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChangeMe@123";
+
 let pass = 0;
 let fail = 0;
 const failures = [];
@@ -100,7 +130,7 @@ async function req(jar, path, opts = {}) {
     const noCsrf = await req(guest, "/api/auth/login", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: "admin@brandpromotion.in", password: "ChangeMe@123" }),
+      body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
     });
     check("login without CSRF rejected", noCsrf.status === 403, `got ${noCsrf.status}`);
 
@@ -109,7 +139,7 @@ async function req(jar, path, opts = {}) {
     const r = await req(admin, "/api/auth/login", {
       method: "POST",
       headers: { "content-type": "application/json", "x-csrf-token": token },
-      body: JSON.stringify({ email: "admin@brandpromotion.in", password: "ChangeMe@123" }),
+      body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
     });
     check("admin login with CSRF 200", r.status === 200, `got ${r.status} ${r.text.slice(0, 120)}`);
     check("role is admin", r.json?.user?.role === "admin");

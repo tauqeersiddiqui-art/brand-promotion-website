@@ -196,6 +196,7 @@ async function req(jar, path, opts = {}) {
       `got ${created.status} ${created.text.slice(0, 150)}`
     );
     dealId = created.json?.id;
+    check("create deal reports telegram status", typeof created.json?.telegram === "string", `got ${typeof created.json?.telegram}`);
 
     const noCsrfWrite = await req(admin, "/api/admin/deals", {
       method: "POST",
@@ -215,6 +216,17 @@ async function req(jar, path, opts = {}) {
       check("PATCH deal 200", patch.status === 200, `got ${patch.status} ${patch.text.slice(0, 150)}`);
     } else {
       check("PATCH deal 200", false, "no deal id returned");
+    }
+
+    if (dealId) {
+      const tg = await req(admin, `/api/admin/deals/${dealId}/telegram`, {
+        method: "POST",
+        headers: { "x-csrf-token": admin.get("bp_csrf_js") },
+      });
+      check("telegram repost endpoint responds", tg.status === 200 || tg.status === 400, `got ${tg.status}`);
+      if (tg.status === 400) {
+        check("telegram unconfigured gives clear error", /Telegram/i.test(tg.json?.error || ""), tg.json?.error);
+      }
     }
     globalThis.__smokeDealId = dealId;
   }

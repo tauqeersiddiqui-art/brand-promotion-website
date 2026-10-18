@@ -29,7 +29,7 @@ async function safeSettings(): Promise<SiteSettings> {
       tagline: "India's smartest deals & brand promotion platform",
       announcement: "",
       whatsapp: "919999999999",
-      telegram: "brandpromotion",
+      telegram: "brandreviewer",
       support_email: "support@brandpromotion.in",
       instagram: "",
       mediators: "Direct,Amit Mediator,Rahul Agency,Pooja Deals,VIP Campaigns,Social Reach",

@@ -245,9 +245,19 @@ export default function AdminDealsPage() {
       if (!r.ok) {
         setMsg({ type: "err", text: d.error || "Save failed." });
       } else {
+        const tg = typeof d.telegram === "string" ? d.telegram : "";
+        const tgNote =
+          tg === "sent"
+            ? " Posted to Telegram ✅"
+            : tg.startsWith("failed")
+              ? ` (Telegram post failed: ${tg.replace(/^failed:\s*/, "")})`
+              : "";
         setMsg({
           type: "ok",
-          text: editing ? "Campaign deal updated ✅" : `Campaign deal created (${d.product_code || "New"}) ✅`,
+          text:
+            (editing
+              ? "Campaign deal updated ✅"
+              : `Campaign deal created (${d.product_code || "New"}) ✅`) + tgNote,
         });
         reset();
         load();
@@ -273,6 +283,24 @@ export default function AdminDealsPage() {
     fd.set("active", d.active === 1 ? "false" : "true");
     const r = await fetch(`/api/admin/deals/${d.id}`, { method: "PATCH", headers: getCsrfHeader(), body: fd });
     if (r.ok) load();
+  }
+
+  async function postTelegram(d: Deal) {
+    setMsg(null);
+    try {
+      const r = await fetch(`/api/admin/deals/${d.id}/telegram`, {
+        method: "POST",
+        headers: getCsrfHeader(),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setMsg({ type: "err", text: j.error || `Telegram post failed (${r.status}).` });
+      } else {
+        setMsg({ type: "ok", text: `Posted "${d.title}" to the Telegram channel ✅` });
+      }
+    } catch {
+      setMsg({ type: "err", text: "Network error posting to Telegram." });
+    }
   }
 
   const filteredDeals = deals?.filter((d) =>
@@ -646,6 +674,13 @@ export default function AdminDealsPage() {
                     <td style={{ whiteSpace: "nowrap" }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => startEdit(d)}>
                         Edit
+                      </button>{" "}
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => postTelegram(d)}
+                        title="Post this campaign to the Telegram channel"
+                      >
+                        Post TG
                       </button>{" "}
                       <button className="btn btn-danger btn-sm" onClick={() => remove(d)}>
                         Delete

@@ -7,6 +7,7 @@ import { applyRateLimit } from "@/lib/rate-limit";
 import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
+import { postDealToTelegram } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 
@@ -130,5 +131,24 @@ export async function POST(req: Request) {
     db.prepare("UPDATE deals SET product_code = ? WHERE id = ?").run(productCode, newId);
   }
 
-  return NextResponse.json({ ok: true, id: newId, product_code: productCode });
+  // Announce the new campaign on the Telegram channel (skipped silently when
+  // no bot token is configured; failures never block deal creation).
+  const telegram = await postDealToTelegram({
+    id: newId,
+    title,
+    platform,
+    deal_type: dealType,
+    price_sale: priceSale,
+    cashback_amount: cashbackAmount,
+    image_url: imageUrl,
+    target_keyword: targetKeyword,
+    total_slots: totalSlots,
+  });
+
+  return NextResponse.json({
+    ok: true,
+    id: newId,
+    product_code: productCode,
+    telegram: telegram.skipped ? "skipped" : telegram.ok ? "sent" : `failed: ${telegram.error}`,
+  });
 }

@@ -267,6 +267,61 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Telegram channel */}
+      {settings.telegram && (
+        <section className="container" style={{ paddingBottom: 10 }}>
+          <div
+            className="card"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: 24,
+              alignItems: "center",
+              padding: 26,
+              background:
+                "radial-gradient(420px 200px at 0% 0%, rgba(56, 189, 248, 0.10), transparent 65%), var(--surface)",
+            }}
+          >
+            <div>
+              <span className="badge badge-brand">Telegram community</span>
+              <h3 style={{ margin: "10px 0 6px", fontSize: 20 }}>
+                Get every new deal on Telegram first
+              </h3>
+              <p
+                className="muted"
+                style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.6, maxWidth: 560 }}
+              >
+                New campaigns are posted to our channel the moment they go live.
+                Scan the QR code or tap the button to join and grab reviewer
+                slots before they fill up.
+              </p>
+              <a
+                href={telegramLink(settings.telegram)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn"
+                style={{ background: "linear-gradient(135deg, #229ED9, #38bdf8)" }}
+              >
+                Join @{settings.telegram.replace(/^@/, "")} on Telegram
+              </a>
+            </div>
+            <img
+              src="/brandreviewer-telegram-qr.png"
+              alt={`Telegram QR code for @${settings.telegram.replace(/^@/, "")}`}
+              width={150}
+              height={150}
+              style={{
+                borderRadius: 12,
+                border: "1px solid var(--border)",
+                background: "#fff",
+                padding: 6,
+                justifySelf: "center",
+              }}
+            />
+          </div>
+        </section>
+      )}
+
       {/* Trust banner */}
       <section className="container section">
         <div className="card trust-banner" style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 30, alignItems: "center" }}>

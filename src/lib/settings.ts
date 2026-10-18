@@ -17,7 +17,7 @@ const DEFAULTS: SiteSettings = {
   tagline: "India's #1 Influencer Cashback & Brand Promotion Platform",
   announcement: "🔥 100% Cashback Campaign Live! Buy on Amazon/Flipkart, share review & get instant UPI payout.",
   whatsapp: "919999999999",
-  telegram: "brandpromotion",
+  telegram: "brandreviewer",
   support_email: "support@brandpromotion.in",
   instagram: "brandpromotion.in",
   mediators: "Direct,Amit Mediator,Rahul Agency,Pooja Deals,VIP Campaigns,Social Reach",

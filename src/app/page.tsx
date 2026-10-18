@@ -31,6 +31,16 @@ export default function HomePage() {
       .all() as unknown as Deal[]
   ).filter((d) => !featured.some((f) => f.id === d.id));
 
+  const categories = (
+    db
+      .prepare(
+        `SELECT DISTINCT category FROM deals
+         WHERE active = 1 AND category != ''
+         ORDER BY category LIMIT 12`
+      )
+      .all() as { category: string }[]
+  ).map((c) => c.category);
+
   const totalDisbursed = (
     db
       .prepare(
@@ -71,12 +81,15 @@ export default function HomePage() {
           </p>
 
           <div className="hero-ctas">
-            <Link href="#submit-order" className="btn">
+            <Link href="#campaigns" className="btn">
+              Browse live deals
+            </Link>
+            <a
+              href="#submit-order"
+              className="btn btn-outline"
+            >
               Submit order proof
-            </Link>
-            <Link href="/browse" className="btn btn-outline">
-              Explore live deals
-            </Link>
+            </a>
             {settings.telegram && (
               <a
                 href={telegramLink(settings.telegram)}
@@ -114,17 +127,44 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick actions */}
-      <HomeActionTabs />
+      {/* Assurance bar */}
+      <div className="assurance-bar">
+        <div className="container assurance-inner">
+          <span className="trust-item">100% cashback deals</span>
+          <span className="trust-item">UPI payouts with UTR</span>
+          <span className="trust-item">Brand-funded campaigns</span>
+          <span className="trust-item">Verified reviewer slots</span>
+        </div>
+      </div>
+
+      {/* Category strip */}
+      {categories.length > 0 && (
+        <div className="container">
+          <div className="category-strip">
+            <Link href="/browse" className="category-chip">
+              All deals
+            </Link>
+            {categories.map((c) => (
+              <Link
+                key={c}
+                href={`/browse?category=${encodeURIComponent(c)}`}
+                className="category-chip"
+              >
+                {c}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Featured Deals */}
       {showFeatured.length > 0 && (
-        <section className="container" id="campaigns">
+        <section className="container section" id="campaigns" style={{ paddingBottom: 24 }}>
           <div className="section-head">
             <div>
-              <h2>Featured brand campaigns</h2>
+              <h2>Deals of the day</h2>
               <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-                Limited reviewer slots. Claim one before it closes.
+                Featured brand campaigns with open reviewer slots.
               </p>
             </div>
             <Link href="/browse" className="link">
@@ -141,10 +181,10 @@ export default function HomePage() {
 
       {/* Fresh drops */}
       {showLatest.length > 0 && (
-        <section className="container">
+        <section className="container" style={{ paddingBottom: 24 }}>
           <div className="section-head">
             <div>
-              <h2>Newly added campaigns</h2>
+              <h2>New arrivals</h2>
               <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
                 Fresh offers across electronics, beauty, home and fitness.
               </p>
@@ -161,8 +201,26 @@ export default function HomePage() {
         </section>
       )}
 
+      {showFeatured.length === 0 && showLatest.length === 0 && (
+        <section className="container section">
+          <div className="empty-state card">
+            <h3>Campaigns are being restocked</h3>
+            <p className="muted">
+              New brand campaigns drop regularly. Join the Telegram channel to
+              get notified the moment slots open.
+            </p>
+            <Link href="/browse" className="btn">
+              Check live deals
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* Quick actions (forms) */}
+      <HomeActionTabs />
+
       {/* How it works */}
-      <section className="container section" style={{ marginTop: 40 }}>
+      <section className="container section" style={{ marginTop: 8 }}>
         <div className="section-head" style={{ textAlign: "center", justifyContent: "center" }}>
           <h2>How it works</h2>
           <p className="muted" style={{ margin: "6px auto 0", maxWidth: 620, textAlign: "center" }}>

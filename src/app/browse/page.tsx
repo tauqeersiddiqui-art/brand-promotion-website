@@ -11,11 +11,16 @@ type Resp = {
   pages: number;
 };
 
+function urlParam(key: string): string {
+  if (typeof window === "undefined") return "";
+  return new URLSearchParams(window.location.search).get(key) || "";
+}
+
 export default function BrowsePage() {
   const [data, setData] = useState<Resp | null>(null);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
-  const [platform, setPlatform] = useState("All");
+  const [category, setCategory] = useState(() => urlParam("category") || "All");
+  const [platform, setPlatform] = useState(() => urlParam("platform") || "All");
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);

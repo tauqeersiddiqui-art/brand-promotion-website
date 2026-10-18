@@ -482,6 +482,80 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width
   color: #ffffff;
 }
 
+/* ---------- marketplace strips ---------- */
+.assurance-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 20px -18px rgba(76, 29, 149, 0.35);
+}
+.assurance-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 26px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+}
+.trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.trust-item::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-image: var(--gradient-brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+  flex-shrink: 0;
+}
+.trust-item:nth-child(2)::before { background-image: linear-gradient(135deg, #059669, #34d399); box-shadow: 0 0 0 3px var(--accent-soft); }
+.trust-item:nth-child(3)::before { background-image: linear-gradient(135deg, #d97706, #fbbf24); box-shadow: 0 0 0 3px var(--warn-soft); }
+.trust-item:nth-child(4)::before { background-image: linear-gradient(135deg, #db2777, #f472b6); box-shadow: 0 0 0 3px #fce7f3; }
+
+.category-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 18px 0 2px;
+  scrollbar-width: thin;
+}
+.category-chip {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.category-chip:hover {
+  border-color: #a78bfa;
+  color: var(--brand);
+  background: var(--brand-soft);
+  text-decoration: none;
+  box-shadow: 0 6px 14px -10px rgba(109, 40, 217, 0.6);
+}
+
+.action-panel {
+  background:
+    radial-gradient(500px 220px at 8% 0%, rgba(139, 92, 246, 0.10), transparent 65%),
+    radial-gradient(460px 220px at 96% 100%, rgba(16, 185, 129, 0.10), transparent 65%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 30px 24px;
+  box-shadow: var(--shadow);
+}
+
 /* ---------- how-it-works cards ---------- */
 .steps-grid {
   display: grid;

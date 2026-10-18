@@ -25,11 +25,18 @@ export default function HomeActionTabs() {
   }, []);
 
   return (
-    <section className="container section" id="quick-actions" style={{ marginTop: 0, marginBottom: 54 }}>
+    <section className="container section" id="quick-actions" style={{ marginTop: 8, marginBottom: 24 }}>
       <span id="submit-order" style={{ display: "block", position: "relative", top: -90 }} />
       <span id="claim-cashback" style={{ display: "block", position: "relative", top: -90 }} />
-      <div style={{ maxWidth: 760, margin: "0 auto" }}>
-        <div className="tab-group" style={{ marginBottom: 24 }}>
+      <div className="action-panel">
+        <div style={{ textAlign: "center", marginBottom: 22 }}>
+          <h2 style={{ margin: "0 0 6px" }}>Reviewer actions</h2>
+          <p className="muted" style={{ margin: 0, fontSize: 14 }}>
+            Submit your order proof, claim your cashback, or track a payout status.
+          </p>
+        </div>
+        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+          <div className="tab-group" style={{ marginBottom: 24 }}>
           <button
             type="button"
             className={`tab-btn ${tab === "submit" ? "active" : ""}`}
@@ -65,6 +72,7 @@ export default function HomeActionTabs() {
         {tab === "submit" && <SubmitOrderProofForm />}
         {tab === "claim" && <ClaimCashbackForm />}
         {tab === "track" && <QuickTrackForm />}
+        </div>
       </div>
     </section>
   );

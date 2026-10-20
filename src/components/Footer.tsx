@@ -37,6 +37,7 @@ export default function Footer({ settings: s }: { settings: SiteSettings }) {
           <Link href="/terms">Terms &amp; conditions</Link>
           <Link href="/privacy">Privacy policy</Link>
           <Link href="/contact">Contact helpdesk</Link>
+          <Link href="/login?next=/mediator">Mediator login</Link>
           <Link href="/admin/login">Admin login</Link>
         </div>
 

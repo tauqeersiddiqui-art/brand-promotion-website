@@ -82,7 +82,23 @@ const DEAL_TYPES = [
   "50% Cashback", "40% Cashback", "30% Cashback", "20% Cashback", "10% Cashback",
   "Review Incentive", "Flat Cashback", "Review Deal", "Rating Deal", "Only Order Deal"
 ];
-const CATEGORIES = ["Electronics", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Fashion", "Health & Wellness", "General"];
+const CATEGORIES = ["Electronics", "Footwear", "Fashion", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Health & Wellness", "General"];
+
+type BulkImportResult = {
+  created: {
+    id: number;
+    product_code: string;
+    title: string;
+    platform: string;
+    category: string;
+    price_sale: number;
+    partial: boolean;
+  }[];
+  skipped: { url: string; reason: string }[];
+  failed: { url: string; error: string }[];
+  summary: { total: number; created: number; skipped: number; failed: number };
+  error?: string;
+};
 
 function parseDealTypePercentage(dealType: string | undefined | null): number {
   const match = (dealType || "").match(/^(\d+)%\s*Cashback$/i);
@@ -97,6 +113,9 @@ export default function AdminDealsPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err" | "warn"; text: string } | null>(null);
   const [filterPlatform, setFilterPlatform] = useState("All");
+  const [bulkLinks, setBulkLinks] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
 
   async function load() {
     try {
@@ -212,6 +231,7 @@ export default function AdminDealsPage() {
         ...f,
         platform: d.platform,
         title: d.title || f.title,
+        category: d.category || f.category,
         price_original: d.priceOriginal ? String(d.priceOriginal) : f.price_original,
         price_sale: d.priceSale ? String(d.priceSale) : f.price_sale,
         cashback_amount: salePrice > 0 ? String(calculatedCashback) : f.cashback_amount,
@@ -234,6 +254,47 @@ export default function AdminDealsPage() {
       setMsg({ type: "err", text: "Network error fetching product." });
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function importBulkLinks() {
+    const links = bulkLinks
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (links.length === 0) {
+      setMsg({ type: "err", text: "Paste at least one Amazon or Flipkart product link." });
+      return;
+    }
+    setBulkBusy(true);
+    setBulkResult(null);
+    setMsg(null);
+    try {
+      const r = await fetch("/api/admin/deals/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getCsrfHeader() },
+        body: JSON.stringify({ urls: links }),
+      });
+      const d = (await r.json().catch(() => ({}))) as BulkImportResult;
+      if (!r.ok) {
+        setMsg({ type: "err", text: d.error || "Bulk import failed." });
+        return;
+      }
+      setBulkResult(d);
+      setBulkLinks("");
+      if (d.created.length > 0) {
+        setMsg({
+          type: d.failed.length > 0 || d.skipped.length > 0 ? "warn" : "ok",
+          text: `Imported ${d.created.length} campaign(s) as pending. Check the price, category and image, then click Approve to publish. Campaigns with ₹0 need a price before saving.`,
+        });
+        load();
+      } else {
+        setMsg({ type: "err", text: "No campaigns were imported. See the reasons below." });
+      }
+    } catch {
+      setMsg({ type: "err", text: "Network error while importing the links." });
+    } finally {
+      setBulkBusy(false);
     }
   }
 
@@ -411,6 +472,62 @@ export default function AdminDealsPage() {
           {msg.text}
         </div>
       )}
+
+      <details className="card mb" style={{ padding: 28 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 17 }}>
+          Bulk import from product links
+        </summary>
+        <p className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
+          Paste up to 20 Amazon or Flipkart product links, one per line. Each campaign is created as{" "}
+          <strong>pending</strong> with its title, price, image and category filled automatically.
+          Edit anything you need, then approve it to make it live. Nothing is posted to Telegram during import.
+        </p>
+        <textarea
+          className="input"
+          rows={5}
+          value={bulkLinks}
+          onChange={(e) => setBulkLinks(e.target.value)}
+          placeholder={"https://www.amazon.in/dp/B0XXXXXXXX\nhttps://www.flipkart.com/product-name/p/ITMXXXXXXXX"}
+          style={{ fontFamily: "monospace", fontSize: 12.5 }}
+        />
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
+          <button type="button" className="btn" onClick={importBulkLinks} disabled={bulkBusy}>
+            {bulkBusy ? "Fetching and importing…" : "Import links"}
+          </button>
+          <span className="muted" style={{ fontSize: 12 }}>
+            {bulkLinks.split(/\r?\n/).filter((l) => l.trim()).length} link(s)
+          </span>
+        </div>
+
+        {bulkResult && (
+          <div style={{ marginTop: 14 }}>
+            <div className="alert alert-success" style={{ marginBottom: 10 }}>
+              Created {bulkResult.summary.created} · Skipped {bulkResult.summary.skipped} · Failed{" "}
+              {bulkResult.summary.failed}
+            </div>
+            {bulkResult.created.length > 0 && (
+              <ul className="muted" style={{ fontSize: 12.5, margin: "0 0 10px", paddingLeft: 18 }}>
+                {bulkResult.created.map((d) => (
+                  <li key={d.id}>
+                    <strong>{d.title}</strong> — {d.platform} · {d.category}
+                    {d.price_sale > 0 ? ` · ₹${d.price_sale.toLocaleString("en-IN")}` : " · price needed"}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {(bulkResult.failed.length > 0 || bulkResult.skipped.length > 0) && (
+              <ul className="muted" style={{ fontSize: 12.5, margin: 0, paddingLeft: 18 }}>
+                {bulkResult.skipped.map((s, i) => (
+                  <li key={`s${i}`}>Skipped {s.url}: {s.reason}</li>
+                ))}
+                {bulkResult.failed.map((f, i) => (
+                  <li key={`f${i}`}>Failed {f.url}: {f.error}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </details>
 
       {/* Campaign Deal Form */}
       <div className="card mb" style={{ padding: 28 }}>

@@ -7,6 +7,7 @@ import { applyRateLimit } from "@/lib/rate-limit";
 import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies } from "@/lib/csrf";
 import { headers } from "next/headers";
+import { writeAutoBackupSafe } from "@/lib/auto-backup";
 
 export const dynamic = "force-dynamic";
 
@@ -167,6 +168,7 @@ export async function POST(req: Request) {
   const newId = Number(info.lastInsertRowid);
   const productCode = `SF-P${newId.toString().padStart(3, "0")}`;
   db.prepare("UPDATE deals SET product_code = ? WHERE id = ?").run(productCode, newId);
+  writeAutoBackupSafe("mediator deal submitted");
 
   return NextResponse.json({
     ok: true,

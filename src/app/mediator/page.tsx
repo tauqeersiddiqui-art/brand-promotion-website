@@ -72,7 +72,7 @@ const DEAL_TYPES = [
   "50% Cashback", "40% Cashback", "30% Cashback", "20% Cashback", "10% Cashback",
   "Review Incentive", "Flat Cashback", "Review Deal", "Rating Deal", "Only Order Deal",
 ];
-const CATEGORIES = ["Electronics", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Fashion", "Health & Wellness", "General"];
+const CATEGORIES = ["Electronics", "Footwear", "Fashion", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Health & Wellness", "General"];
 
 export default function MediatorPage() {
   const [deals, setDeals] = useState<MediatorDeal[] | null>(null);

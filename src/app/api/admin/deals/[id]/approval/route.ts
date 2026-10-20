@@ -7,6 +7,7 @@ import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { postDealToTelegram } from "@/lib/telegram";
+import { writeAutoBackupSafe } from "@/lib/auto-backup";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +103,7 @@ export async function POST(
             mediator_commission_amount = ?, updated_at = datetime('now')
       WHERE id = ?`
   ).run(user.id, new Date().toISOString(), commission, id);
+  writeAutoBackupSafe("deal approved");
 
   const telegram = await postDealToTelegram({
     id: deal.id,

@@ -36,7 +36,8 @@ A fully operational deals website (like shopfluencer.in/browse-deals) with an ad
 
 **Admin panel** (`/admin`, owner-only)
 - Dashboard stats (deals, users, orders, revenue, pending refunds)
-- Deals manager: create/edit/delete with **image upload** (or image URL), stock, original vs sale price (auto discount %), categories, featured toggle
+- Deals manager: create/edit/delete with **image upload** (or image URL), stock, original vs sale price (auto discount %), categories including Footwear, featured toggle
+- Bulk import: paste up to 20 Amazon/Flipkart links, auto-fill title/price/image, auto-select the category, then edit and approve each pending campaign
 - Campaign approval queue: approve/reject mediator submissions and set the final fixed commission
 - Users manager: promote/demote accounts and suspend mediators
 - Orders manager: view, search, change status, CSV export

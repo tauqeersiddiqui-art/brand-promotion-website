@@ -8,6 +8,7 @@ import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { postDealToTelegram } from "@/lib/telegram";
+import { writeAutoBackupSafe } from "@/lib/auto-backup";
 
 export const dynamic = "force-dynamic";
 
@@ -160,6 +161,7 @@ export async function POST(req: Request) {
     productCode = `SF-P${newId.toString().padStart(3, "0")}`;
     db.prepare("UPDATE deals SET product_code = ? WHERE id = ?").run(productCode, newId);
   }
+  writeAutoBackupSafe("deal created");
 
   // Announce the new campaign on the Telegram channel (skipped silently when
   // no bot token is configured; failures never block deal creation).

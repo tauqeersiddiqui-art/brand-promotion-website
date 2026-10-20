@@ -7,6 +7,7 @@ import { applyRateLimit } from "@/lib/rate-limit";
 import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
+import { writeAutoBackupSafe } from "@/lib/auto-backup";
 
 export const dynamic = "force-dynamic";
 
@@ -206,6 +207,7 @@ export async function PATCH(
     mediatorCommission,
     id
   );
+  writeAutoBackupSafe("deal updated");
 
   return NextResponse.json({ ok: true });
 }
@@ -228,5 +230,6 @@ export async function DELETE(
   // refunds and reviews, so the caller should be deliberate here.
   const res = db.prepare("DELETE FROM deals WHERE id = ?").run(id);
   if (res.changes === 0) return bad("Deal not found.", 404);
+  writeAutoBackupSafe("deal deleted");
   return NextResponse.json({ ok: true });
 }

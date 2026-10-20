@@ -101,6 +101,16 @@ function pruneBackups() {
   }
 }
 
+/** Write immediately after an important change; never fail the request over it. */
+export function writeAutoBackupSafe(reason: string): string | null {
+  try {
+    return writeAutoBackup(reason);
+  } catch (e) {
+    log(`immediate backup failed (${reason}): ${e instanceof Error ? e.message : String(e)}`);
+    return null;
+  }
+}
+
 export function writeAutoBackup(reason: string): string | null {
   ensureDir(BACKUP_DIR);
   const current = fingerprint();

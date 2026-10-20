@@ -4,6 +4,7 @@ import { requireMediator, bad } from "@/lib/api-helpers";
 import { parseId } from "@/lib/validation";
 import { getCsrfTokenFromCookies } from "@/lib/csrf";
 import { headers } from "next/headers";
+import { writeAutoBackupSafe } from "@/lib/auto-backup";
 
 export const dynamic = "force-dynamic";
 
@@ -40,5 +41,6 @@ export async function DELETE(
   if (res.changes === 0) {
     return bad("Campaign not found or already approved.", 404);
   }
+  writeAutoBackupSafe("mediator deal withdrawn");
   return NextResponse.json({ ok: true });
 }

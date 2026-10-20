@@ -52,7 +52,10 @@ function LoginForm() {
         setError(d.error || "Login failed.");
         return;
       }
-      const target = d.user.role === "admin" ? "/admin" : next || "/account";
+      const target =
+        d.user.role === "admin"
+          ? "/admin"
+          : next || (d.user.role === "mediator" ? "/mediator" : "/account");
       router.push(target);
       router.refresh();
     } catch {
@@ -108,6 +111,9 @@ function LoginForm() {
         </p>
         <p className="auth-switch" style={{ marginTop: 4 }}>
           Are you the owner? <Link href="/admin/login">Admin login</Link>
+        </p>
+        <p className="auth-switch" style={{ marginTop: 4 }}>
+          Approved mediator? <Link href="/login?next=/mediator">Mediator login</Link>
         </p>
       </div>
     </div>

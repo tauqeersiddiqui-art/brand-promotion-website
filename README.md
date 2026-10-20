@@ -92,6 +92,18 @@ Set env vars: `AUTH_SECRET` (strong random), `NEXT_PUBLIC_SITE_NAME`, `OCR_SPACE
 3. Done — review screenshots are OCR'd automatically on submit; admins can re-run OCR from Admin → Reviews
 4. If OCR fails (e.g. missing key), the review is still saved — nothing is lost
 
+### Automatic backups
+
+The server writes a full JSON backup (users, deals, orders, reviews, claims, refunds, settings, uploads rows) plus copies of uploaded screenshots:
+
+- **On every start** and then every `AUTO_BACKUP_MINUTES` (default 5) when data changed.
+- **On start**, if the database looks freshly seeded/wiped (new file, no orders), the newest automatic backup is restored, including images.
+- Backups live in `BACKUP_DIR` (default `data/backups`) and keep the last 20 snapshots.
+
+⚠️ Render's free tier erases the local disk on every deploy. To survive deploys, attach a **persistent disk** to the service and set `BACKUP_DIR=/var/data/backups` (or wherever the disk is mounted), then deploy once to create the first backup. Without a persistent disk, automation only protects restarts, not deploys.
+
+Disable with `AUTO_RESTORE=0`; take a manual snapshot anytime from Admin → 💾 Backup.
+
 ## Project structure
 
 ```

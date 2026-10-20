@@ -15,3 +15,4 @@ public/uploads/
 .DS_Store
 tsconfig.tsbuildinfo
 .vscode/
+data/backups/

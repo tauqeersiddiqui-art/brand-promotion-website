@@ -20,7 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   let dealPages: MetadataRoute.Sitemap = [];
   try {
     const rows = db
-      .prepare("SELECT id, created_at FROM deals WHERE active = 1 ORDER BY datetime(created_at) DESC LIMIT 500")
+      .prepare("SELECT id, created_at FROM deals WHERE active = 1 AND approval_status = 'approved' ORDER BY datetime(created_at) DESC LIMIT 500")
       .all() as { id: number; created_at: string }[];
     dealPages = rows.map((r) => ({
       url: `${base}/deal/${r.id}`,

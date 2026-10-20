@@ -24,7 +24,7 @@ export const SESSION_DAYS = 7;
 export type SessionPayload = {
   userId: number;
   email: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "mediator";
   name: string;
 };
 
@@ -55,7 +55,7 @@ export async function verifySessionToken(
     if (
       typeof payload.userId !== "number" ||
       typeof payload.email !== "string" ||
-      (payload.role !== "user" && payload.role !== "admin")
+      (payload.role !== "user" && payload.role !== "admin" && payload.role !== "mediator")
     ) {
       return null;
     }

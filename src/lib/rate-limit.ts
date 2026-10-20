@@ -171,6 +171,9 @@ export const RATE_LIMITS = {
 
   // Admin actions
   adminAction: { limit: 60, windowMs: 60 * 1000, keyPrefix: "admin" },
+
+  // Mediator campaign submissions
+  mediatorAction: { limit: 20, windowMs: 60 * 1000, keyPrefix: "mediator" },
 } as const;
 
 /**

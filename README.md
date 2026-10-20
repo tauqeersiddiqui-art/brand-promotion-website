@@ -29,9 +29,16 @@ A fully operational deals website (like shopfluencer.in/browse-deals) with an ad
 - Reviews go live on deal pages only after **admin approval** (average rating shown)
 - One review per order; anonymous/guest reviews blocked
 
+**Mediator portal** (`/mediator`, admin-approved mediator accounts)
+- Submit campaigns for admin approval with a proposed **fixed commission amount**
+- Scoped dashboard: only the mediator's own campaigns, approval status and rejection reasons
+- Approved campaigns go live automatically; mediators can withdraw pending/rejected campaigns
+
 **Admin panel** (`/admin`, owner-only)
 - Dashboard stats (deals, users, orders, revenue, pending refunds)
 - Deals manager: create/edit/delete with **image upload** (or image URL), stock, original vs sale price (auto discount %), categories, featured toggle
+- Campaign approval queue: approve/reject mediator submissions and set the final fixed commission
+- Users manager: promote/demote accounts and suspend mediators
 - Orders manager: view, search, change status, CSV export
 - Refunds manager: approve/reject with admin notes, CSV export
 - Settings: site name, WhatsApp/Telegram links, announcement banner, hero text, support email
@@ -69,7 +76,14 @@ Open http://localhost:3000
 
 ## Deploying to production (Vercel note)
 
-SQLite file storage works on a single Node server (VPS/Railway/Render). For **Vercel**, swap `better-sqlite3` for Turso (libSQL) or Postgres — the data layer is isolated in `src/lib/db.ts` to make that swap easy.
+SQLite file storage works on a single Node server (VPS/Railway/Render). For **Vercel**, swap `better-sqlite3` for Turso (libSQL) or Postgres; the data layer is isolated in `src/lib/db.ts` to make that swap easy.
+
+Google Sheets is intentionally **not** used as the primary database. It has no
+transactions or foreign keys, strict API rate limits, slow reads at this scale,
+and cannot safely provide an auditable ledger for commissions and payments.
+Use it only as an optional reporting/export mirror. For a managed database,
+use Postgres (Neon/Supabase/Render) and keep proof images in object storage
+(Cloudflare R2/S3).
 
 On a VPS:
 ```bash

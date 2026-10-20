@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       ? Math.min(100, requestedLimit)
       : 12;
 
-  const where: string[] = ["active = 1"];
+  const where: string[] = ["active = 1", "approval_status = 'approved'"];
   const params: (string | number)[] = [];
 
   if (search) {
@@ -83,13 +83,13 @@ export async function GET(req: NextRequest) {
 
   const categories = (
     db
-      .prepare("SELECT DISTINCT category FROM deals WHERE active = 1 ORDER BY category")
+      .prepare("SELECT DISTINCT category FROM deals WHERE active = 1 AND approval_status = 'approved' ORDER BY category")
       .all() as { category: string }[]
   ).map((r) => r.category);
 
   const platforms = (
     db
-      .prepare("SELECT DISTINCT platform FROM deals WHERE active = 1 ORDER BY platform")
+      .prepare("SELECT DISTINCT platform FROM deals WHERE active = 1 AND approval_status = 'approved' ORDER BY platform")
       .all() as { platform: string }[]
   ).map((r) => r.platform);
 

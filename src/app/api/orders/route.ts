@@ -155,6 +155,7 @@ export async function POST(req: Request) {
         claimed_slots: number;
         stock: number;
         active: number;
+        approval_status: string;
         platform: string;
         deal_type: string;
       }
@@ -166,7 +167,7 @@ export async function POST(req: Request) {
     deal = db.prepare("SELECT * FROM deals WHERE product_code = ?").get(productCode) as typeof deal;
   }
 
-  if (deal && !deal.active) {
+  if (deal && (!deal.active || deal.approval_status !== "approved")) {
     return bad("This campaign is currently inactive.", 400);
   }
 

@@ -181,7 +181,7 @@ const BRANDS: Store[] = [
 function liveCounts(): Record<string, number> {
   try {
     const rows = db
-      .prepare("SELECT platform, COUNT(*) AS c FROM deals WHERE active = 1 GROUP BY platform")
+      .prepare("SELECT platform, COUNT(*) AS c FROM deals WHERE active = 1 AND approval_status = 'approved' GROUP BY platform")
       .all() as { platform: string; c: number }[];
     return Object.fromEntries(rows.map((r) => [r.platform.toLowerCase(), r.c]));
   } catch {

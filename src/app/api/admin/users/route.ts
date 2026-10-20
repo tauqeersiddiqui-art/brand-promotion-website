@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
   const users = db
     .prepare(
       `SELECT u.id, u.name, u.email, u.phone, u.role, u.created_at,
+              u.mediator_code, u.mediator_status,
               COUNT(o.id) AS order_count
        FROM users u LEFT JOIN orders o ON o.user_id = u.id
        ${where}

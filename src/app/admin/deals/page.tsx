@@ -40,6 +40,11 @@ type Deal = {
   featured: number;
   active: number;
   order_count: number;
+  submitted_by: number | null;
+  submitted_by_name: string | null;
+  approval_status: "pending" | "approved" | "rejected";
+  rejection_reason: string;
+  mediator_commission_amount: number;
 };
 
 const EMPTY = {
@@ -68,6 +73,7 @@ const EMPTY = {
   stock: "50",
   featured: false,
   active: true,
+  mediator_commission_amount: "",
 };
 
 const PLATFORMS = ["Amazon", "Flipkart", "Myntra", "Brand Store", "Meesho", "Nykaa"];
@@ -165,6 +171,7 @@ export default function AdminDealsPage() {
       stock: String(d.stock || 50),
       featured: d.featured === 1,
       active: d.active === 1,
+      mediator_commission_amount: String(d.mediator_commission_amount || ""),
     });
     setFile(null);
     setMsg(null);
@@ -259,6 +266,7 @@ export default function AdminDealsPage() {
       fd.set("stock", form.stock || "50");
       fd.set("featured", form.featured ? "true" : "false");
       fd.set("active", form.active ? "true" : "false");
+      fd.set("mediator_commission_amount", form.mediator_commission_amount || "0");
       if (form.image_url) fd.set("image_url", form.image_url);
       if (file) fd.set("image", file);
 
@@ -303,6 +311,58 @@ export default function AdminDealsPage() {
       setMsg({ type: "ok", text: "Campaign deal deleted." });
       load();
     }
+  }
+
+  async function approveDeal(d: Deal) {
+    const proposed = window.prompt(
+      `Fixed mediator commission for "${d.title}" (₹)`,
+      String(d.mediator_commission_amount || 0)
+    );
+    if (proposed === null) return;
+    const fd = new FormData();
+    fd.set("action", "approve");
+    fd.set("mediator_commission_amount", proposed || "0");
+    const r = await fetch(`/api/admin/deals/${d.id}/approval`, {
+      method: "POST",
+      headers: getCsrfHeader(),
+      body: fd,
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      setMsg({ type: "err", text: j.error || "Approval failed." });
+      return;
+    }
+    setMsg({
+      type: "ok",
+      text:
+        `Campaign approved with ₹${Number(j.mediator_commission_amount || 0).toLocaleString("en-IN")} fixed commission.` +
+        (j.telegram === "sent" ? " Posted to Telegram." : ""),
+    });
+    load();
+  }
+
+  async function rejectDeal(d: Deal) {
+    const reason = window.prompt(`Reason for rejecting "${d.title}"`);
+    if (reason === null) return;
+    if (reason.trim().length < 3) {
+      setMsg({ type: "err", text: "Please give a rejection reason." });
+      return;
+    }
+    const fd = new FormData();
+    fd.set("action", "reject");
+    fd.set("reason", reason.trim());
+    const r = await fetch(`/api/admin/deals/${d.id}/approval`, {
+      method: "POST",
+      headers: getCsrfHeader(),
+      body: fd,
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      setMsg({ type: "err", text: j.error || "Rejection failed." });
+      return;
+    }
+    setMsg({ type: "ok", text: "Campaign rejected. The mediator can see the reason." });
+    load();
   }
 
   async function toggleActive(d: Deal) {
@@ -458,6 +518,22 @@ export default function AdminDealsPage() {
               onChange={(e) => set("cashback_amount", e.target.value)}
               placeholder="1999"
             />
+          </div>
+
+          <div>
+            <label className="form-label">Mediator commission (fixed ₹)</label>
+            <input
+              className="input"
+              type="number"
+              min={0}
+              step="0.01"
+              value={form.mediator_commission_amount}
+              onChange={(e) => set("mediator_commission_amount", e.target.value)}
+              placeholder="e.g. 150"
+            />
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              Fixed amount paid to the mediator for this campaign. Not a percentage.
+            </p>
           </div>
 
           <div className="full">
@@ -709,9 +785,12 @@ export default function AdminDealsPage() {
                 <th>Campaign & Code</th>
                 <th>Platform</th>
                 <th>Price & Cashback</th>
+                <th>Commission</th>
                 <th>Slots Status</th>
                 <th>Orders</th>
-                <th>Status</th>
+                <th>Submitted by</th>
+                <th>Approval</th>
+                <th>Active</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -755,6 +834,10 @@ export default function AdminDealsPage() {
                       </div>
                     </td>
                     <td>
+                      <strong>₹{Number(d.mediator_commission_amount || 0).toLocaleString("en-IN")}</strong>
+                      <div className="muted" style={{ fontSize: 11 }}>fixed</div>
+                    </td>
+                    <td>
                       <div style={{ fontSize: 12 }}>
                         <span style={{ color: rem <= 5 ? "var(--danger)" : "var(--accent)", fontWeight: 600 }}>
                           {rem} slots left
@@ -764,6 +847,27 @@ export default function AdminDealsPage() {
                     </td>
                     <td>
                       <strong>{d.order_count || 0}</strong>
+                    </td>
+                    <td style={{ fontSize: 12 }}>
+                      {d.submitted_by_name || <span className="muted">Admin</span>}
+                    </td>
+                    <td>
+                      <span
+                        className={`pill ${
+                          d.approval_status === "approved"
+                            ? "pill-delivered"
+                            : d.approval_status === "rejected"
+                              ? "pill-cancelled"
+                              : "pill-pending"
+                        }`}
+                      >
+                        {d.approval_status || "approved"}
+                      </span>
+                      {d.rejection_reason && (
+                        <div className="muted" style={{ fontSize: 11, marginTop: 4, maxWidth: 180 }}>
+                          {d.rejection_reason}
+                        </div>
+                      )}
                     </td>
                     <td>
                       <button
@@ -776,16 +880,28 @@ export default function AdminDealsPage() {
                       </button>
                     </td>
                     <td style={{ whiteSpace: "nowrap" }}>
+                      {d.approval_status !== "approved" && (
+                        <button className="btn btn-sm" onClick={() => approveDeal(d)}>
+                          Approve
+                        </button>
+                      )}{" "}
+                      {d.approval_status !== "rejected" && (
+                        <button className="btn btn-secondary btn-sm" onClick={() => rejectDeal(d)}>
+                          Reject
+                        </button>
+                      )}{" "}
                       <button className="btn btn-ghost btn-sm" onClick={() => startEdit(d)}>
                         Edit
                       </button>{" "}
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => postTelegram(d)}
-                        title="Post this campaign to the Telegram channel"
-                      >
-                        Post TG
-                      </button>{" "}
+                      {d.approval_status === "approved" && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => postTelegram(d)}
+                          title="Post this campaign to the Telegram channel"
+                        >
+                          Post TG
+                        </button>
+                      )}{" "}
                       <button className="btn btn-danger btn-sm" onClick={() => remove(d)}>
                         Delete
                       </button>

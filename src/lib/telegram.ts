@@ -48,7 +48,14 @@ export async function postDealToTelegram(
   }
   const chatId = (process.env.TELEGRAM_CHAT_ID || DEFAULT_CHAT_ID).trim();
 
-  const dealUrl = `${siteBase()}/deal/${deal.id}`;
+  const base = siteBase();
+  // Smoke tests and local previews must not post test campaigns to the public
+  // channel. Localhost URLs also make Telegram reject inline buttons.
+  if (/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(base)) {
+    return { ok: false, skipped: true, error: "Telegram posting is skipped for localhost URLs." };
+  }
+
+  const dealUrl = `${base}/deal/${deal.id}`;
   const lines: (string | null)[] = [
     `\u{1F525} NEW CAMPAIGN: ${deal.title}`,
     "",
@@ -65,12 +72,7 @@ export async function postDealToTelegram(
   ];
   const caption = lines.filter((l): l is string => l !== null).join("\n").slice(0, 1024);
 
-  // Telegram rejects inline-button URLs pointing at localhost. Skip the button
-  // in local development instead of failing the whole post.
-  const linkable = !/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(siteBase());
-  const replyMarkup = linkable
-    ? { inline_keyboard: [[{ text: "View deal", url: dealUrl }]] }
-    : undefined;
+  const replyMarkup = { inline_keyboard: [[{ text: "View deal", url: dealUrl }]] };
   const hasPhoto = Boolean(deal.image_url && /^https?:\/\//i.test(deal.image_url));
 
   async function call(

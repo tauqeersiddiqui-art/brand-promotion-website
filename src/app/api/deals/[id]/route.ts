@@ -31,7 +31,7 @@ export async function GET(
               image_url, deal_url, target_keyword, instructions, coupon_code,
               price_original, price_sale, cashback_amount, total_slots, claimed_slots,
               stock, featured, active, created_at
-       FROM deals WHERE id = ? AND active = 1`
+       FROM deals WHERE id = ? AND active = 1 AND approval_status = 'approved'`
     )
     .get(id);
   if (!deal) {

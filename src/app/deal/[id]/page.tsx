@@ -45,7 +45,7 @@ export default async function DealPage({
   if (!Number.isInteger(id) || id < 1) notFound();
 
   const deal = db
-    .prepare("SELECT * FROM deals WHERE id = ? AND active = 1")
+    .prepare("SELECT * FROM deals WHERE id = ? AND active = 1 AND approval_status = 'approved'")
     .get(id) as DealRow | undefined;
   if (!deal) notFound();
 

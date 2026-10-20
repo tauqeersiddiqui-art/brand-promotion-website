@@ -36,6 +36,12 @@ type Deal = {
   stock: number;
   featured: number;
   active: number;
+  submitted_by: number | null;
+  approval_status: string;
+  rejection_reason: string;
+  approved_by: number | null;
+  approved_at: string;
+  mediator_commission_amount: number;
 };
 
 async function validateRequest(req: Request): Promise<NextResponse | null> {
@@ -134,6 +140,9 @@ export async function PATCH(
   const stock = has("stock")
     ? int(form.get("stock"), 0, 1_000_000, existing.stock)
     : existing.stock;
+  const mediatorCommission = has("mediator_commission_amount")
+    ? num(form.get("mediator_commission_amount"), 0, 10_000_000, existing.mediator_commission_amount)
+    : existing.mediator_commission_amount;
   const featured = has("featured")
     ? form.get("featured") === "true" || form.get("featured") === "on"
     : existing.featured === 1;
@@ -166,7 +175,8 @@ export async function PATCH(
       price_original = ?, price_sale = ?, cashback_amount = ?, review_amount = ?,
       rating_amount = ?, only_order_amount = ?, order_form_url = ?, refund_form_url = ?,
       total_slots = ?, claimed_slots = ?,
-      stock = ?, featured = ?, active = ?, updated_at = datetime('now')
+      stock = ?, featured = ?, active = ?, mediator_commission_amount = ?,
+      updated_at = datetime('now')
      WHERE id = ?`
   ).run(
     productCode,
@@ -193,6 +203,7 @@ export async function PATCH(
     stock,
     featured ? 1 : 0,
     active ? 1 : 0,
+    mediatorCommission,
     id
   );
 

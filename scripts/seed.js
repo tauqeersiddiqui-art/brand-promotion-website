@@ -23,9 +23,11 @@ db.exec(`
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     phone TEXT,
-    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
+    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin','mediator')),
     provider TEXT NOT NULL DEFAULT 'credentials',
     google_id TEXT,
+    mediator_code TEXT NOT NULL DEFAULT '',
+    mediator_status TEXT NOT NULL DEFAULT 'active',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -50,6 +52,12 @@ db.exec(`
     stock INTEGER NOT NULL DEFAULT 0,
     featured INTEGER NOT NULL DEFAULT 0,
     active INTEGER NOT NULL DEFAULT 1,
+    submitted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    approval_status TEXT NOT NULL DEFAULT 'approved',
+    rejection_reason TEXT NOT NULL DEFAULT '',
+    approved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    approved_at TEXT NOT NULL DEFAULT '',
+    mediator_commission_amount REAL NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );

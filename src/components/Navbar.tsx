@@ -53,6 +53,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
     { href: "/#submit-order", label: "Submit Order" },
     { href: "/#claim-cashback", label: "Claim Cashback" },
     { href: "/track", label: "Track Status" },
+    ...(me?.role === "mediator" ? [{ href: "/mediator", label: "Mediator" }] : []),
     ...(me?.role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 

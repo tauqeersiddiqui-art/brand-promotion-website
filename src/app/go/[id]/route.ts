@@ -20,7 +20,7 @@ export async function GET(
   }
 
   const deal = db
-    .prepare("SELECT deal_url FROM deals WHERE id = ? AND active = 1")
+    .prepare("SELECT deal_url FROM deals WHERE id = ? AND active = 1 AND approval_status = 'approved'")
     .get(id) as { deal_url: string } | undefined;
 
   if (!deal || !deal.deal_url || !/^https?:\/\//i.test(deal.deal_url)) {

@@ -13,6 +13,14 @@ const run = db.transaction(() => {
   removed.reimbursements = claims.length;
   for (const c of claims) db.prepare("DELETE FROM reimbursements WHERE id = ?").run(c.id);
 
+  const mediatorDeals = db
+    .prepare(
+      "SELECT id FROM deals WHERE submitted_by IN (SELECT id FROM users WHERE email LIKE 'smoke_mediator_%@example.com')"
+    )
+    .all();
+  removed.mediator_deals = mediatorDeals.length;
+  for (const d of mediatorDeals) db.prepare("DELETE FROM deals WHERE id = ?").run(d.id);
+
   const users = db.prepare("SELECT id FROM users WHERE email LIKE 'smoke_%@example.com'").all();
   removed.users = users.length;
   for (const u of users) db.prepare("DELETE FROM users WHERE id = ?").run(u.id);

@@ -39,6 +39,21 @@ export async function requireAdmin(): Promise<
   return { user, error: null };
 }
 
+/** Returns the user (must be a mediator) or a 401/403 response. */
+export async function requireMediator(): Promise<
+  { user: ApiUser; error: null } | { user: null; error: NextResponse }
+> {
+  const { user, error } = await requireUser();
+  if (error) return { user: null, error };
+  if (user.role !== "mediator") {
+    return {
+      user: null,
+      error: NextResponse.json({ error: "Mediator access required." }, { status: 403 }),
+    };
+  }
+  return { user, error: null };
+}
+
 export function isAdminUser(user: ApiUser): boolean {
   return user.role === "admin" || isAdminEmail(user.email);
 }

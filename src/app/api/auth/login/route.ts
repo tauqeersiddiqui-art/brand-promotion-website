@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   const token = await createSessionToken({
     userId: user.id,
     email: user.email,
-    role: user.role === "admin" ? "admin" : "user",
+    role: user.role === "admin" ? "admin" : user.role === "mediator" ? "mediator" : "user",
     name: user.name,
   });
   await setSessionCookie(token);

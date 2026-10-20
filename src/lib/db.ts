@@ -29,9 +29,11 @@ const SCHEMA_DDL = `
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       phone TEXT,
-      role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
+      role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin','mediator')),
       provider TEXT NOT NULL DEFAULT 'credentials',
       google_id TEXT,
+      mediator_code TEXT NOT NULL DEFAULT '',
+      mediator_status TEXT NOT NULL DEFAULT 'active' CHECK (mediator_status IN ('active','suspended')),
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -61,6 +63,12 @@ const SCHEMA_DDL = `
       stock INTEGER NOT NULL DEFAULT 0,
       featured INTEGER NOT NULL DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1,
+      submitted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      approval_status TEXT NOT NULL DEFAULT 'approved' CHECK (approval_status IN ('pending','approved','rejected')),
+      rejection_reason TEXT NOT NULL DEFAULT '',
+      approved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      approved_at TEXT NOT NULL DEFAULT '',
+      mediator_commission_amount REAL NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -244,6 +252,15 @@ function createDb(): Database.Database {
   if (!userCols.includes("google_id")) {
     db.exec("ALTER TABLE users ADD COLUMN google_id TEXT");
   }
+  if (!userCols.includes("mediator_code")) {
+    execTolerateDuplicate(db, "ALTER TABLE users ADD COLUMN mediator_code TEXT NOT NULL DEFAULT ''");
+  }
+  if (!userCols.includes("mediator_status")) {
+    execTolerateDuplicate(
+      db,
+      "ALTER TABLE users ADD COLUMN mediator_status TEXT NOT NULL DEFAULT 'active'"
+    );
+  }
 
   const dealCols = (db.prepare("PRAGMA table_info(deals)").all() as { name: string }[]).map((c) => c.name);
   if (!dealCols.includes("product_code")) {
@@ -284,6 +301,36 @@ function createDb(): Database.Database {
   }
   if (!dealCols.includes("claimed_slots")) {
     db.exec("ALTER TABLE deals ADD COLUMN claimed_slots INTEGER NOT NULL DEFAULT 0");
+  }
+  if (!dealCols.includes("submitted_by")) {
+    execTolerateDuplicate(
+      db,
+      "ALTER TABLE deals ADD COLUMN submitted_by INTEGER REFERENCES users(id) ON DELETE SET NULL"
+    );
+  }
+  if (!dealCols.includes("approval_status")) {
+    execTolerateDuplicate(
+      db,
+      "ALTER TABLE deals ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'approved'"
+    );
+  }
+  if (!dealCols.includes("rejection_reason")) {
+    execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN rejection_reason TEXT NOT NULL DEFAULT ''");
+  }
+  if (!dealCols.includes("approved_by")) {
+    execTolerateDuplicate(
+      db,
+      "ALTER TABLE deals ADD COLUMN approved_by INTEGER REFERENCES users(id) ON DELETE SET NULL"
+    );
+  }
+  if (!dealCols.includes("approved_at")) {
+    execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN approved_at TEXT NOT NULL DEFAULT ''");
+  }
+  if (!dealCols.includes("mediator_commission_amount")) {
+    execTolerateDuplicate(
+      db,
+      "ALTER TABLE deals ADD COLUMN mediator_commission_amount REAL NOT NULL DEFAULT 0"
+    );
   }
 
   const orderCols = (db.prepare("PRAGMA table_info(orders)").all() as { name: string }[]).map((c) => c.name);
@@ -392,6 +439,9 @@ function createDb(): Database.Database {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_deals_active ON deals(active, featured);
     CREATE INDEX IF NOT EXISTS idx_deals_code ON deals(product_code);
+    CREATE INDEX IF NOT EXISTS idx_deals_submitted ON deals(submitted_by);
+    CREATE INDEX IF NOT EXISTS idx_deals_approval ON deals(approval_status, active);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_mediator_code ON users(mediator_code) WHERE mediator_code != '';
     CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
     CREATE INDEX IF NOT EXISTS idx_orders_deal ON orders(deal_id);
     CREATE INDEX IF NOT EXISTS idx_orders_code ON orders(order_code);
@@ -416,6 +466,11 @@ function createDb(): Database.Database {
   // application now uses. SQLite cannot ALTER a CHECK constraint in place, so
   // this uses the documented rebuild procedure.
   reconcileCheckConstraints(db, [
+    {
+      table: "users",
+      // Mediator accounts need a role the legacy CHECK constraint rejected.
+      mustContain: ["'mediator'"],
+    },
     {
       table: "orders",
       // The legacy table omitted 'verified' and 'rejected', so an admin marking

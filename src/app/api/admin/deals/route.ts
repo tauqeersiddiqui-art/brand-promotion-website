@@ -40,8 +40,10 @@ export async function GET() {
 
   const deals = db
     .prepare(
-      `SELECT d.*, COUNT(o.id) AS order_count
-       FROM deals d LEFT JOIN orders o ON o.deal_id = d.id
+      `SELECT d.*, COUNT(o.id) AS order_count, su.name AS submitted_by_name
+       FROM deals d
+       LEFT JOIN orders o ON o.deal_id = d.id
+       LEFT JOIN users su ON su.id = d.submitted_by
        GROUP BY d.id ORDER BY datetime(d.created_at) DESC`
     )
     .all();
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
   const validationError = await validateRequest(req);
   if (validationError) return validationError;
 
-  const { error } = await requireAdmin();
+  const { user, error } = await requireAdmin();
   if (error) return error;
 
   let form: FormData;
@@ -87,6 +89,12 @@ export async function POST(req: Request) {
   const totalSlots = int(form.get("total_slots"), 0, 1_000_000, 50);
   const claimedSlots = int(form.get("claimed_slots"), 0, 1_000_000, 0);
   const stock = int(form.get("stock"), 0, 1_000_000, Math.max(0, totalSlots - claimedSlots));
+  const mediatorCommission = num(
+    form.get("mediator_commission_amount"),
+    0,
+    10_000_000,
+    0
+  );
   const featured = form.get("featured") === "true" || form.get("featured") === "on";
   const active = form.get("active") !== "false";
 
@@ -111,8 +119,9 @@ export async function POST(req: Request) {
         image_url, deal_url, target_keyword, instructions, coupon_code,
         price_original, price_sale, cashback_amount, review_amount, rating_amount,
         only_order_amount, order_form_url, refund_form_url, total_slots, claimed_slots,
-        stock, featured, active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        stock, featured, active, submitted_by, approval_status, approved_by, approved_at,
+        mediator_commission_amount
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       productCode,
@@ -138,7 +147,12 @@ export async function POST(req: Request) {
       claimedSlots,
       stock,
       featured ? 1 : 0,
-      active ? 1 : 0
+      active ? 1 : 0,
+      user.id,
+      "approved",
+      user.id,
+      new Date().toISOString(),
+      mediatorCommission
     );
 
   const newId = Number(info.lastInsertRowid);

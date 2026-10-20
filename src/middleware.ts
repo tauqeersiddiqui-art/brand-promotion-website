@@ -28,8 +28,10 @@ export async function middleware(req: NextRequest) {
 
   const needsAdmin =
     pathname.startsWith("/admin") && pathname !== "/admin/login";
-  const needsAuth = pathname.startsWith("/account");
+  const needsMediator = pathname.startsWith("/mediator");
+  const needsAuth = pathname.startsWith("/account") || needsMediator;
   const needsAdminApi = pathname.startsWith("/api/admin");
+  const needsMediatorApi = pathname.startsWith("/api/mediator");
   // Authenticated API prefixes. Order, claim and track routes verify the
   // session inside the handler (after CSRF) so they can return richer errors.
   const needsUserApi =
@@ -38,7 +40,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/api/reviews") ||
     pathname.startsWith("/api/orders/me");
 
-  if (!needsAdmin && !needsAuth && !needsAdminApi && !needsUserApi) {
+  if (!needsAdmin && !needsAuth && !needsAdminApi && !needsUserApi && !needsMediatorApi) {
     return NextResponse.next();
   }
 
@@ -60,6 +62,17 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/admin/login?error=admin-only", req.url));
   }
 
+  if (
+    (needsMediator || needsMediatorApi) &&
+    session.role !== "mediator" &&
+    session.role !== "admin"
+  ) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Mediator access required." }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/account", req.url));
+  }
+
   return NextResponse.next();
 }
 
@@ -67,7 +80,9 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/account/:path*",
+    "/mediator/:path*",
     "/api/admin/:path*",
+    "/api/mediator/:path*",
     "/api/orders/me/:path*",
     "/api/refunds/:path*",
     "/api/reviews/:path*",

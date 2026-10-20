@@ -15,7 +15,7 @@ export default function HomePage() {
       `SELECT id, title, description, category, image_url, coupon_code,
               price_original, price_sale, stock, featured, product_code,
               platform, deal_type, total_slots, claimed_slots, cashback_amount
-       FROM deals WHERE active = 1 AND featured = 1
+       FROM deals WHERE active = 1 AND approval_status = 'approved' AND featured = 1
        ORDER BY datetime(created_at) DESC LIMIT 8`
     )
     .all() as unknown as Deal[];
@@ -26,7 +26,7 @@ export default function HomePage() {
         `SELECT id, title, description, category, image_url, coupon_code,
                 price_original, price_sale, stock, featured, product_code,
                 platform, deal_type, total_slots, claimed_slots, cashback_amount
-         FROM deals WHERE active = 1
+         FROM deals WHERE active = 1 AND approval_status = 'approved'
          ORDER BY datetime(created_at) DESC LIMIT 12`
       )
       .all() as unknown as Deal[]
@@ -36,7 +36,7 @@ export default function HomePage() {
     db
       .prepare(
         `SELECT DISTINCT category FROM deals
-         WHERE active = 1 AND category != ''
+         WHERE active = 1 AND approval_status = 'approved' AND category != ''
          ORDER BY category LIMIT 12`
       )
       .all() as { category: string }[]
@@ -52,7 +52,7 @@ export default function HomePage() {
   ).r;
 
   const totals = {
-    deals: (db.prepare("SELECT COUNT(*) AS c FROM deals WHERE active = 1").get() as { c: number }).c,
+    deals: (db.prepare("SELECT COUNT(*) AS c FROM deals WHERE active = 1 AND approval_status = 'approved'").get() as { c: number }).c,
     orders: (db.prepare("SELECT COUNT(*) AS c FROM orders").get() as { c: number }).c,
     reimbursements: (db.prepare("SELECT COUNT(*) AS c FROM reimbursements WHERE status = 'paid'").get() as { c: number }).c,
     disbursed: totalDisbursed > 0 ? Math.round(totalDisbursed) : 0,

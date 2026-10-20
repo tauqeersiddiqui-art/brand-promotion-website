@@ -84,7 +84,29 @@ export default function PrivacyPage() {
 
           <section>
             <h3 style={{ fontSize: 18, margin: "0 0 8px", color: "var(--accent)" }}>
-              5. Contacting Our Data Privacy Officer
+              5. Cookies &amp; Advertising
+            </h3>
+            <p className="muted" style={{ margin: "0 0 10px" }}>
+              We use essential cookies to keep you signed in and to protect forms against cross-site
+              request forgery. With your consent where required, we also allow third-party vendors,
+              including Google, to use cookies to serve ads based on your prior visits to this and
+              other websites.
+            </p>
+            <ul className="muted" style={{ margin: "0 0 10px", paddingLeft: 18, lineHeight: 1.7 }}>
+              <li>Google&apos;s use of advertising cookies enables it and its partners to serve ads to you based on your visit to this site and/or other sites on the Internet.</li>
+              <li>You may opt out of personalised advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="link">Google Ads Settings</a>.</li>
+              <li>You can also opt out of third-party vendor cookies at <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" className="link">aboutads.info</a>.</li>
+              <li>Some store links on this site are affiliate links; we may earn a commission at no extra cost to you.</li>
+            </ul>
+            <p className="muted" style={{ margin: 0 }}>
+              Blocking non-essential cookies does not stop you from using the store links, submitting
+              order proofs, or claiming cashback.
+            </p>
+          </section>
+
+          <section>
+            <h3 style={{ fontSize: 18, margin: "0 0 8px", color: "var(--accent)" }}>
+              6. Contacting Our Data Privacy Officer
             </h3>
             <p className="muted" style={{ margin: "0 0 12px" }}>
               If you have any questions or would like to request data deletion, please reach out to:

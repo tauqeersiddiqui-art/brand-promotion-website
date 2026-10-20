@@ -16,12 +16,12 @@ const DEFAULTS: SiteSettings = {
   site_name: "Brand Promotion",
   tagline: "India's #1 Influencer Cashback & Brand Promotion Platform",
   announcement: "🔥 100% Cashback Campaign Live! Buy on Amazon/Flipkart, share review & get instant UPI payout.",
-  whatsapp: "919999999999",
+  whatsapp: "918527324446",
   telegram: "brandreviewer",
   support_email: "support@brandpromotion.in",
   instagram: "brandpromotion.in",
   mediators: "Direct,Amit Mediator,Rahul Agency,Pooja Deals,VIP Campaigns,Social Reach",
-  rules_instructions: "1. Check available slots before ordering.\n2. Search product with specified keyword on Amazon/Flipkart.\n3. Upload Desktop/App Order screenshot & Price breakup screenshot.\n4. After delivery, post a genuine 5-star rating with photos.\n5. Submit reimbursement claim with Review Screenshot & UPI ID to receive 100% cashback within 24-48 hours.",
+  rules_instructions: "1. Check available slots before ordering.\n2. Search product with specified keyword on Amazon/Flipkart.\n3. Upload the order confirmation screenshot (must show the Order ID).\n4. After delivery, post a genuine 5-star review with photos.\n5. Once the return window closes, claim cashback with your review screenshot and an order-page screenshot showing the Order ID and 'Return window closed'.",
 };
 
 export function getSettings(): SiteSettings {

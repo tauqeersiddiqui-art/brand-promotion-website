@@ -68,7 +68,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span className="deal-cat">{deal.category}</span>
           {deal.product_code && (
-            <span style={{ fontSize: 11.5, color: "var(--muted)", fontWeight: 600 }}>
+            <span className="deal-code" style={{ fontSize: 11.5, color: "var(--muted)", fontWeight: 600 }}>
               #{deal.product_code}
             </span>
           )}
@@ -82,8 +82,8 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
         <div style={{ margin: "4px 0 2px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: remainingSlots <= 5 ? "var(--danger)" : "var(--muted)" }}>
-            <span>{remainingSlots > 0 ? `${remainingSlots} slots left` : "Slots full"}</span>
-            <span>{claimedSlots} / {totalSlots} claimed</span>
+            <span className="slot-label">{remainingSlots > 0 ? `${remainingSlots} slots left` : "Slots full"}</span>
+            <span className="slot-count">{claimedSlots} / {totalSlots} claimed</span>
           </div>
           <div className="slot-bar-wrap">
             <div className="slot-bar-fill" style={{ width: `${slotPct}%`, background: remainingSlots <= 5 ? "var(--danger)" : undefined }} />
@@ -96,7 +96,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
             <span className="price-was">₹{deal.price_original.toLocaleString("en-IN")}</span>
           )}
           {is100Pct && (
-            <span className="pill pill-delivered" style={{ marginLeft: "auto", fontSize: 11.5 }}>
+            <span className="pill pill-delivered deal-free" style={{ marginLeft: "auto", fontSize: 11.5 }}>
               Free after review
             </span>
           )}

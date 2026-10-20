@@ -4,7 +4,7 @@ import { whatsappLink, telegramLink, type SiteSettings } from "@/lib/settings";
 export default function Footer({ settings: s }: { settings: SiteSettings }) {
   return (
     <footer className="footer">
-      <div className="container footer-grid" style={{ gridTemplateColumns: "1.8fr 1fr 1fr 1fr" }}>
+      <div className="container footer-grid">
         <div>
           <div className="brand" style={{ marginBottom: 10 }}>
             <span className="logo">BP</span> {s.site_name}

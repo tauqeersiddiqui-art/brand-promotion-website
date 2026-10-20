@@ -93,7 +93,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
               </Link>
             </>
           ) : (
-            <div style={{ width: 140 }} />
+            <span className="nav-loading" aria-hidden="true" />
           )}
 
           <button

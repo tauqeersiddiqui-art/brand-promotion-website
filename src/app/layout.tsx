@@ -28,12 +28,12 @@ async function safeSettings(): Promise<SiteSettings> {
       site_name: "Brand Promotion",
       tagline: "India's smartest deals & brand promotion platform",
       announcement: "",
-      whatsapp: "919999999999",
+      whatsapp: "918527324446",
       telegram: "brandreviewer",
       support_email: "support@brandpromotion.in",
       instagram: "",
       mediators: "Direct,Amit Mediator,Rahul Agency,Pooja Deals,VIP Campaigns,Social Reach",
-      rules_instructions: "1. Search keyword on Amazon/Flipkart.\n2. Submit Order & Price screenshot.\n3. Post 5-star review upon delivery.\n4. Submit claim for 100% UPI refund.",
+      rules_instructions: "1. Search keyword on Amazon/Flipkart.\n2. Submit order screenshot with Order ID.\n3. Post 5-star review upon delivery.\n4. After the return window closes, claim with review + order screenshots.",
     };
   }
 }

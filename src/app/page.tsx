@@ -379,7 +379,7 @@ export default function HomePage() {
             },
             {
               q: "Can I track without an account?",
-              a: "Yes. Enter your marketplace Order ID or tracking code on the /track page to see the live status of your order and payout.",
+              a: "Tracking is private, so you need a free account. Log in, then open the Track Status page and search with your marketplace Order ID or BP tracking code to see the live order and payout status.",
             },
             {
               q: "What if all slots are full?",

@@ -11,12 +11,16 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = getSettings();
+  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "";
   return {
     title: {
       default: `${s.site_name} — ${s.tagline}`,
       template: `%s · ${s.site_name}`,
     },
     description: s.tagline,
+    ...(adsenseClient
+      ? { other: { "google-adsense-account": adsenseClient } }
+      : {}),
   };
 }
 

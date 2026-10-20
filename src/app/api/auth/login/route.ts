@@ -23,16 +23,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-  const rl = await applyRateLimit("login", ip);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: `Too many login attempts. Try again in ${rl.retryAfter}s.` },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
-    );
-  }
-
   let body: unknown;
   try {
     body = await req.json();
@@ -44,6 +34,19 @@ export async function POST(req: Request) {
   // Input sanitization
   const email = sanitizeText(str(b.email, 254), 254).toLowerCase().trim();
   const password = typeof b.password === "string" ? b.password : "";
+
+  // Rate limiting: a per-IP bucket stops spraying, and a per-email bucket stops
+  // a distributed attacker from hammering one account from rotating IPs.
+  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const rlIp = await applyRateLimit("loginIp", ip);
+  const rlEmail = email ? await applyRateLimit("login", email) : { ok: true, retryAfter: 0 };
+  if (!rlIp.ok || !rlEmail.ok) {
+    const retryAfter = Math.max(rlIp.retryAfter, rlEmail.retryAfter);
+    return NextResponse.json(
+      { error: `Too many login attempts. Try again in ${retryAfter}s.` },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
+  }
 
   if (!isEmail(email) || !password) return bad("Enter your email and password.");
 

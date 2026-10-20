@@ -7,6 +7,8 @@ A fully operational deals website (like shopfluencer.in/browse-deals) with an ad
 **Public site**
 - Landing page with hero, featured deals, stats, how-it-works
 - `/browse` — live deal grid with search, category filter, sort, pagination
+- `/stores` — direct links to Amazon, Flipkart, Myntra, Ajio, Meesho, Nykaa, Croma and leading D2C brands, with live campaign counts
+- `/ads.txt` — served from `NEXT_PUBLIC_ADSENSE_CLIENT` for AdSense verification
 - Deal detail page with discount badge and safe "Go to deal" redirect
 - Google-Form-style order form (name, email, phone, address, size/color/qty, notes, coupon)
 - Refund request form attached to each order

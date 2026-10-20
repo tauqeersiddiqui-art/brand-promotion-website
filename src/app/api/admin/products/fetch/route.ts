@@ -174,6 +174,24 @@ export async function POST(req: NextRequest) {
 
   const cleanUrl = sanitizeText(url.trim(), 800);
 
+  // Detect the platform from the parsed hostname, not from substring matches:
+  // `http://internal/flipkart` would otherwise pass the check and make the
+  // server fetch an arbitrary internal URL (SSRF).
+  let host = "";
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(cleanUrl);
+    host = parsedUrl.hostname.toLowerCase();
+  } catch {
+    return NextResponse.json({ error: "Product URL is not valid." }, { status: 400 });
+  }
+  if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
+    return NextResponse.json({ error: "Product URL must use http(s)." }, { status: 400 });
+  }
+
+  const isAmazonHost = /(^|\.)amazon\.(?:in|com|co\.uk|de|fr|ca|es|it|co\.jp|com\.au|ae|sa|sg|nl|se|pl)$/.test(host);
+  const isFlipkartHost = /(^|\.)flipkart\.com$/.test(host);
+
   // Detect platform and extract product ID
   let platform = "Amazon";
   let productId = "";
@@ -189,7 +207,7 @@ export async function POST(req: NextRequest) {
     /flipkart\.com\/.*\/p\/([A-Z0-9]+)/i,
   ];
 
-  if (cleanUrl.includes("amazon")) {
+  if (isAmazonHost) {
     if (/\/deals|\/gp\/best-sellers|\/gp\/most-wished-for|\/gp\/new-releases|\/s\?/i.test(cleanUrl)) {
       return NextResponse.json(
         {
@@ -207,7 +225,7 @@ export async function POST(req: NextRequest) {
         break;
       }
     }
-  } else if (cleanUrl.includes("flipkart")) {
+  } else if (isFlipkartHost) {
     if (/\/search|\/category|\/brand|\/offers/i.test(cleanUrl)) {
       return NextResponse.json(
         {
@@ -299,7 +317,7 @@ export async function POST(req: NextRequest) {
       // is still useful.
       let parsed = { title: "", price: 0, originalPrice: 0, image: "", description: "" };
       try {
-        const response = await fetch(cleanUrl, {
+        const response = await fetch(parsedUrl.toString(), {
           headers: PAGE_HEADERS,
           signal: AbortSignal.timeout(10000),
         });

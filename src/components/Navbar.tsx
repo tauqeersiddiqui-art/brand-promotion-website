@@ -49,6 +49,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
   const links = [
     { href: "/", label: "Home" },
     { href: "/browse", label: "Live Deals" },
+    { href: "/stores", label: "Stores" },
     { href: "/#submit-order", label: "Submit Order" },
     { href: "/#claim-cashback", label: "Claim Cashback" },
     { href: "/track", label: "Track Status" },

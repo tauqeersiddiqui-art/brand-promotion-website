@@ -28,7 +28,13 @@ export function isUrl(v: string): boolean {
 }
 
 export function isStrongPassword(v: string): boolean {
-  return typeof v === "string" && v.length >= 8 && v.length <= 128;
+  if (typeof v !== "string") return false;
+  if (v.length < 8 || v.length > 128) return false;
+  // Length alone lets "password" through. Require mixed character classes so
+  // an attacker cannot trivially guess or spray a weak credential.
+  if (!/[a-zA-Z]/.test(v)) return false;
+  if (!/[0-9]/.test(v)) return false;
+  return true;
 }
 
 export function int(v: unknown, min: number, max: number, fallback = 0): number {

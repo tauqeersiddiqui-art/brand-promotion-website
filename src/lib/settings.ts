@@ -49,7 +49,12 @@ export function updateSettings(partial: Partial<SiteSettings>) {
 }
 
 export function whatsappLink(num: string, text?: string): string {
-  const clean = num.replace(/[^0-9]/g, "");
+  let clean = num.replace(/[^0-9]/g, "");
+  // wa.me requires a country code. Older saves of "918527324446" were reduced
+  // to the bare 10-digit local number by the generic phone sanitizer, which
+  // turned into a US number. Restore the Indian country code on read.
+  if (clean.length === 10) clean = `91${clean}`;
+  if (clean.length === 11 && clean.startsWith("0")) clean = `91${clean.slice(1)}`;
   const t = text ? `?text=${encodeURIComponent(text)}` : "";
   return `https://wa.me/${clean}${t}`;
 }

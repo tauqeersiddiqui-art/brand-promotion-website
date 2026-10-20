@@ -92,7 +92,7 @@ export default function SignupPage() {
             placeholder="98765 43210"
           />
           <div style={{ height: 12 }} />
-          <label className="form-label">Password * (min 8 chars)</label>
+          <label className="form-label">Password * (min 8 chars, letters + numbers)</label>
           <input
             className="input"
             type="password"

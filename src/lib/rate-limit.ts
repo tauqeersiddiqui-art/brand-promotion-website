@@ -155,9 +155,11 @@ export const RATE_LIMITS = {
   signup: { limit: 4, windowMs: 60 * 60 * 1000, keyPrefix: "signup-ip" },
   passwordReset: { limit: 3, windowMs: 60 * 60 * 1000, keyPrefix: "pwd-reset" },
 
-  // Orders & Claims
+  // Orders & Claims (per account)
   orderSubmit: { limit: 10, windowMs: 60 * 60 * 1000, keyPrefix: "order" },
+  orderIp: { limit: 20, windowMs: 60 * 60 * 1000, keyPrefix: "order-ip" },
   reimbursementClaim: { limit: 10, windowMs: 60 * 60 * 1000, keyPrefix: "reimb" },
+  reimbursementIp: { limit: 20, windowMs: 60 * 60 * 1000, keyPrefix: "reimb-ip" },
 
   // API general
   apiGeneral: { limit: 120, windowMs: 60 * 1000, keyPrefix: "api" },
@@ -165,6 +167,7 @@ export const RATE_LIMITS = {
 
   // File upload
   upload: { limit: 20, windowMs: 60 * 60 * 1000, keyPrefix: "upload" },
+  uploadIp: { limit: 40, windowMs: 60 * 60 * 1000, keyPrefix: "upload-ip" },
 
   // Admin actions
   adminAction: { limit: 60, windowMs: 60 * 1000, keyPrefix: "admin" },

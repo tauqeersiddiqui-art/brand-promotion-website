@@ -184,6 +184,7 @@ const SCHEMA_DDL = `
     CREATE TABLE IF NOT EXISTS uploads (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       url TEXT NOT NULL UNIQUE,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
       original_name TEXT NOT NULL DEFAULT '',
       mime_type TEXT NOT NULL DEFAULT '',
       size INTEGER NOT NULL DEFAULT 0,
@@ -356,6 +357,15 @@ function createDb(): Database.Database {
     execTolerateDuplicate(db, "ALTER TABLE reimbursements ADD COLUMN mediator_name TEXT NOT NULL DEFAULT ''");
   }
 
+  // Uploads are now tied to the account that made them, so a proof screenshot
+  // cannot be attached to another user's order or claim by URL guessing.
+  const uploadCols = (db.prepare("PRAGMA table_info(uploads)").all() as { name: string }[]).map(
+    (c) => c.name
+  );
+  if (!uploadCols.includes("user_id")) {
+    execTolerateDuplicate(db, "ALTER TABLE uploads ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL");
+  }
+
   // Create indexes now that all columns are guaranteed to exist
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_deals_active ON deals(active, featured);
@@ -377,6 +387,7 @@ function createDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_click_tracking_user ON click_tracking(user_id);
     CREATE INDEX IF NOT EXISTS idx_click_tracking_ip ON click_tracking(ip);
     CREATE INDEX IF NOT EXISTS idx_uploads_url ON uploads(url);
+    CREATE INDEX IF NOT EXISTS idx_uploads_user ON uploads(user_id);
   `);
 
   // Rebuild tables whose legacy CHECK constraints are missing statuses the

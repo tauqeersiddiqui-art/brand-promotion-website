@@ -58,6 +58,13 @@ export async function GET(req: NextRequest) {
 
   const email = profile.email.toLowerCase().trim();
 
+  // Linking a Google identity to an existing password account is only safe when
+  // Google has verified the address; otherwise an unverified profile could
+  // take over an account that happens to use the same email.
+  if (!profile.email_verified) {
+    return fail(req, "Your Google email is not verified.");
+  }
+
   // 1) Already linked via Google?
   let user = db
     .prepare("SELECT id, name, email, role FROM users WHERE google_id = ?")
@@ -84,7 +91,6 @@ export async function GET(req: NextRequest) {
 
   // 3) New user → auto-create account (Google verifies the email for us)
   if (!user) {
-    if (!profile.email_verified) return fail(req, "Your Google email is not verified.");
     const name = (profile.name || email.split("@")[0]).slice(0, 80);
     const randomPassword = await hashPassword(crypto.randomBytes(24).toString("hex"));
     const info = db

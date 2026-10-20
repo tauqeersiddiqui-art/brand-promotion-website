@@ -5,6 +5,7 @@ import { str, int } from "@/lib/validation";
 import { applyRateLimit } from "@/lib/rate-limit";
 import { saveUploadedImage } from "@/lib/upload";
 import { runOcrOnBuffer } from "@/lib/ocr";
+import { computeImageHash } from "@/lib/ocr-validation";
 import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
@@ -107,6 +108,26 @@ export async function POST(req: Request) {
       ocrStatus = "failed";
       ocrError = ocr.error;
     }
+
+    // Record the file like /api/upload does. Without this row the screenshot
+    // had no content hash, so the same image could be reused across reviews
+    // without any system noticing.
+    db.prepare(
+      `INSERT INTO uploads (url, user_id, original_name, mime_type, size, ocr_text, ocr_order_id, ocr_amount, ocr_date, ocr_status, p_hash)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      saved.url,
+      user.id,
+      file.name.slice(0, 200),
+      file.type.slice(0, 100),
+      saved.buffer.length,
+      ocrText,
+      ocr.ok ? ocr.extractedOrderId || "" : "",
+      ocr.ok ? ocr.extractedAmount || 0 : 0,
+      ocr.ok ? ocr.extractedDate || "" : "",
+      ocrStatus,
+      computeImageHash(saved.buffer)
+    );
   }
 
   const reviewCode = generateCode("RV");

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db, generateCode } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { str, int } from "@/lib/validation";
+import { str, int, isUrl } from "@/lib/validation";
 import { applyRateLimit } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
 import { runOcrOnBuffer, analyzeReviewText, extractOrderId, normalizeOrderId, hasReturnWindowClosed } from "@/lib/ocr";
@@ -26,13 +26,14 @@ export async function POST(req: Request) {
     );
   }
 
-  // Rate limiting
+  // Rate limiting (IP ceiling here; the per-account bucket is applied once the
+  // session is known, so rotating X-Forwarded-For does not bypass it).
   const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-  const rl = await applyRateLimit("reimbursementClaim", ip);
-  if (!rl.ok) {
+  const rlIp = await applyRateLimit("reimbursementIp", ip);
+  if (!rlIp.ok) {
     return NextResponse.json(
-      { error: `Too many claim requests. Try again in ${rl.retryAfter}s.` },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      { error: `Too many claim requests. Try again in ${rlIp.retryAfter}s.` },
+      { status: 429, headers: { "Retry-After": String(rlIp.retryAfter) } }
     );
   }
 
@@ -114,6 +115,14 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
     return bad("Please log in to submit a cashback claim for your order.", 401);
+  }
+
+  const rlUser = await applyRateLimit("reimbursementClaim", `user:${session.userId}`);
+  if (!rlUser.ok) {
+    return NextResponse.json(
+      { error: `Too many claim requests. Try again in ${rlUser.retryAfter}s.` },
+      { status: 429, headers: { "Retry-After": String(rlUser.retryAfter) } }
+    );
   }
 
   const orderOwnerId = order.user_id;
@@ -266,6 +275,28 @@ export async function POST(req: Request) {
   }
   if (!SAFE_UPLOAD_PATH.test(sellerFeedbackUrl)) {
     return bad("Invalid seller feedback screenshot path.", 400);
+  }
+  if (reviewLink && !isUrl(reviewLink)) {
+    return bad("Review link must be a valid http(s) URL.", 400);
+  }
+
+  // Every proof must be a real upload by this account. Checking only the path
+  // shape let a caller reference another user's upload (or a non-existent file)
+  // and still reach the OCR step.
+  for (const [label, url] of [
+    ["review", reviewScreenshotUrl],
+    ["order", orderScreenshotUrl],
+    ["seller feedback", sellerFeedbackUrl],
+  ] as const) {
+    const upload = db
+      .prepare("SELECT user_id FROM uploads WHERE url = ?")
+      .get(url) as { user_id: number | null } | undefined;
+    if (!upload) {
+      return bad(`The ${label} screenshot was not uploaded here. Please upload it again.`, 400);
+    }
+    if (upload.user_id != null && upload.user_id !== userId) {
+      return bad(`The ${label} screenshot belongs to a different account.`, 403);
+    }
   }
 
   // The same image cannot back claims for two different orders. Re-using a

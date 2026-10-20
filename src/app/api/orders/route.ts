@@ -1,16 +1,73 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 import { db, generateCode } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { str, isEmail, isPhone, int } from "@/lib/validation";
 import { applyRateLimit } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
-import { extractOrderId } from "@/lib/ocr";
+import { extractOrderId, extractAmount, normalizeOrderId, runOcrOnBuffer } from "@/lib/ocr";
 import { sanitizeText, sanitizePhone } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { validateOrderSubmission } from "@/lib/ocr-validation";
 
 export const dynamic = "force-dynamic";
+
+const UPLOAD_URL_RE = /^\/uploads\/[A-Za-z0-9._-]+$/;
+
+type UploadRow = { user_id: number | null; ocr_status: string; ocr_order_id: string };
+
+/**
+ * Make sure a proof screenshot exists on this server and has been OCR'd.
+ *
+ * Previously validation trusted whatever URL the client sent, and OCR only ran
+ * when the client also sent `ocr=true`. An attacker could upload with
+ * `ocr=false`, skip OCR entirely, and still have the order auto-approved.
+ */
+async function ensureUploadOcr(
+  url: string,
+  userId: number
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const row = db
+    .prepare("SELECT user_id, ocr_status, ocr_order_id FROM uploads WHERE url = ?")
+    .get(url) as UploadRow | undefined;
+
+  if (!row) {
+    return { ok: false, error: "That screenshot was not uploaded here. Please upload it again." };
+  }
+  if (row.user_id != null && row.user_id !== userId) {
+    return { ok: false, error: "That screenshot belongs to a different account." };
+  }
+  if (row.ocr_status === "done") return { ok: true };
+
+  const filePath = path.join(process.cwd(), "public", "uploads", path.basename(url));
+  const uploadsDir = path.join(process.cwd(), "public", "uploads");
+  if (path.dirname(filePath) !== uploadsDir || !fs.existsSync(filePath)) {
+    return { ok: false, error: "The screenshot file is missing on the server. Please upload it again." };
+  }
+
+  const buf = fs.readFileSync(filePath);
+  const ext = path.extname(filePath).slice(1).toLowerCase();
+  const mime = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
+  const ocr = await runOcrOnBuffer(buf, mime);
+  const text = ocr.ok ? ocr.text : "";
+
+  db.prepare(
+    `UPDATE uploads
+        SET ocr_text = ?, ocr_order_id = ?, ocr_amount = ?, ocr_date = ?, ocr_status = ?
+      WHERE url = ?`
+  ).run(
+    text,
+    ocr.ok ? extractOrderId(text) || "" : "",
+    ocr.ok ? extractAmount(text) || 0 : 0,
+    ocr.ok ? ocr.extractedDate || "" : "",
+    ocr.ok ? "done" : "failed",
+    url
+  );
+
+  return { ok: true };
+}
 
 export async function POST(req: Request) {
   // CSRF protection
@@ -24,21 +81,24 @@ export async function POST(req: Request) {
     );
   }
 
-  // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-  const rl = await applyRateLimit("orderSubmit", ip);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: `Too many submissions. Try again in ${rl.retryAfter}s.` },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
-    );
-  }
-
   // Order proofs must belong to an account. Guest submissions produced rows
   // nobody could track or claim a cashback for.
   const session = await getSession();
   if (!session) {
     return bad("Please log in to submit your order proof. Creating a free account takes 30 seconds.", 401);
+  }
+
+  // Rate limiting: per account plus a looser per-IP ceiling. Keying only on
+  // X-Forwarded-For let a caller rotate the header and submit without limit.
+  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const rl = await applyRateLimit("orderSubmit", `user:${session.userId}`);
+  const rlIp = await applyRateLimit("orderIp", ip);
+  if (!rl.ok || !rlIp.ok) {
+    const retryAfter = Math.max(rl.retryAfter, rlIp.retryAfter);
+    return NextResponse.json(
+      { error: `Too many submissions. Try again in ${retryAfter}s.` },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
   }
 
   let body: Record<string, unknown>;
@@ -138,6 +198,24 @@ export async function POST(req: Request) {
     return bad("This order has already been submitted. Please track it with your Order ID instead.", 409);
   }
 
+  // Only screenshots uploaded through this server may be attached. This also
+  // forces OCR to run even when the client omitted the `ocr` flag.
+  const checkedUploads = new Set<string>();
+  for (const [label, url] of [
+    ["order", orderScreenshotUrl],
+    ["price", priceScreenshotUrl],
+  ] as const) {
+    if (!url) continue;
+    if (!UPLOAD_URL_RE.test(url)) {
+      return bad(`The ${label} screenshot link is invalid. Please upload the image again.`);
+    }
+    // The same image is often attached as both proofs; OCR it only once.
+    if (checkedUploads.has(url)) continue;
+    checkedUploads.add(url);
+    const ensured = await ensureUploadOcr(url, session.userId);
+    if (!ensured.ok) return bad(ensured.error);
+  }
+
   const finalUnitPrice = unitPrice > 0 ? unitPrice : deal ? deal.price_sale : 0;
   const total = Math.round(finalUnitPrice * quantity * 100) / 100;
   const orderCode = generateCode("BP");
@@ -167,6 +245,22 @@ export async function POST(req: Request) {
       "This screenshot has already been used for another order submission. Please upload a fresh screenshot of this order.",
       400
     );
+  }
+
+  // If OCR read an Order ID from the screenshot, it must be the one typed in
+  // the form. Auto-fill makes these match for genuine users; a mismatch means
+  // the proof belongs to a different purchase.
+  if (orderScreenshotUrl) {
+    const proof = db
+      .prepare("SELECT ocr_order_id FROM uploads WHERE url = ?")
+      .get(orderScreenshotUrl) as { ocr_order_id: string } | undefined;
+    const extracted = proof?.ocr_order_id || "";
+    if (extracted && normalizeOrderId(extracted) !== normalizeOrderId(externalOrderId)) {
+      return bad(
+        `The Order ID on your screenshot (${extracted}) does not match the Order ID you entered (${externalOrderId}). Please check both and try again.`,
+        400
+      );
+    }
   }
 
   // Store fraud score and validation details

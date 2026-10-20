@@ -25,6 +25,7 @@ export default function Footer({ settings: s }: { settings: SiteSettings }) {
         <div>
           <h4>Reviewer Hub</h4>
           <Link href="/browse">Live brand deals</Link>
+          <Link href="/stores">Shop all stores</Link>
           <Link href="/#submit-order">Submit order proof</Link>
           <Link href="/#claim-cashback">Claim cashback</Link>
           <Link href="/track">Track payout status</Link>

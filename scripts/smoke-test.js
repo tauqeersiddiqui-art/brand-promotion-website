@@ -112,9 +112,37 @@ async function req(jar, path, opts = {}) {
   }
 
   section("Public pages render");
-  for (const p of ["/", "/browse", "/track", "/login", "/signup", "/terms", "/privacy", "/contact"]) {
+  for (const p of ["/", "/browse", "/stores", "/track", "/login", "/signup", "/terms", "/privacy", "/contact"]) {
     const r = await req(guest, p);
     check(`GET ${p} 200`, r.status === 200, `got ${r.status}`);
+  }
+  {
+    const r = await req(guest, "/ads.txt");
+    check("GET /ads.txt 200", r.status === 200, `got ${r.status}`);
+    check("ads.txt is plain text", /text\/plain/.test(r.headers.get("content-type") || ""), r.headers.get("content-type"));
+
+    const robots = await req(guest, "/robots.txt");
+    check("GET /robots.txt 200", robots.status === 200, `got ${robots.status}`);
+    check("robots points at sitemap", /sitemap\.xml/i.test(robots.text));
+
+    const sitemap = await req(guest, "/sitemap.xml");
+    check("GET /sitemap.xml 200", sitemap.status === 200, `got ${sitemap.status}`);
+    check("sitemap lists /stores", /\/stores/.test(sitemap.text));
+  }
+
+  section("Upload requires an account");
+  {
+    const anon = new Jar();
+    await req(anon, "/api/csrf");
+    const png = fs.readFileSync(path.join(process.cwd(), "public", "brandreviewer-telegram-qr.png"));
+    const fd = new FormData();
+    fd.append("file", new Blob([png], { type: "image/png" }), "anon.png");
+    const r = await req(anon, "/api/upload", {
+      method: "POST",
+      headers: { "x-csrf-token": anon.get("bp_csrf_js") },
+      body: fd,
+    });
+    check("anonymous upload -> 401", r.status === 401, `got ${r.status} ${r.text.slice(0, 120)}`);
   }
 
   section("Deals API");
@@ -259,6 +287,13 @@ async function req(jar, path, opts = {}) {
   let orderCode = null;
   let orderId = null;
   {
+    const weak = await req(guest, "/api/auth/signup", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
+      body: JSON.stringify({ name: "Weak Password", email: `weak_${Date.now()}@example.com`, password: "password" }),
+    });
+    check("weak password rejected (400)", weak.status === 400, `got ${weak.status} ${weak.text.slice(0, 120)}`);
+
     const su = await req(guest, "/api/auth/signup", {
       method: "POST",
       headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
@@ -343,6 +378,53 @@ async function req(jar, path, opts = {}) {
         }),
       });
       check("order with fresh screenshot accepted", shotOrd.status === 200, `got ${shotOrd.status} ${shotOrd.text.slice(0, 200)}`);
+      check(
+        "screenshot order not auto-approved without OCR match",
+        shotOrd.json?.validation_status !== "auto_approve",
+        `got ${shotOrd.json?.validation_status}`
+      );
+
+      const forged = await req(guest, "/api/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
+        body: JSON.stringify({
+          deal_id: firstDealId,
+          external_order_id: `SMOKE-FORGED-${Date.now()}`,
+          reviewer_name: "Smoke Tester",
+          full_name: "Smoke Tester",
+          email,
+          phone: "9876543210",
+          quantity: 1,
+          unit_price: 500,
+          order_screenshot_url: "/uploads/does-not-exist.png",
+        }),
+      });
+      check(
+        "order with unregistered screenshot rejected (400)",
+        forged.status === 400,
+        `got ${forged.status} ${forged.text.slice(0, 150)}`
+      );
+
+      const external = await req(guest, "/api/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
+        body: JSON.stringify({
+          deal_id: firstDealId,
+          external_order_id: `SMOKE-EXTERNAL-${Date.now()}`,
+          reviewer_name: "Smoke Tester",
+          full_name: "Smoke Tester",
+          email,
+          phone: "9876543210",
+          quantity: 1,
+          unit_price: 500,
+          order_screenshot_url: "https://evil.example/proof.png",
+        }),
+      });
+      check(
+        "order with external screenshot URL rejected (400)",
+        external.status === 400,
+        `got ${external.status} ${external.text.slice(0, 150)}`
+      );
 
       const dupOrd = await req(guest, "/api/orders", {
         method: "POST",

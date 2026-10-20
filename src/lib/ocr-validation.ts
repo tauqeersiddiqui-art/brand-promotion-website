@@ -4,6 +4,7 @@
  */
 
 import { db } from "@/lib/db";
+import { normalizeOrderId } from "@/lib/ocr";
 
 export interface OcrValidationResult {
   valid: boolean;
@@ -15,6 +16,12 @@ export interface OcrValidationResult {
     amountMatch: boolean;
     dateValid: boolean;
     imageHashUnique: boolean;
+    /**
+     * True only when the order screenshot was uploaded to this server and OCR
+     * actually finished. Auto-approval requires this: a submission with no
+     * screenshot (or an unreadable one) must go to a human.
+     */
+    ocrAvailable: boolean;
   };
 }
 
@@ -45,11 +52,19 @@ export function calculateOcrConfidence(
   const warnings: string[] = [];
   let score = 100;
 
-  // 1. Order ID exact match (critical)
-  const orderIdMatch = ocrOrderId.toLowerCase() === formOrderId.toLowerCase();
+  // 1. Order ID exact match (critical). Compare normalized values so dashes,
+  // spaces and case differences introduced by OCR do not create false
+  // mismatches (or, worse, false matches).
+  const normalizedOcr = normalizeOrderId(ocrOrderId);
+  const normalizedForm = normalizeOrderId(formOrderId);
+  const orderIdMatch = normalizedOcr !== "" && normalizedOcr === normalizedForm;
   if (!orderIdMatch) {
     score -= 40;
-    errors.push(`Order ID mismatch: OCR found "${ocrOrderId}", form has "${formOrderId}"`);
+    errors.push(
+      normalizedOcr
+        ? `Order ID mismatch: OCR found "${ocrOrderId}", form has "${formOrderId}"`
+        : "OCR could not extract an Order ID from the screenshot"
+    );
   }
 
   // 2. Amount match within 5% tolerance (important)
@@ -106,6 +121,7 @@ export function calculateOcrConfidence(
     amountMatch,
     dateValid,
     imageHashUnique: true, // Default, updated by validateOrderSubmission
+    ocrAvailable: false, // Default, updated by validateOrderSubmission
   };
 
   return {
@@ -307,7 +323,17 @@ export function makeDecision(
     };
   }
 
-  if (totalScore >= 80 && ocrValidation.errors.length === 0) {
+  // Auto-approval is only allowed when the proof actually exists on this
+  // server and OCR could read the matching Order ID. Previously a submission
+  // with no screenshot, or one where the client simply omitted the OCR flag,
+  // could be auto-approved from an attacker-supplied order ID.
+  if (
+    totalScore >= 80 &&
+    ocrValidation.errors.length === 0 &&
+    ocrValidation.details.ocrAvailable &&
+    ocrValidation.details.orderIdMatch &&
+    ocrValidation.details.imageHashUnique
+  ) {
     return { action: "auto_approve", reason: "High confidence match, low fraud risk" };
   }
 
@@ -419,12 +445,17 @@ export async function validateOrderSubmission(
 }> {
   // Get OCR data from upload records
   const orderUpload = orderScreenshotUrl.startsWith("/uploads/")
-    ? db.prepare("SELECT ocr_order_id, ocr_amount, ocr_date FROM uploads WHERE url = ?").get(orderScreenshotUrl)
+    ? db
+        .prepare("SELECT ocr_order_id, ocr_amount, ocr_date, ocr_status FROM uploads WHERE url = ?")
+        .get(orderScreenshotUrl)
     : null;
 
   const priceUpload = priceScreenshotUrl.startsWith("/uploads/")
     ? db.prepare("SELECT ocr_amount FROM uploads WHERE url = ?").get(priceScreenshotUrl)
     : null;
+
+  const ocrAvailable =
+    !!orderUpload && (orderUpload as { ocr_status?: string }).ocr_status === "done";
 
   const ocrOrderId = (orderUpload as any)?.ocr_order_id || "";
   // Prefer the order screenshot's amount; fall back to the price breakup. Do
@@ -476,6 +507,7 @@ export async function validateOrderSubmission(
 
   // Update image hash check result
   ocrValidation.details.imageHashUnique = imageHashUnique;
+  ocrValidation.details.ocrAvailable = ocrAvailable;
   if (!imageHashUnique) {
     ocrValidation.errors.push("Screenshot already used for another order");
     ocrValidation.score -= 50;

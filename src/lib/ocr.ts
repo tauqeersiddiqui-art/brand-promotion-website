@@ -97,7 +97,18 @@ export function extractOrderDate(text: string): string | null {
 
 /** Runs OCR on an in-memory image buffer. */
 export async function runOcrOnBuffer(buf: Buffer, mime: string): Promise<OcrResult> {
-  const apiKey = process.env.OCR_SPACE_API_KEY || "helloworld";
+  // The public "helloworld" demo key is heavily throttled and must never be
+  // used in production: every proof would silently fall back to manual review
+  // while still looking like a successful OCR pass. Fail closed instead so the
+  // admin UI and logs show that OCR is not configured.
+  const apiKey = process.env.OCR_SPACE_API_KEY || (process.env.NODE_ENV === "production" ? "" : "helloworld");
+  if (!apiKey) {
+    return {
+      ok: false,
+      text: "",
+      error: "OCR service is not configured on this server (OCR_SPACE_API_KEY missing). Manual review required.",
+    };
+  }
 
   if (buf.length > 5 * 1024 * 1024) {
     return { ok: false, text: "", error: "Image too large for OCR (max 5 MB)." };

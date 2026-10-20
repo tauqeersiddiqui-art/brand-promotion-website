@@ -52,7 +52,8 @@ export async function POST(req: Request) {
   // Validation
   if (name.length < 2) return bad("Please enter your full name (at least 2 characters).");
   if (!isEmail(email)) return bad("Please enter a valid email address.");
-  if (!isStrongPassword(password)) return bad("Password must be at least 8 characters (max 128).");
+  if (!isStrongPassword(password))
+    return bad("Password must be 8-128 characters and include at least one letter and one number.");
   if (phone && phone.length !== 10) return bad("Please enter a valid 10-digit Indian phone number.");
 
   // Check existing user

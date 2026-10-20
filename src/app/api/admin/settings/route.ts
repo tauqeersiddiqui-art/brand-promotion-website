@@ -4,7 +4,15 @@ import { requireAdmin, bad } from "@/lib/api-helpers";
 import { str } from "@/lib/validation";
 import { getSettings, updateSettings, type SiteSettings } from "@/lib/settings";
 import { applyRateLimit } from "@/lib/rate-limit";
-import { sanitizeHtml, sanitizeText, sanitizePhone } from "@/lib/sanitize";
+import { sanitizeHtml, sanitizeText } from "@/lib/sanitize";
+
+/** Keep the country code intact: +91 85273 24446 -> 918527324446. */
+function normalizeWhatsapp(raw: string): string {
+  const digits = raw.replace(/[^0-9]/g, "");
+  if (digits.length === 10) return `91${digits}`;
+  if (digits.length === 11 && digits.startsWith("0")) return `91${digits.slice(1)}`;
+  return digits;
+}
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 
@@ -62,19 +70,17 @@ export async function PATCH(req: Request) {
       if (key === "rules_instructions" || key === "announcement") {
         partial[key] = sanitizeHtml(str(b[key], maxLen));
       } else if (key === "whatsapp") {
-        partial[key] = sanitizePhone(str(b[key], maxLen));
+        partial[key] = normalizeWhatsapp(str(b[key], maxLen));
       } else {
         partial[key] = sanitizeText(str(b[key], maxLen), maxLen);
       }
     }
   });
 
-  // Basic sanity: whatsapp should be digits after cleaning
+  // Basic sanity: whatsapp should be digits after cleaning, with country code
   if (partial.whatsapp) {
-    const clean = partial.whatsapp.replace(/[^0-9]/g, "");
-    if (clean.length < 8 || clean.length > 15)
-      return bad("WhatsApp number must be 8-15 digits (with country code).");
-    partial.whatsapp = clean;
+    if (partial.whatsapp.length < 10 || partial.whatsapp.length > 15)
+      return bad("WhatsApp number must be 10-15 digits (with country code).");
   }
   if (partial.support_email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(partial.support_email))
     return bad("Support email is not valid.");

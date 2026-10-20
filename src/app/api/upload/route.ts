@@ -5,6 +5,7 @@ import { runOcrOnBuffer, extractOrderId, extractAmount, extractOrderDate, analyz
 import { applyRateLimit } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
+import { getSession } from "@/lib/auth";
 import { headers } from "next/headers";
 import { computeImageHash } from "@/lib/ocr-validation";
 
@@ -22,13 +23,26 @@ export async function POST(req: Request) {
     );
   }
 
-  // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-  const rl = await applyRateLimit("upload", ip);
-  if (!rl.ok) {
+  // Uploads are only ever made by logged-in users (order proof, review and
+  // claim forms all require an account). Without this an anonymous caller
+  // could fill the disk and burn the OCR quota.
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json(
-      { error: `Upload rate limit reached. Try again in ${rl.retryAfter}s.` },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      { error: "Please log in before uploading a screenshot." },
+      { status: 401 }
+    );
+  }
+
+  // Rate limiting keyed on the account first: X-Forwarded-For is client
+  // controlled on some hosts, so an IP-only bucket is easy to rotate around.
+  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const rl = await applyRateLimit("upload", `user:${session.userId}`);
+  const rlIp = await applyRateLimit("uploadIp", ip);
+  if (!rl.ok || !rlIp.ok) {
+    return NextResponse.json(
+      { error: `Upload rate limit reached. Try again in ${Math.max(rl.retryAfter, rlIp.retryAfter)}s.` },
+      { status: 429, headers: { "Retry-After": String(Math.max(rl.retryAfter, rlIp.retryAfter)) } }
     );
   }
 
@@ -78,10 +92,11 @@ export async function POST(req: Request) {
     // Store upload record with OCR results
     if (saved.url) {
       db.prepare(`
-        INSERT INTO uploads (url, original_name, mime_type, size, ocr_text, ocr_order_id, ocr_amount, ocr_date, ocr_status, p_hash)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO uploads (url, user_id, original_name, mime_type, size, ocr_text, ocr_order_id, ocr_amount, ocr_date, ocr_status, p_hash)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         saved.url,
+        session.userId,
         file.name.slice(0, 200),
         file.type.slice(0, 100),
         saved.buffer.length,

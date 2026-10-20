@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { db } from "@/lib/db";
 import AdSlot from "@/components/AdSlot";
 
@@ -8,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Shop on India's leading platforms",
   description:
-    "Browse live deals directly on Amazon, Flipkart, Myntra, Ajio, Meesho, Nykaa, Croma and more. Shop normally, then submit your order proof to earn cashback.",
+    "Open Amazon, Flipkart, Myntra, Ajio, Meesho, Nykaa, Croma and leading brand stores from one page. Buy directly on the store's website — orders, payments, delivery and returns stay with that store.",
 };
 
 type Store = {
@@ -204,8 +203,8 @@ function StoreCard({ store, count }: { store: Store; count: number }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <h3 style={{ margin: 0, fontSize: 18 }}>{store.name}</h3>
         {count > 0 && (
-          <span className="badge badge-cashback" style={{ whiteSpace: "nowrap" }}>
-            {count} live deal{count === 1 ? "" : "s"}
+          <span className="badge badge-outline" style={{ whiteSpace: "nowrap" }}>
+            {count} featured deal{count === 1 ? "" : "s"}
           </span>
         )}
       </div>
@@ -226,11 +225,11 @@ function StoreCard({ store, count }: { store: Store; count: number }) {
         </a>
         <a
           className="btn btn-outline btn-sm"
-          href={store.search("cashback deals")}
+          href={store.search("deals")}
           target="_blank"
           rel="noopener noreferrer"
         >
-          Search deals
+          Search on store
         </a>
       </div>
     </article>
@@ -244,12 +243,18 @@ export default function StoresPage() {
     <>
       <section className="container section" style={{ paddingTop: 42 }}>
         <div className="section-head" style={{ display: "block", textAlign: "center" }}>
-          <span className="badge badge-outline">Direct brand stores</span>
-          <h1 style={{ margin: "12px 0 10px" }}>Shop directly on India&apos;s leading platforms</h1>
+          <span className="badge badge-outline">Store directory</span>
+          <h1 style={{ margin: "12px 0 10px" }}>Open India&apos;s leading online stores</h1>
           <p className="muted" style={{ maxWidth: 720, margin: "0 auto", fontSize: 15 }}>
-            Open a marketplace or brand store below, buy the product you want at the normal price,
-            then submit your order proof here. Once the return window closes, claim your cashback.
+            Choose a marketplace or brand below and shop on that store&apos;s own website. Your order,
+            payment, delivery, return and refund are handled entirely by that store. This page is only
+            a helpful directory of links — there is no order or refund form to fill here.
           </p>
+        </div>
+
+        <div className="alert alert-info" style={{ margin: "22px auto 0", maxWidth: 820, textAlign: "center" }}>
+          We do not sell products, collect payments, or process orders and refunds. Please complete
+          your purchase and any return or refund request on the store&apos;s website.
         </div>
 
         <div
@@ -261,9 +266,9 @@ export default function StoresPage() {
           }}
         >
           {[
-            ["1", "Shop on the platform", "Use the links on this page — the price and offers are exactly what you see on the store."],
-            ["2", "Submit your order proof", "Upload the order confirmation screenshot with the Order ID from your account page."],
-            ["3", "Claim after delivery", "Post your review, then claim the refund once the return window has closed."],
+            ["1", "Pick a store", "Find the marketplace or brand you want to shop from and open it with our link."],
+            ["2", "Buy on the store's site", "Choose the product, pay, and track delivery directly in the store's app or website."],
+            ["3", "Use the store's support", "Returns, replacements and refunds are handled by that store's own help centre."],
           ].map(([step, title, text]) => (
             <div className="card" key={step} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <span
@@ -292,9 +297,7 @@ export default function StoresPage() {
 
         <div className="section-head">
           <h2>Marketplaces</h2>
-          <Link href="/browse" className="btn btn-outline btn-sm">
-            View live campaigns
-          </Link>
+          <span className="muted" style={{ fontSize: 13 }}>Opens the store&apos;s own website</span>
         </div>
         <div
           style={{
@@ -329,11 +332,11 @@ export default function StoresPage() {
         </div>
 
         <div className="card" style={{ marginTop: 34, background: "var(--brand-soft)", borderColor: "var(--border-hover)" }}>
-          <h3 style={{ marginTop: 0, fontSize: 17 }}>Before you shop</h3>
+          <h3 style={{ marginTop: 0, fontSize: 17 }}>Please note</h3>
           <ul className="muted" style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, display: "flex", flexDirection: "column", gap: 6 }}>
-            <li>Check the campaign slots on <Link href="/browse" className="link">Live Deals</Link> before placing the order.</li>
-            <li>Buy only through your own account and keep the order confirmation email.</li>
-            <li>Never cancel or return a product after receiving the cashback.</li>
+            <li>All purchases happen on the store&apos;s website under that store&apos;s terms and conditions.</li>
+            <li>We never ask for payment, card details, OTPs or order proofs for purchases made on other stores.</li>
+            <li>For order status, delivery, replacement or refund, contact the store where you bought the product.</li>
             <li>Some store links may be promotional or affiliate links; the price you pay is unchanged.</li>
           </ul>
         </div>

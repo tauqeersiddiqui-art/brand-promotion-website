@@ -1,0 +1,50 @@
+STORE DIRECTORY PROCESS
+=======================
+
+Purpose
+-------
+The /stores page is a help-only directory of online stores. Visitors use our links to
+open marketplaces and brand stores and then buy directly on that store's own website.
+We do not sell products, take payments, collect order proofs, or process orders,
+returns and refunds for purchases made on other stores.
+
+User flow
+---------
+1. Visitor opens /stores and picks a marketplace or brand.
+2. Visitor clicks "Visit store" (or "Search on store") and lands on the store's website.
+3. The visitor buys, pays, tracks delivery, and requests returns/refunds on that store.
+4. If the visitor needs help, they use that store's own support/help centre.
+
+What the page must say
+----------------------
+- The page is a directory of links, not a shop or a cashback/refund service.
+- Orders, payments, delivery, returns and refunds are handled by the destination store.
+- No order proof, refund form, or cashback claim is needed for purchases made elsewhere.
+- We never ask for payment, card details, OTPs, or order screenshots for other stores.
+- Some links may be affiliate/promotional links; the price the visitor pays is unchanged.
+
+Copy rules
+----------
+Do not use these phrases on /stores:
+- "submit your order proof"
+- "claim your cashback"
+- "claim after delivery"
+- "return window closes"
+- "campaign slots"
+- "never cancel or return after cashback"
+
+Preferred wording:
+- "Pick a store" -> "Buy on the store's site" -> "Use the store's support"
+- "Opens the store's own website"
+- "There is no order or refund form to fill here"
+
+Implementation notes
+--------------------
+- File: src/app/stores/page.tsx
+- Keep store links pointing to the store's official website and open them in a new tab
+  with rel="noopener noreferrer".
+- Do not add forms, upload fields, or payment inputs to this page.
+- Affiliate/AdSense disclosure stays in src/app/privacy/page.tsx.
+- The rest of the site (campaigns, deals, tracking) is separate from this directory.
+
+Last updated: 2026-10-20

@@ -89,7 +89,8 @@ export async function PATCH(
   const category = has("category") ? sanitizeText(asStr("category") || "General", 40) : existing.category;
   const platform = has("platform") ? sanitizeText(asStr("platform") || "Amazon", 40) : existing.platform;
   const dealType = has("deal_type") ? sanitizeText(asStr("deal_type") || "100% Cashback", 60) : existing.deal_type;
-  const dealUrl = has("deal_url") ? sanitizeText(asStr("deal_url"), 500) : existing.deal_url;
+  let dealUrl = has("deal_url") ? sanitizeText(asStr("deal_url"), 500) : existing.deal_url;
+  if (dealUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(dealUrl)) dealUrl = `https://${dealUrl}`;
   const targetKeyword = has("target_keyword") ? sanitizeText(asStr("target_keyword"), 255) : existing.target_keyword;
   const instructions = has("instructions") ? sanitizeHtml(asStr("instructions")) : existing.instructions;
   const coupon = has("coupon_code") ? sanitizeText(asStr("coupon_code"), 40) : existing.coupon_code;

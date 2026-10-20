@@ -14,6 +14,45 @@ const PAGE_HEADERS = {
   "Accept-Language": "en-IN,en;q=0.9",
 };
 
+/**
+ * Share-sheet shorteners used by Amazon and Flipkart (e.g. link.amazon/XXXX,
+ * amzn.to/XXXX, fkrt.it/XXXX). These redirect to the real product page, so we
+ * expand them before detecting the platform/product ID.
+ */
+const SHORT_LINK_HOST = /^(?:link\.amazon|amzn\.to|amzn\.in|a\.co|dl\.flipkart\.com|fkrt\.it)$/i;
+
+const AMAZON_HOST = /(^|\.)amazon\.(?:in|com|co\.uk|de|fr|ca|es|it|co\.jp|com\.au|ae|sa|sg|nl|se|pl)$/;
+const FLIPKART_HOST = /(^|\.)flipkart\.com$/;
+
+function withScheme(raw: string): string {
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+}
+
+/** Follow short-link redirects and return the final product URL. */
+async function expandShortLink(url: string, timeout = 10000): Promise<string> {
+  const res = await fetch(url, {
+    headers: PAGE_HEADERS,
+    redirect: "follow",
+    signal: AbortSignal.timeout(timeout),
+  });
+  const finalUrl = res.url;
+  let host = "";
+  try {
+    host = new URL(finalUrl).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+  if (!SHORT_LINK_HOST.test(host)) return finalUrl;
+
+  // Some shorteners answer with a meta-refresh/JS redirect page instead of a
+  // 3xx. Pull the first Amazon/Flipkart URL out of the HTML as a fallback.
+  const html = await res.text();
+  const match = html.match(
+    /https?:\/\/(?:www\.)?(?:amazon\.[a-z.]{2,}|flipkart\.com)\/[^\s"'<>\\]+/i
+  );
+  return match ? match[0] : finalUrl;
+}
+
 /** Read a <meta> tag content by property/name, in either attribute order. */
 function metaContent(html: string, key: string): string {
   const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -172,7 +211,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product URL is required." }, { status: 400 });
   }
 
-  const cleanUrl = sanitizeText(url.trim(), 800);
+  let cleanUrl = withScheme(sanitizeText(url.trim(), 800));
 
   // Detect the platform from the parsed hostname, not from substring matches:
   // `http://internal/flipkart` would otherwise pass the check and make the
@@ -189,8 +228,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product URL must use http(s)." }, { status: 400 });
   }
 
-  const isAmazonHost = /(^|\.)amazon\.(?:in|com|co\.uk|de|fr|ca|es|it|co\.jp|com\.au|ae|sa|sg|nl|se|pl)$/.test(host);
-  const isFlipkartHost = /(^|\.)flipkart\.com$/.test(host);
+  if (SHORT_LINK_HOST.test(host)) {
+    try {
+      const expanded = await expandShortLink(parsedUrl.toString());
+      parsedUrl = new URL(expanded);
+      host = parsedUrl.hostname.toLowerCase();
+      cleanUrl = parsedUrl.toString();
+    } catch {
+      return NextResponse.json(
+        {
+          error: "Could not open the short product link. Please paste the full Amazon/Flipkart product URL instead.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (SHORT_LINK_HOST.test(host)) {
+      return NextResponse.json(
+        {
+          error: "The short link did not resolve to a product page.",
+          hint: "Open the link in a browser and paste the full product URL (it should contain /dp/ASIN or /p/ITM...).",
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  const isAmazonHost = AMAZON_HOST.test(host);
+  const isFlipkartHost = FLIPKART_HOST.test(host);
+
+  if (!isAmazonHost && !isFlipkartHost) {
+    return NextResponse.json(
+      {
+        error: "Only Amazon and Flipkart product links are supported.",
+        hint: "Paste a product page URL from amazon.in or flipkart.com (short share links are supported).",
+      },
+      { status: 400 }
+    );
+  }
+
+  let searchableUrl = cleanUrl;
+  try {
+    searchableUrl = decodeURIComponent(cleanUrl);
+  } catch {
+    /* keep the original when the URL contains malformed escapes */
+  }
 
   // Detect platform and extract product ID
   let platform = "Amazon";
@@ -208,7 +290,7 @@ export async function POST(req: NextRequest) {
   ];
 
   if (isAmazonHost) {
-    if (/\/deals|\/gp\/best-sellers|\/gp\/most-wished-for|\/gp\/new-releases|\/s\?/i.test(cleanUrl)) {
+    if (/\/deals|\/gp\/best-sellers|\/gp\/most-wished-for|\/gp\/new-releases|\/s\?/i.test(searchableUrl)) {
       return NextResponse.json(
         {
           error: "This is a category/deals listing page, not a product page.",
@@ -219,14 +301,14 @@ export async function POST(req: NextRequest) {
     }
     platform = "Amazon";
     for (const pattern of amazonPatterns) {
-      const match = cleanUrl.match(pattern);
+      const match = searchableUrl.match(pattern);
       if (match) {
         productId = match[1];
         break;
       }
     }
   } else if (isFlipkartHost) {
-    if (/\/search|\/category|\/brand|\/offers/i.test(cleanUrl)) {
+    if (/\/search|\/category|\/brand|\/offers/i.test(searchableUrl)) {
       return NextResponse.json(
         {
           error: "This is a category/search page, not a product page.",
@@ -237,7 +319,7 @@ export async function POST(req: NextRequest) {
     }
     platform = "Flipkart";
     for (const pattern of flipkartPatterns) {
-      const match = cleanUrl.match(pattern);
+      const match = searchableUrl.match(pattern);
       if (match) {
         productId = match[1];
         break;

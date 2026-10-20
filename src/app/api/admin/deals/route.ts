@@ -69,7 +69,8 @@ export async function POST(req: Request) {
   const category = sanitizeText(str(form.get("category"), 40), 40) || "General";
   const platform = sanitizeText(str(form.get("platform"), 40), 40) || "Amazon";
   const dealType = sanitizeText(str(form.get("deal_type"), 60), 60) || "100% Cashback";
-  const dealUrl = sanitizeText(str(form.get("deal_url"), 500), 500);
+  let dealUrl = sanitizeText(str(form.get("deal_url"), 500), 500);
+  if (dealUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(dealUrl)) dealUrl = `https://${dealUrl}`;
   const targetKeyword = sanitizeText(str(form.get("target_keyword"), 255), 255);
   const instructions = sanitizeHtml(str(form.get("instructions"), 2000));
   const coupon = sanitizeText(str(form.get("coupon_code"), 40), 40);

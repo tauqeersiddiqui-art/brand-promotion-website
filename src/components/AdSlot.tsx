@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { ADSENSE_CLIENT } from "@/lib/adsense";
 
 declare global {
   interface Window {
@@ -16,7 +17,7 @@ type Props = {
 };
 
 export default function AdSlot({ slot, format = "auto", label = "Advertisement", minHeight = 90 }: Props) {
-  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "";
+  const client = ADSENSE_CLIENT;
   const slotId = slot || process.env.NEXT_PUBLIC_ADSENSE_SLOT_DEFAULT || "";
   const ref = useRef<HTMLModElement | null>(null);
 

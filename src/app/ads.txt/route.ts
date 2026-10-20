@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ADSENSE_PUB_ID } from "@/lib/adsense";
 
 export const dynamic = "force-dynamic";
 
@@ -8,8 +9,7 @@ export const dynamic = "force-dynamic";
  * need a code edit.
  */
 export function GET() {
-  const client = (process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "").trim();
-  const pubId = client.replace(/^ca-/, "");
+  const pubId = ADSENSE_PUB_ID;
 
   const body = /^pub-\d{10,}$/.test(pubId)
     ? `google.com, ${pubId}, DIRECT, f08c47fec0942fa0\n`

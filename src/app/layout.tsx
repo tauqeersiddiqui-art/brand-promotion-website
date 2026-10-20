@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import { ADSENSE_CLIENT } from "@/lib/adsense";
 import { getSettings, type SiteSettings } from "@/lib/settings";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = getSettings();
-  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "";
+  const adsenseClient = ADSENSE_CLIENT;
   return {
     title: {
       default: `${s.site_name} — ${s.tagline}`,
@@ -45,7 +46,7 @@ async function safeSettings(): Promise<SiteSettings> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const s = await safeSettings();
   const announcement = s.announcement.trim();
-  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "";
+  const adsenseClient = ADSENSE_CLIENT;
 
   return (
     <html lang="en">
@@ -55,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
             crossOrigin="anonymous"
-            strategy="afterInteractive"
+            strategy="beforeInteractive"
           />
         )}
         <CsrfBootstrap />

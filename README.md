@@ -77,6 +77,26 @@ npm run build && npm start   # or pm2 start npm -- start
 ```
 Set env vars: `AUTH_SECRET` (strong random), `NEXT_PUBLIC_SITE_NAME`, `OCR_SPACE_API_KEY`, and put behind HTTPS (Nginx/Caddy).
 
+### Persistent storage (important on Render)
+
+The SQLite database and uploaded screenshots live on local disk. Render's
+ephemeral filesystem erases them on every deploy, so mount a persistent disk
+(e.g. at `/var/data`) and set:
+
+```
+DATA_DIR=/var/data
+```
+
+This stores the database at `/var/data/app.db`, screenshots at
+`/var/data/uploads`, and automatic backups at `/var/data/backups`.
+`DATABASE_PATH` and `UPLOAD_DIR` can override those paths individually.
+Without `DATA_DIR`, uploads are still served through `/api/files/:name` but
+will not survive a deploy.
+
+Proof screenshots (order, review and refund evidence) are private: they are
+only served to their owner or an admin. Approved review screenshots are public
+because they appear on deal pages.
+
 ### Google login setup (optional, 5 minutes)
 1. Open https://console.cloud.google.com/apis/credentials → **Create credentials → OAuth client ID → Web application**
 2. Add **Authorized redirect URI**: `http://localhost:3000/api/auth/google/callback` (add your production URL too)

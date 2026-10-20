@@ -11,10 +11,11 @@ import { sanitizeText, sanitizePhone } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { validateOrderSubmission } from "@/lib/ocr-validation";
+import { isStoredUploadUrl, uploadFilePath } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
-const UPLOAD_URL_RE = /^\/uploads\/[A-Za-z0-9._-]+$/;
+const UPLOAD_URL_RE = /^\/(?:api\/files|uploads)\/[A-Za-z0-9._-]+$/;
 
 type UploadRow = { user_id: number | null; ocr_status: string; ocr_order_id: string };
 
@@ -41,9 +42,8 @@ async function ensureUploadOcr(
   }
   if (row.ocr_status === "done") return { ok: true };
 
-  const filePath = path.join(process.cwd(), "public", "uploads", path.basename(url));
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  if (path.dirname(filePath) !== uploadsDir || !fs.existsSync(filePath)) {
+  const filePath = uploadFilePath(url);
+  if (!filePath) {
     return { ok: false, error: "The screenshot file is missing on the server. Please upload it again." };
   }
 
@@ -278,7 +278,7 @@ export async function POST(req: Request) {
   const targetDealType = deal.deal_type || dealType;
 
   // Extract OCR results from validation
-  const orderUpload = orderScreenshotUrl.startsWith("/uploads/")
+  const orderUpload = isStoredUploadUrl(orderScreenshotUrl)
     ? db.prepare("SELECT ocr_order_id, ocr_amount FROM uploads WHERE url = ?").get(orderScreenshotUrl)
     : null;
   const ocrExtractedId = (orderUpload as any)?.ocr_order_id || "";

@@ -1,6 +1,10 @@
 // Removes rows created by scripts/smoke-test.js. Safe to re-run.
+const path = require("path");
 const D = require("better-sqlite3");
-const db = new D("data/app.db");
+const dataDir = path.resolve(process.env.DATA_DIR || path.join(process.cwd(), "data"));
+const db = new D(
+  path.resolve(process.env.DATABASE_PATH || path.join(dataDir, "app.db"))
+);
 db.pragma("foreign_keys = ON");
 
 const removed = {};

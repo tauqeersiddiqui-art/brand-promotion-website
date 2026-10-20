@@ -3,11 +3,15 @@
 const path = require("path");
 const fs = require("fs");
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = path.resolve(
+  process.env.DATA_DIR || path.join(process.cwd(), "data")
+);
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 const Database = require("better-sqlite3");
-const db = new Database(path.join(DATA_DIR, "app.db"));
+const db = new Database(
+  path.resolve(process.env.DATABASE_PATH || path.join(DATA_DIR, "app.db"))
+);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 

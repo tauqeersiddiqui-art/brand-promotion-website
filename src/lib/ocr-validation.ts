@@ -5,6 +5,7 @@
 
 import { db } from "@/lib/db";
 import { normalizeOrderId } from "@/lib/ocr";
+import { isStoredUploadUrl } from "@/lib/storage";
 
 export interface OcrValidationResult {
   valid: boolean;
@@ -356,7 +357,7 @@ export function makeDecision(
  * p_hash of a stored screenshot URL, or "" when the URL is not one of ours.
  */
 function uploadHashForUrl(url: string): string {
-  if (!url || !url.startsWith("/uploads/")) return "";
+  if (!url || !isStoredUploadUrl(url)) return "";
   const row = db
     .prepare("SELECT p_hash FROM uploads WHERE url = ? AND p_hash != '' LIMIT 1")
     .get(url) as { p_hash: string } | undefined;
@@ -370,7 +371,7 @@ function uploadHashForUrl(url: string): string {
  * with the screenshot already attached to their own order.
  */
 export function isScreenshotUsedByAnotherOrder(url: string, excludeOrderId?: number): boolean {
-  if (!url || !url.startsWith("/uploads/")) return false;
+  if (!url || !isStoredUploadUrl(url)) return false;
   const excluded = excludeOrderId ?? -1;
   const hash = uploadHashForUrl(url);
 
@@ -401,7 +402,7 @@ export function isScreenshotUsedByAnotherClaim(
   url: string,
   externalOrderId: string
 ): boolean {
-  if (!url || !url.startsWith("/uploads/")) return false;
+  if (!url || !isStoredUploadUrl(url)) return false;
   const hash = uploadHashForUrl(url);
 
   if (hash) {
@@ -444,13 +445,13 @@ export async function validateOrderSubmission(
   decision: { action: "auto_approve" | "manual_review" | "reject"; reason: string };
 }> {
   // Get OCR data from upload records
-  const orderUpload = orderScreenshotUrl.startsWith("/uploads/")
+  const orderUpload = isStoredUploadUrl(orderScreenshotUrl)
     ? db
         .prepare("SELECT ocr_order_id, ocr_amount, ocr_date, ocr_status FROM uploads WHERE url = ?")
         .get(orderScreenshotUrl)
     : null;
 
-  const priceUpload = priceScreenshotUrl.startsWith("/uploads/")
+  const priceUpload = isStoredUploadUrl(priceScreenshotUrl)
     ? db.prepare("SELECT ocr_amount FROM uploads WHERE url = ?").get(priceScreenshotUrl)
     : null;
 

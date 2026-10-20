@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { db } from "./db";
+import { DATA_DIR, UPLOAD_DIR } from "./storage";
 import {
   BACKUP_TABLES,
   buildFullBackup,
@@ -10,9 +11,9 @@ import {
   type FullBackup,
 } from "./backup";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_PATH = path.join(DATA_DIR, "app.db");
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+const DB_PATH = path.resolve(
+  process.env.DATABASE_PATH || path.join(DATA_DIR, "app.db")
+);
 const BACKUP_DIR = path.resolve(process.env.BACKUP_DIR || path.join(DATA_DIR, "backups"));
 const UPLOAD_BACKUP_DIR = path.join(BACKUP_DIR, "uploads");
 

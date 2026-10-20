@@ -8,6 +8,7 @@ import { runOcrOnBuffer } from "@/lib/ocr";
 import { applyRateLimit } from "@/lib/rate-limit";
 import { sanitizeHtml, sanitizeText } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
+import { uploadFilePath } from "@/lib/storage";
 import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -94,11 +95,10 @@ export async function POST(
   if (!review) return bad("Review not found.", 404);
   if (!review.screenshot_url) return bad("This review has no screenshot to OCR.");
 
-  const filePath = path.join(process.cwd(), "public", review.screenshot_url.replace(/^\//, ""));
-  if (!filePath.startsWith(path.join(process.cwd(), "public", "uploads"))) {
-    return bad("Invalid screenshot path.");
+  const filePath = uploadFilePath(review.screenshot_url);
+  if (!filePath) {
+    return bad("Screenshot file is missing on the server.");
   }
-  if (!fs.existsSync(filePath)) return bad("Screenshot file is missing on the server.");
 
   const buf = fs.readFileSync(filePath);
   const ext = path.extname(filePath).slice(1).toLowerCase();

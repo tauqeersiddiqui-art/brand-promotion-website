@@ -65,39 +65,63 @@ export async function postDealToTelegram(
   ];
   const caption = lines.filter((l): l is string => l !== null).join("\n").slice(0, 1024);
 
-  const replyMarkup = { inline_keyboard: [[{ text: "View deal", url: dealUrl }]] };
+  // Telegram rejects inline-button URLs pointing at localhost. Skip the button
+  // in local development instead of failing the whole post.
+  const linkable = !/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(siteBase());
+  const replyMarkup = linkable
+    ? { inline_keyboard: [[{ text: "View deal", url: dealUrl }]] }
+    : undefined;
   const hasPhoto = Boolean(deal.image_url && /^https?:\/\//i.test(deal.image_url));
 
-  try {
-    const res = await fetch(
-      `https://api.telegram.org/bot${token}/${hasPhoto ? "sendPhoto" : "sendMessage"}`,
-      {
+  async function call(
+    method: "sendPhoto" | "sendMessage",
+    payload: Record<string, unknown>
+  ): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(
-          hasPhoto
-            ? { chat_id: chatId, photo: deal.image_url, caption, reply_markup: replyMarkup }
-            : {
-                chat_id: chatId,
-                text: caption,
-                disable_web_page_preview: false,
-                reply_markup: replyMarkup,
-              }
-        ),
+        body: JSON.stringify(payload),
         signal: AbortSignal.timeout(10000),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; description?: string }
+        | null;
+      if (!res.ok || !data?.ok) {
+        return {
+          ok: false,
+          error: data?.description || `Telegram API error (HTTP ${res.status})`,
+        };
       }
-    );
-    const data = (await res.json().catch(() => null)) as
-      | { ok?: boolean; description?: string }
-      | null;
-    if (!res.ok || !data?.ok) {
-      return { ok: false, error: data?.description || `Telegram API error (HTTP ${res.status})` };
+      return { ok: true };
+    } catch (e) {
+      return {
+        ok: false,
+        error: e instanceof Error ? e.message : "Network error while calling Telegram.",
+      };
     }
-    return { ok: true };
-  } catch (e) {
-    return {
-      ok: false,
-      error: e instanceof Error ? e.message : "Network error while calling Telegram.",
-    };
   }
+
+  const textPayload = {
+    chat_id: chatId,
+    text: caption,
+    disable_web_page_preview: false,
+    reply_markup: replyMarkup,
+  };
+
+  if (hasPhoto) {
+    const photo = await call("sendPhoto", {
+      chat_id: chatId,
+      photo: deal.image_url,
+      caption,
+      reply_markup: replyMarkup,
+    });
+    if (photo.ok) return { ok: true };
+    // Telegram can reject the image URL (unreachable host, wrong content type).
+    // The text post is more useful than dropping the campaign entirely.
+    const fallback = await call("sendMessage", textPayload);
+    return fallback.ok ? { ok: true } : { ok: false, error: fallback.error || photo.error };
+  }
+
+  return call("sendMessage", textPayload);
 }

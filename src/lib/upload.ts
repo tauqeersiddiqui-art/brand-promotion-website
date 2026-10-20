@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { UPLOAD_DIR, ensureStorageDirs, uploadNameFromUrl } from "./storage";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 
 const MAGIC: { magic: number[]; ext: string }[] = [
@@ -42,12 +42,12 @@ export async function saveUploadedImage(file: File): Promise<UploadResult> {
     return { ok: false, error: "Corrupted WebP file." };
   }
 
-  if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  ensureStorageDirs();
 
   const name = `${Date.now().toString(36)}-${crypto.randomBytes(8).toString("hex")}.${match.ext}`;
   fs.writeFileSync(path.join(UPLOAD_DIR, name), buf);
 
-  return { ok: true, url: `/uploads/${name}`, buffer: buf, ext: match.ext };
+  return { ok: true, url: `/api/files/${name}`, buffer: buf, ext: match.ext };
 }
 
 /**
@@ -57,7 +57,8 @@ export async function saveUploadedImage(file: File): Promise<UploadResult> {
  */
 export function deleteUploadedImage(url: string): void {
   try {
-    const name = path.basename(url);
+    const name = uploadNameFromUrl(url);
+    if (!name) return;
     const target = path.join(UPLOAD_DIR, name);
     // Defence in depth: never unlink anything outside the uploads directory.
     if (path.dirname(target) !== UPLOAD_DIR) return;

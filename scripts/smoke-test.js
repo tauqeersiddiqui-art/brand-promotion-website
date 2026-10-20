@@ -252,7 +252,11 @@ async function req(jar, path, opts = {}) {
         method: "POST",
         headers: { "x-csrf-token": admin.get("bp_csrf_js") },
       });
-      check("telegram repost endpoint responds", tg.status === 200 || tg.status === 400, `got ${tg.status}`);
+      check(
+        "telegram repost endpoint responds",
+        tg.status === 200 || tg.status === 400,
+        `got ${tg.status} ${tg.text.slice(0, 200)}`
+      );
       if (tg.status === 400) {
         check("telegram unconfigured gives clear error", /Telegram/i.test(tg.json?.error || ""), tg.json?.error);
       }

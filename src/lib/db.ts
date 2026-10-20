@@ -1,11 +1,13 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import { DATA_DIR, ensureStorageDirs } from "./storage";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+ensureStorageDirs();
 
-const dbPath = path.join(DATA_DIR, "app.db");
+export const dbPath = path.resolve(
+  process.env.DATABASE_PATH || path.join(DATA_DIR, "app.db")
+);
 
 declare global {
   // eslint-disable-next-line no-var

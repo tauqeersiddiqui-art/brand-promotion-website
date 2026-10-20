@@ -11,6 +11,7 @@ import { sanitizeText, sanitizePhone, sanitizeUpiId, sanitizeIfsc, sanitizeAccou
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { checkMaxClaimsPerUser, checkCooldownAfterRejection, checkDailyClaimLimit, checkDuplicateOrderInReimbursements, isScreenshotUsedByAnotherClaim } from "@/lib/ocr-validation";
+import { uploadFilePath } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -257,7 +258,7 @@ export async function POST(req: Request) {
   // Both proofs are mandatory: the live review screenshot, and a screenshot of
   // the order page that proves the buyer owns this order (Order ID visible) and
   // that the marketplace return window has closed.
-  const SAFE_UPLOAD_PATH = /^\/uploads\/[A-Za-z0-9._-]+$/;
+  const SAFE_UPLOAD_PATH = /^\/(?:api\/files|uploads)\/[A-Za-z0-9._-]+$/;
   if (!reviewScreenshotUrl) {
     return bad("Please upload a screenshot of your live review showing 5 stars and the 'Verified Purchase' badge.");
   }
@@ -323,10 +324,9 @@ export async function POST(req: Request) {
   // Resolve inside the uploads directory only. These URLs are caller-supplied
   // text, and a plain path.join would let `..` segments read arbitrary files and
   // forward them to the OCR provider.
-  const uploadsRoot = path.join(process.cwd(), "public", "uploads");
   async function ocrScreenshot(url: string): Promise<{ text: string; ok: boolean }> {
-    const filePath = path.join(process.cwd(), "public", url);
-    if (!filePath.startsWith(uploadsRoot + path.sep) || !fs.existsSync(filePath)) {
+    const filePath = uploadFilePath(url);
+    if (!filePath) {
       return { text: "", ok: false };
     }
     try {

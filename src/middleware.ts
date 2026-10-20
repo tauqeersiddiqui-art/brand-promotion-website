@@ -19,6 +19,13 @@ async function readSession(req: NextRequest) {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Legacy proof URLs stay valid but are served through the authorised file
+  // route, so old screenshots are no longer world-readable.
+  if (pathname.startsWith("/uploads/")) {
+    const target = new URL(`/api/files/${pathname.slice("/uploads/".length)}`, req.url);
+    return NextResponse.rewrite(target);
+  }
+
   const needsAdmin =
     pathname.startsWith("/admin") && pathname !== "/admin/login";
   const needsAuth = pathname.startsWith("/account");
@@ -65,5 +72,6 @@ export const config = {
     "/api/refunds/:path*",
     "/api/reviews/:path*",
     "/api/me/:path*",
+    "/uploads/:path*",
   ],
 };

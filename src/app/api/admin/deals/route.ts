@@ -77,6 +77,13 @@ export async function POST(req: Request) {
   const priceOriginal = num(form.get("price_original"), 0, 10_000_000, 0);
   const priceSale = num(form.get("price_sale"), 0, 10_000_000, 0);
   const cashbackAmount = num(form.get("cashback_amount"), 0, 10_000_000, priceSale);
+  const reviewAmount = num(form.get("review_amount"), 0, 10_000_000, 0);
+  const ratingAmount = num(form.get("rating_amount"), 0, 10_000_000, 0);
+  const onlyOrderAmount = num(form.get("only_order_amount"), 0, 10_000_000, 0);
+  let orderFormUrl = sanitizeText(str(form.get("order_form_url"), 500), 500);
+  let refundFormUrl = sanitizeText(str(form.get("refund_form_url"), 500), 500);
+  if (orderFormUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(orderFormUrl)) orderFormUrl = `https://${orderFormUrl}`;
+  if (refundFormUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(refundFormUrl)) refundFormUrl = `https://${refundFormUrl}`;
   const totalSlots = int(form.get("total_slots"), 0, 1_000_000, 50);
   const claimedSlots = int(form.get("claimed_slots"), 0, 1_000_000, 0);
   const stock = int(form.get("stock"), 0, 1_000_000, Math.max(0, totalSlots - claimedSlots));
@@ -86,6 +93,8 @@ export async function POST(req: Request) {
   if (title.length < 3) return bad("Title must be at least 3 characters.");
   if (priceSale <= 0) return bad("Sale price must be greater than 0.");
   if (dealUrl && !isUrl(dealUrl)) return bad("Deal URL must start with http:// or https://");
+  if (orderFormUrl && !isUrl(orderFormUrl)) return bad("Order form URL must start with http:// or https://");
+  if (refundFormUrl && !isUrl(refundFormUrl)) return bad("Refund form URL must start with http:// or https://");
 
   let imageUrl = sanitizeText(str(form.get("image_url"), 500), 500);
   const file = form.get("image");
@@ -100,9 +109,10 @@ export async function POST(req: Request) {
       `INSERT INTO deals (
         product_code, title, description, category, platform, deal_type,
         image_url, deal_url, target_keyword, instructions, coupon_code,
-        price_original, price_sale, cashback_amount, total_slots, claimed_slots,
+        price_original, price_sale, cashback_amount, review_amount, rating_amount,
+        only_order_amount, order_form_url, refund_form_url, total_slots, claimed_slots,
         stock, featured, active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       productCode,
@@ -119,6 +129,11 @@ export async function POST(req: Request) {
       priceOriginal,
       priceSale,
       cashbackAmount,
+      reviewAmount,
+      ratingAmount,
+      onlyOrderAmount,
+      orderFormUrl,
+      refundFormUrl,
       totalSlots,
       claimedSlots,
       stock,

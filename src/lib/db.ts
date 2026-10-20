@@ -49,6 +49,11 @@ const SCHEMA_DDL = `
       price_original REAL NOT NULL DEFAULT 0,
       price_sale REAL NOT NULL DEFAULT 0,
       cashback_amount REAL NOT NULL DEFAULT 0,
+      review_amount REAL NOT NULL DEFAULT 0,
+      rating_amount REAL NOT NULL DEFAULT 0,
+      only_order_amount REAL NOT NULL DEFAULT 0,
+      order_form_url TEXT NOT NULL DEFAULT '',
+      refund_form_url TEXT NOT NULL DEFAULT '',
       total_slots INTEGER NOT NULL DEFAULT 50,
       claimed_slots INTEGER NOT NULL DEFAULT 0,
       stock INTEGER NOT NULL DEFAULT 0,
@@ -256,6 +261,21 @@ function createDb(): Database.Database {
   }
   if (!dealCols.includes("cashback_amount")) {
     db.exec("ALTER TABLE deals ADD COLUMN cashback_amount REAL NOT NULL DEFAULT 0");
+  }
+  if (!dealCols.includes("review_amount")) {
+    execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN review_amount REAL NOT NULL DEFAULT 0");
+  }
+  if (!dealCols.includes("rating_amount")) {
+    execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN rating_amount REAL NOT NULL DEFAULT 0");
+  }
+  if (!dealCols.includes("only_order_amount")) {
+    execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN only_order_amount REAL NOT NULL DEFAULT 0");
+  }
+  if (!dealCols.includes("order_form_url")) {
+    execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN order_form_url TEXT NOT NULL DEFAULT ''");
+  }
+  if (!dealCols.includes("refund_form_url")) {
+    execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN refund_form_url TEXT NOT NULL DEFAULT ''");
   }
   if (!dealCols.includes("total_slots")) {
     db.exec("ALTER TABLE deals ADD COLUMN total_slots INTEGER NOT NULL DEFAULT 50");

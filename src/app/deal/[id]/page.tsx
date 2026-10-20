@@ -28,6 +28,11 @@ type DealRow = {
   target_keyword?: string;
   instructions?: string;
   cashback_amount?: number;
+  review_amount?: number;
+  rating_amount?: number;
+  only_order_amount?: number;
+  order_form_url?: string;
+  refund_form_url?: string;
 };
 
 export default async function DealPage({
@@ -190,9 +195,49 @@ export default async function DealPage({
               {deal.description}
             </p>
 
+            {(Number(deal.review_amount) > 0 ||
+              Number(deal.rating_amount) > 0 ||
+              Number(deal.only_order_amount) > 0) && (
+              <div
+                style={{
+                  background: "var(--bg-soft)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-lg)",
+                  padding: 14,
+                  margin: "18px 0 0",
+                }}
+              >
+                <h4 style={{ margin: "0 0 10px", fontSize: 14 }}>Payout by deal type</h4>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {Number(deal.review_amount) > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                      <span>Review deal (5★ + written review)</span>
+                      <strong>₹{Number(deal.review_amount).toLocaleString("en-IN")}</strong>
+                    </div>
+                  )}
+                  {Number(deal.rating_amount) > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                      <span>Rating deal (5★ rating only)</span>
+                      <strong>₹{Number(deal.rating_amount).toLocaleString("en-IN")}</strong>
+                    </div>
+                  )}
+                  {Number(deal.only_order_amount) > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                      <span>Only order deal (no review)</span>
+                      <strong>₹{Number(deal.only_order_amount).toLocaleString("en-IN")}</strong>
+                    </div>
+                  )}
+                </div>
+                <p className="muted" style={{ margin: "10px 0 0", fontSize: 12 }}>
+                  Pick one deal type when you submit your order proof. Payout is issued after the campaign checks
+                  below are completed.
+                </p>
+              </div>
+            )}
+
             {deal.instructions && (
               <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
-                <h4 style={{ margin: "0 0 6px", fontSize: 14 }}>Campaign instructions</h4>
+                <h4 style={{ margin: "0 0 6px", fontSize: 14 }}>Notes &amp; instructions</h4>
                 <p className="muted" style={{ margin: 0, fontSize: 13.5, whiteSpace: "pre-wrap" }}>
                   {deal.instructions}
                 </p>
@@ -217,6 +262,33 @@ export default async function DealPage({
                 </div>
               )}
             </div>
+
+            {(deal.order_form_url || deal.refund_form_url) && (
+              <div className="mt" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {deal.order_form_url && (
+                  <a
+                    className="btn btn-secondary"
+                    href={deal.order_form_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ flex: 1 }}
+                  >
+                    Open order form →
+                  </a>
+                )}
+                {deal.refund_form_url && (
+                  <a
+                    className="btn btn-secondary"
+                    href={deal.refund_form_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ flex: 1 }}
+                  >
+                    Open refund / claim form →
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

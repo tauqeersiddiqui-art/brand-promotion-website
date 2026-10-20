@@ -26,6 +26,11 @@ type Deal = {
   price_original: number;
   price_sale: number;
   cashback_amount: number;
+  review_amount: number;
+  rating_amount: number;
+  only_order_amount: number;
+  order_form_url: string;
+  refund_form_url: string;
   total_slots: number;
   claimed_slots: number;
   stock: number;
@@ -103,6 +108,23 @@ export async function PATCH(
   const cashbackAmount = has("cashback_amount")
     ? num(form.get("cashback_amount"), 0, 10_000_000, existing.cashback_amount)
     : existing.cashback_amount;
+  const reviewAmount = has("review_amount")
+    ? num(form.get("review_amount"), 0, 10_000_000, existing.review_amount)
+    : existing.review_amount;
+  const ratingAmount = has("rating_amount")
+    ? num(form.get("rating_amount"), 0, 10_000_000, existing.rating_amount)
+    : existing.rating_amount;
+  const onlyOrderAmount = has("only_order_amount")
+    ? num(form.get("only_order_amount"), 0, 10_000_000, existing.only_order_amount)
+    : existing.only_order_amount;
+  let orderFormUrl = has("order_form_url")
+    ? sanitizeText(asStr("order_form_url"), 500)
+    : existing.order_form_url;
+  let refundFormUrl = has("refund_form_url")
+    ? sanitizeText(asStr("refund_form_url"), 500)
+    : existing.refund_form_url;
+  if (orderFormUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(orderFormUrl)) orderFormUrl = `https://${orderFormUrl}`;
+  if (refundFormUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(refundFormUrl)) refundFormUrl = `https://${refundFormUrl}`;
   const totalSlots = has("total_slots")
     ? int(form.get("total_slots"), 0, 1_000_000, existing.total_slots)
     : existing.total_slots;
@@ -122,6 +144,8 @@ export async function PATCH(
   if (title.length < 3) return bad("Title must be at least 3 characters.");
   if (priceSale <= 0) return bad("Sale price must be greater than 0.");
   if (dealUrl && !isUrl(dealUrl)) return bad("Deal URL must start with http:// or https://");
+  if (orderFormUrl && !isUrl(orderFormUrl)) return bad("Order form URL must start with http:// or https://");
+  if (refundFormUrl && !isUrl(refundFormUrl)) return bad("Refund form URL must start with http:// or https://");
 
   let imageUrl = existing.image_url;
   if (has("image_url")) {
@@ -139,7 +163,9 @@ export async function PATCH(
     `UPDATE deals SET
       product_code = ?, title = ?, description = ?, category = ?, platform = ?, deal_type = ?,
       image_url = ?, deal_url = ?, target_keyword = ?, instructions = ?, coupon_code = ?,
-      price_original = ?, price_sale = ?, cashback_amount = ?, total_slots = ?, claimed_slots = ?,
+      price_original = ?, price_sale = ?, cashback_amount = ?, review_amount = ?,
+      rating_amount = ?, only_order_amount = ?, order_form_url = ?, refund_form_url = ?,
+      total_slots = ?, claimed_slots = ?,
       stock = ?, featured = ?, active = ?, updated_at = datetime('now')
      WHERE id = ?`
   ).run(
@@ -157,6 +183,11 @@ export async function PATCH(
     priceOriginal,
     priceSale,
     cashbackAmount,
+    reviewAmount,
+    ratingAmount,
+    onlyOrderAmount,
+    orderFormUrl,
+    refundFormUrl,
     totalSlots,
     claimedSlots,
     stock,

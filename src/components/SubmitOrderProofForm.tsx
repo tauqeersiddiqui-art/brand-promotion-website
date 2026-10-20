@@ -25,6 +25,10 @@ type DealOption = {
   price_sale: number;
   total_slots: number;
   claimed_slots: number;
+  deal_type?: string;
+  review_amount?: number;
+  rating_amount?: number;
+  only_order_amount?: number;
 };
 
 export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?: number }) {
@@ -35,6 +39,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
   const [dealId, setDealId] = useState<number | string>(initialDealId || "");
   const [externalOrderId, setExternalOrderId] = useState("");
   const [platform, setPlatform] = useState("Amazon");
+  const [dealType, setDealType] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [mediatorName, setMediatorName] = useState("Direct");
   const [fullName, setFullName] = useState("");
@@ -88,7 +93,34 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
     if (!selected) return;
     if (selected.platform) setPlatform(selected.platform);
     if (selected.price_sale) setTotal(selected.price_sale);
+    const options = [
+      Number(selected.review_amount) > 0
+        ? { value: "Review Deal", label: `Review deal (5★ + text) — ₹${Number(selected.review_amount).toLocaleString("en-IN")}` }
+        : null,
+      Number(selected.rating_amount) > 0
+        ? { value: "Rating Deal", label: `Rating deal (5★ only) — ₹${Number(selected.rating_amount).toLocaleString("en-IN")}` }
+        : null,
+      Number(selected.only_order_amount) > 0
+        ? { value: "Only Order Deal", label: `Only order deal — ₹${Number(selected.only_order_amount).toLocaleString("en-IN")}` }
+        : null,
+    ].filter((o): o is { value: string; label: string } => o !== null);
+    setDealType((prev) => (options.some((o) => o.value === prev) ? prev : options[0]?.value || ""));
   }, [dealId, deals]);
+
+  const selectedDeal = deals.find((d) => d.id === Number(dealId));
+  const dealTypeOptions = selectedDeal
+    ? [
+        Number(selectedDeal.review_amount) > 0
+          ? { value: "Review Deal", label: `Review deal (5★ + text) — ₹${Number(selectedDeal.review_amount).toLocaleString("en-IN")}` }
+          : null,
+        Number(selectedDeal.rating_amount) > 0
+          ? { value: "Rating Deal", label: `Rating deal (5★ only) — ₹${Number(selectedDeal.rating_amount).toLocaleString("en-IN")}` }
+          : null,
+        Number(selectedDeal.only_order_amount) > 0
+          ? { value: "Only Order Deal", label: `Only order deal — ₹${Number(selectedDeal.only_order_amount).toLocaleString("en-IN")}` }
+          : null,
+      ].filter((o): o is { value: string; label: string } => o !== null)
+    : [];
 
   // Handle Order Screenshot Upload & Auto OCR extraction
   async function handleOrderScreenshotChange(file: File | null) {
@@ -150,6 +182,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
         deal_id: dealId ? Number(dealId) : undefined,
         external_order_id: externalOrderId.trim(),
         platform,
+        deal_type: dealType || undefined,
         reviewer_name: reviewerName.trim(),
         mediator_name: mediatorName.trim(),
         full_name: fullName.trim(),
@@ -313,6 +346,22 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
             placeholder={platform === "Amazon" ? "404-XXXXXXX-XXXXXXX" : "OD1234567890..."}
           />
         </div>
+
+        {dealTypeOptions.length > 0 && (
+          <div>
+            <label className="form-label">Deal Type *</label>
+            <select
+              className="input"
+              required
+              value={dealType}
+              onChange={(e) => setDealType(e.target.value)}
+            >
+              {dealTypeOptions.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label className="form-label">Reviewer Profile Name *</label>

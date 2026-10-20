@@ -29,6 +29,11 @@ type Deal = {
   price_original: number;
   price_sale: number;
   cashback_amount: number;
+  review_amount: number;
+  rating_amount: number;
+  only_order_amount: number;
+  order_form_url: string;
+  refund_form_url: string;
   total_slots: number;
   claimed_slots: number;
   stock: number;
@@ -53,6 +58,11 @@ const EMPTY = {
   price_original: "",
   price_sale: "",
   cashback_amount: "",
+  review_amount: "",
+  rating_amount: "",
+  only_order_amount: "",
+  order_form_url: "",
+  refund_form_url: "",
   total_slots: "50",
   claimed_slots: "0",
   stock: "50",
@@ -64,7 +74,7 @@ const PLATFORMS = ["Amazon", "Flipkart", "Myntra", "Brand Store", "Meesho", "Nyk
 const DEAL_TYPES = [
   "100% Cashback", "90% Cashback", "80% Cashback", "70% Cashback", "60% Cashback",
   "50% Cashback", "40% Cashback", "30% Cashback", "20% Cashback", "10% Cashback",
-  "Review Incentive", "Flat Cashback"
+  "Review Incentive", "Flat Cashback", "Review Deal", "Rating Deal", "Only Order Deal"
 ];
 const CATEGORIES = ["Electronics", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Fashion", "Health & Wellness", "General"];
 
@@ -145,6 +155,11 @@ export default function AdminDealsPage() {
       price_original: String(d.price_original || ""),
       price_sale: String(d.price_sale || ""),
       cashback_amount: String(d.cashback_amount || d.price_sale || ""),
+      review_amount: String(d.review_amount || ""),
+      rating_amount: String(d.rating_amount || ""),
+      only_order_amount: String(d.only_order_amount || ""),
+      order_form_url: d.order_form_url || "",
+      refund_form_url: d.refund_form_url || "",
       total_slots: String(d.total_slots || 50),
       claimed_slots: String(d.claimed_slots || 0),
       stock: String(d.stock || 50),
@@ -234,6 +249,11 @@ export default function AdminDealsPage() {
       fd.set("price_original", form.price_original || "0");
       fd.set("price_sale", form.price_sale);
       fd.set("cashback_amount", form.cashback_amount || form.price_sale);
+      fd.set("review_amount", form.review_amount || "0");
+      fd.set("rating_amount", form.rating_amount || "0");
+      fd.set("only_order_amount", form.only_order_amount || "0");
+      fd.set("order_form_url", form.order_form_url);
+      fd.set("refund_form_url", form.refund_form_url);
       fd.set("total_slots", form.total_slots || "50");
       fd.set("claimed_slots", form.claimed_slots || "0");
       fd.set("stock", form.stock || "50");
@@ -440,6 +460,57 @@ export default function AdminDealsPage() {
             />
           </div>
 
+          <div className="full">
+            <label className="form-label">Payout per deal type (₹) — optional</label>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                gap: 12,
+              }}
+            >
+              <div>
+                <label className="form-label" style={{ fontWeight: 500, fontSize: 12 }}>Review deal (5★ + text)</label>
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.review_amount}
+                  onChange={(e) => set("review_amount", e.target.value)}
+                  placeholder="99"
+                />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontWeight: 500, fontSize: 12 }}>Rating deal (5★ only)</label>
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.rating_amount}
+                  onChange={(e) => set("rating_amount", e.target.value)}
+                  placeholder="149"
+                />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontWeight: 500, fontSize: 12 }}>Only order deal</label>
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.only_order_amount}
+                  onChange={(e) => set("only_order_amount", e.target.value)}
+                  placeholder="249"
+                />
+              </div>
+            </div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+              These are shown separately on the public deal page. Leave 0/blank when a type is not offered.
+            </p>
+          </div>
+
           <div>
             <label className="form-label">Total Reviewer Slots</label>
             <input
@@ -508,8 +579,31 @@ export default function AdminDealsPage() {
               </button>
             </div>
             <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-              Paste Amazon/Flipkart product URL and click "Fetch Details" to auto-fill title, price, image & keywords
+              Paste Amazon/Flipkart product URL (short share links work too) and click "Fetch details" to auto-fill title,
+              price, image &amp; keywords.
             </p>
+          </div>
+
+          <div>
+            <label className="form-label">Order Form Link (Google Form, optional)</label>
+            <input
+              className="input"
+              type="url"
+              value={form.order_form_url}
+              onChange={(e) => set("order_form_url", e.target.value)}
+              placeholder="https://forms.gle/..."
+            />
+          </div>
+
+          <div>
+            <label className="form-label">Refund / Claim Form Link (Google Form, optional)</label>
+            <input
+              className="input"
+              type="url"
+              value={form.refund_form_url}
+              onChange={(e) => set("refund_form_url", e.target.value)}
+              placeholder="https://forms.gle/..."
+            />
           </div>
 
           <div className="full">
@@ -524,14 +618,17 @@ export default function AdminDealsPage() {
           </div>
 
           <div className="full">
-            <label className="form-label">Campaign Specific Instructions for Reviewers</label>
+            <label className="form-label">Campaign Notes &amp; Instructions for Reviewers</label>
             <textarea
               className="input"
-              rows={3}
+              rows={8}
               value={form.instructions}
               onChange={(e) => set("instructions", e.target.value)}
-              placeholder="1. Search with keyword on Amazon. 2. Do not use random vouchers. 3. Post 5-star review with unboxed photos."
+              placeholder={"Read all details carefully before ordering.\n• Product code and colour/price limits\n• Fill the order form immediately (no form = no refund)\n• Deleted reviews count as ratings\n• Refund form within 30 days; screen recording proof for ratings\n• Only-order deals need the return-period-ended screenshot"}
             />
+            <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+              Shown as a notes block on the deal page, line breaks preserved.
+            </p>
           </div>
 
           <div className="full">

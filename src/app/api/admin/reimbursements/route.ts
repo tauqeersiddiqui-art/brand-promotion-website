@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
       `SELECT r.*,
               o.order_code, o.platform, o.product_code, o.full_name AS order_customer,
               o.phone AS customer_phone, o.email AS customer_email,
-              o.order_screenshot_url, o.price_screenshot_url,
+              o.order_screenshot_url AS order_proof_url, o.price_screenshot_url,
               COALESCE(d.title, 'Campaign: ' || o.product_code) AS deal_title
        FROM reimbursements r
        JOIN orders o ON o.id = r.order_id

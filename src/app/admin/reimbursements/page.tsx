@@ -25,6 +25,8 @@ type Reimbursement = {
   review_link: string;
   review_screenshot_url: string;
   ocr_text: string;
+  order_screenshot_url: string;
+  order_ocr_text: string;
   ocr_status: string;
   payout_method: string;
   upi_id: string;
@@ -43,7 +45,7 @@ type Reimbursement = {
   order_customer: string;
   customer_phone: string;
   customer_email: string;
-  order_screenshot_url: string;
+  order_proof_url: string;
   price_screenshot_url: string;
   deal_title: string;
 };
@@ -497,18 +499,47 @@ export default function AdminReimbursementsPage() {
               )}
               {activeItem.order_screenshot_url && (
                 <div style={{ flex: 1 }}>
-                  <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>📦 Order Screenshot:</div>
+                  <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>📦 Order page (return window closed):</div>
                   <a href={activeItem.order_screenshot_url} target="_blank" rel="noopener noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={activeItem.order_screenshot_url}
-                      alt="Order screenshot"
+                      alt="Claim order screenshot"
+                      style={{ width: "100%", maxHeight: 160, objectFit: "contain", borderRadius: 8, background: "var(--bg)", border: "1px solid var(--border)" }}
+                    />
+                  </a>
+                </div>
+              )}
+              {activeItem.order_proof_url && (
+                <div style={{ flex: 1 }}>
+                  <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>🧾 Original order proof:</div>
+                  <a href={activeItem.order_proof_url} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={activeItem.order_proof_url}
+                      alt="Original order proof"
                       style={{ width: "100%", maxHeight: 160, objectFit: "contain", borderRadius: 8, background: "var(--bg)", border: "1px solid var(--border)" }}
                     />
                   </a>
                 </div>
               )}
             </div>
+
+            {(activeItem.ocr_text || activeItem.order_ocr_text) && (
+              <details style={{ marginBottom: 16 }}>
+                <summary className="muted" style={{ cursor: "pointer", fontSize: 12.5 }}>OCR text used for validation</summary>
+                {activeItem.ocr_text && (
+                  <pre style={{ whiteSpace: "pre-wrap", fontSize: 11.5, margin: "8px 0", padding: 10, background: "var(--bg-soft)", borderRadius: 8 }}>
+                    [review] {activeItem.ocr_text}
+                  </pre>
+                )}
+                {activeItem.order_ocr_text && (
+                  <pre style={{ whiteSpace: "pre-wrap", fontSize: 11.5, margin: "8px 0", padding: 10, background: "var(--bg-soft)", borderRadius: 8 }}>
+                    [order] {activeItem.order_ocr_text}
+                  </pre>
+                )}
+              </details>
+            )}
 
             {/* Payout Details Form */}
             <form onSubmit={savePayoutChanges}>

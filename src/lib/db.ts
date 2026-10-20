@@ -116,7 +116,9 @@ const SCHEMA_DDL = `
       review_text TEXT NOT NULL DEFAULT '',
       review_link TEXT NOT NULL DEFAULT '',
       review_screenshot_url TEXT NOT NULL DEFAULT '',
+      order_screenshot_url TEXT NOT NULL DEFAULT '',
       ocr_text TEXT NOT NULL DEFAULT '',
+      order_ocr_text TEXT NOT NULL DEFAULT '',
       ocr_status TEXT NOT NULL DEFAULT 'pending' CHECK (ocr_status IN ('pending','done','failed')),
       payout_method TEXT NOT NULL DEFAULT 'upi' CHECK (payout_method IN ('upi','bank')),
       upi_id TEXT NOT NULL DEFAULT '',
@@ -313,6 +315,20 @@ function createDb(): Database.Database {
   // resets, so annotating a delivered order restarted the buyer's clock.
   if (!orderCols.includes("delivered_at")) {
     db.exec("ALTER TABLE orders ADD COLUMN delivered_at TEXT NOT NULL DEFAULT ''");
+  }
+
+  // Reimbursement claims now carry a second proof: a screenshot of the order
+  // page showing the marketplace Order ID and that the return window has
+  // closed. Stored separately from the review screenshot so admins can verify
+  // both, together with its own OCR text.
+  const reimbCols = (db.prepare("PRAGMA table_info(reimbursements)").all() as { name: string }[]).map(
+    (c) => c.name
+  );
+  if (!reimbCols.includes("order_screenshot_url")) {
+    db.exec("ALTER TABLE reimbursements ADD COLUMN order_screenshot_url TEXT NOT NULL DEFAULT ''");
+  }
+  if (!reimbCols.includes("order_ocr_text")) {
+    db.exec("ALTER TABLE reimbursements ADD COLUMN order_ocr_text TEXT NOT NULL DEFAULT ''");
   }
 
   // Create indexes now that all columns are guaranteed to exist

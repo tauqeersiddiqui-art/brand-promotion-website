@@ -471,8 +471,10 @@ async function req(jar, path, opts = {}) {
       check("admin approves review", appr.status === 200, `got ${appr.status} ${appr.text.slice(0, 150)}`);
     }
 
-    // 5. User claims the reimbursement.
-    const claim = await req(guest, "/api/reimbursements", {
+    // 5. A claim now requires TWO readable screenshots: the live 5-star
+    // "Verified Purchase" review and an order-page shot showing this order's ID
+    // plus "Return window closed". A claim without them must be refused.
+    const claimNoProof = await req(guest, "/api/reimbursements", {
       method: "POST",
       headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
       body: JSON.stringify({
@@ -482,15 +484,47 @@ async function req(jar, path, opts = {}) {
         review_text: "Verified 5-star review submitted.",
       }),
     });
-    check("POST /api/reimbursements 200", claim.status === 200, `got ${claim.status} ${claim.text.slice(0, 250)}`);
+    check(
+      "claim without screenshots rejected (400)",
+      claimNoProof.status === 400,
+      `got ${claimNoProof.status} ${claimNoProof.text.slice(0, 150)}`
+    );
+    check(
+      "rejection names the missing screenshot",
+      /screenshot/i.test(claimNoProof.json?.error || ""),
+      claimNoProof.text.slice(0, 150)
+    );
 
-    // 6. Claim shows in the account's reimbursements tab.
+    // 6. OCR.space cannot be made to read a fixture as a 5-star Verified
+    // Purchase review, so the payout state machine is exercised with the exact
+    // row the validated API would have inserted.
+    const Database = require("better-sqlite3");
+    const sqlite = new Database(path.join(process.cwd(), "data", "app.db"));
+    try {
+      sqlite
+        .prepare(
+          `INSERT INTO reimbursements (
+             reimbursement_code, order_id, user_id, deal_id, external_order_id,
+             reviewer_name, review_rating, amount, payout_method, upi_id,
+             review_screenshot_url, order_screenshot_url, ocr_status, status
+           )
+           SELECT ?, o.id, o.user_id, o.deal_id, o.external_order_id,
+                  o.reviewer_name, 5, o.total, 'upi', 'smoketester@okaxis',
+                  '', '', 'done', 'pending'
+           FROM orders o WHERE o.id = ?`
+        )
+        .run(`SMOKE-RM-${Date.now()}`, orderId);
+    } finally {
+      sqlite.close();
+    }
+
+    // 7. Claim shows in the account's reimbursements tab.
     const myReimb = await req(guest, "/api/reimbursements");
     check("GET /api/reimbursements 200", myReimb.status === 200, `got ${myReimb.status}`);
     const rows = myReimb.json?.reimbursements;
     check("reimbursements list populated", Array.isArray(rows) && rows.length > 0, `len=${rows?.length}`);
 
-    // 7. Admin walks the claim through the status machine to paid.
+    // 8. Admin walks the claim through the status machine to paid.
     const adminReimb = await req(admin, "/api/admin/reimbursements?status=pending");
     const claimRow = adminReimb.json?.reimbursements?.find((x) => x.order_code === orderCode);
     reimbId = claimRow?.id;

@@ -36,6 +36,8 @@ export default function ClaimCashbackForm() {
   const [reviewNotes, setReviewNotes] = useState("");
   const [reviewFile, setReviewFile] = useState<File | null>(null);
   const [reviewFileUrl, setReviewFileUrl] = useState("");
+  const [orderFile, setOrderFile] = useState<File | null>(null);
+  const [orderFileUrl, setOrderFileUrl] = useState("");
   const [fileResetKey, setFileResetKey] = useState(0);
 
   const [busy, setBusy] = useState(false);
@@ -56,7 +58,7 @@ export default function ClaimCashbackForm() {
     setReviewFile(file);
     setReviewFileUrl("");
     if (!file) return;
-    setOcrMsg("Analyzing review screenshot for rating & order details…");
+    setOcrMsg("Analyzing review screenshot for rating & Verified Purchase badge…");
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -68,10 +70,36 @@ export default function ClaimCashbackForm() {
         setReviewFile(null);
         return;
       }
-      // Reuse the URL from the OCR pass; re-uploading the same bytes hit the
-      // duplicate-hash check and failed the claim with a 409.
+      // Reuse the URL from the OCR pass so the file is uploaded once.
       setReviewFileUrl(d.url || "");
       setOcrMsg("✅ Review screenshot uploaded.");
+    } catch {
+      setOcrMsg("");
+    }
+  }
+
+  async function handleOrderScreenshotChange(file: File | null) {
+    setOrderFile(file);
+    setOrderFileUrl("");
+    if (!file) return;
+    setOcrMsg("Analyzing order screenshot…");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("ocr", "true");
+      const r = await fetch("/api/upload", { method: "POST", headers: getCsrfHeader(), body: fd });
+      const d = await r.json();
+      if (!r.ok) {
+        setOcrMsg(d.error || "Screenshot upload failed. Please try again.");
+        setOrderFile(null);
+        return;
+      }
+      setOrderFileUrl(d.url || "");
+      if (d.extracted_order_id) {
+        setOcrMsg(`✅ Order screenshot uploaded (Order ID: ${d.extracted_order_id}).`);
+      } else {
+        setOcrMsg("ℹ️ Order screenshot uploaded. Make sure the Order ID and 'Return window closed' are clearly visible.");
+      }
     } catch {
       setOcrMsg("");
     }
@@ -95,6 +123,17 @@ export default function ClaimCashbackForm() {
       }
       if (!reviewScreenshotUrl) throw new Error("Please upload your review screenshot.");
 
+      let orderScreenshotUrl = orderFileUrl;
+      if (orderFile && !orderScreenshotUrl) {
+        const fd = new FormData();
+        fd.append("file", orderFile);
+        const r = await fetch("/api/upload", { method: "POST", headers: getCsrfHeader(), body: fd });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || "Failed to upload order screenshot");
+        orderScreenshotUrl = d.url;
+      }
+      if (!orderScreenshotUrl) throw new Error("Please upload your order details screenshot.");
+
       const payload = {
         external_order_id: externalOrderId.trim(),
         reviewer_name: reviewerName.trim(),
@@ -106,6 +145,7 @@ export default function ClaimCashbackForm() {
         bank_name: bankName.trim(),
         amount: amount ? Number(amount) : undefined,
         review_screenshot_url: reviewScreenshotUrl,
+        order_screenshot_url: orderScreenshotUrl,
         review_link: reviewLink.trim(),
         // The route reads `review_text`; `review_notes` was silently dropped.
         review_text: reviewNotes.trim(),
@@ -164,6 +204,8 @@ export default function ClaimCashbackForm() {
               setExternalOrderId("");
               setReviewFile(null);
               setReviewFileUrl("");
+              setOrderFile(null);
+              setOrderFileUrl("");
               setOcrMsg("");
               setFileResetKey((k) => k + 1);
             }}
@@ -198,7 +240,8 @@ export default function ClaimCashbackForm() {
       <div style={{ marginBottom: 18 }}>
         <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Claim review cashback / reimbursement</h3>
         <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
-          Once your product is delivered & review is live on Amazon/Flipkart, submit your proof for 100% UPI cashback.
+          Once your product is delivered, your review is live on Amazon/Flipkart and the return
+          window has closed, submit both screenshots for 100% UPI cashback.
         </p>
       </div>
 
@@ -332,7 +375,7 @@ export default function ClaimCashbackForm() {
 
         <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
           <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            Live review screenshot * (Showing 5 stars &amp; reviewer name)
+            1. Live review screenshot * (5 stars &amp; &quot;Verified Purchase&quot; badge)
           </label>
           <input
             key={`review-${fileResetKey}`}
@@ -343,7 +386,27 @@ export default function ClaimCashbackForm() {
             onChange={(e) => handleReviewScreenshotChange(e.target.files?.[0] ?? null)}
           />
           <span className="muted" style={{ fontSize: 12 }}>
-            Upload screenshot of the published 5-star review from Amazon/Flipkart app or web.
+            Screenshot of the published review. It must clearly show the 5-star rating and the
+            &quot;Verified Purchase&quot; badge; unreadable screenshots are rejected.
+          </span>
+        </div>
+
+        <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
+          <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
+            2. Order details screenshot * (Order ID + &quot;Return window closed&quot;)
+          </label>
+          <input
+            key={`claim-order-${fileResetKey}`}
+            className="input"
+            type="file"
+            required={!orderFileUrl}
+            accept="image/*"
+            onChange={(e) => handleOrderScreenshotChange(e.target.files?.[0] ?? null)}
+          />
+          <span className="muted" style={{ fontSize: 12 }}>
+            Open the order in the Amazon/Flipkart app and screenshot the order details page. It
+            must show the order&apos;s Order ID and that the return window has closed (e.g.
+            &quot;Return window closed&quot;). Claims can only be filed after the return period ends.
           </span>
         </div>
 

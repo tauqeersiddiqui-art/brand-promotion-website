@@ -4,13 +4,13 @@ import { getSession } from "@/lib/auth";
 import { str, int } from "@/lib/validation";
 import { applyRateLimit } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
-import { runOcrOnBuffer, analyzeReviewText } from "@/lib/ocr";
+import { runOcrOnBuffer, analyzeReviewText, extractOrderId, normalizeOrderId, hasReturnWindowClosed } from "@/lib/ocr";
 import fs from "fs";
 import path from "path";
 import { sanitizeText, sanitizePhone, sanitizeUpiId, sanitizeIfsc, sanitizeAccountNumber, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
-import { checkMaxClaimsPerUser, checkCooldownAfterRejection, checkDailyClaimLimit, checkDuplicateOrderInReimbursements } from "@/lib/ocr-validation";
+import { checkMaxClaimsPerUser, checkCooldownAfterRejection, checkDailyClaimLimit, checkDuplicateOrderInReimbursements, isScreenshotUsedByAnotherClaim } from "@/lib/ocr-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
   const reviewText = sanitizeHtml(str(body.review_text, 2000)).trim();
   const reviewLink = sanitizeText(str(body.review_link, 500), 500).trim();
   const reviewScreenshotUrl = sanitizeText(str(body.review_screenshot_url, 500), 500).trim();
+  const orderScreenshotUrl = sanitizeText(str(body.order_screenshot_url, 500), 500).trim();
   const payoutMethod = sanitizeText(str(body.payout_method, 10), 10).toLowerCase() === "bank" ? "bank" : "upi";
   const upiId = sanitizeUpiId(str(body.upi_id, 80));
   const bankName = sanitizeText(str(body.bank_name, 80), 80).trim();
@@ -242,79 +243,111 @@ export async function POST(req: Request) {
   const finalReviewerName = reviewerName || order.reviewer_name || "Verified Reviewer";
   const reimbCode = generateCode("RM");
 
-  // Attempt OCR if a local upload screenshot is provided
-  let ocrText = "";
-  let ocrStatus = "pending";
-  let has5StarRating = false;
-  let hasVerifiedPurchase = false;
+  // Both proofs are mandatory: the live review screenshot, and a screenshot of
+  // the order page that proves the buyer owns this order (Order ID visible) and
+  // that the marketplace return window has closed.
+  const SAFE_UPLOAD_PATH = /^\/uploads\/[A-Za-z0-9._-]+$/;
+  if (!reviewScreenshotUrl) {
+    return bad("Please upload a screenshot of your live review showing 5 stars and the 'Verified Purchase' badge.");
+  }
+  if (!SAFE_UPLOAD_PATH.test(reviewScreenshotUrl)) {
+    return bad("Invalid review screenshot path.", 400);
+  }
+  if (!orderScreenshotUrl) {
+    return bad("Please upload a screenshot of your order page showing the Order ID and that the return window has closed.");
+  }
+  if (!SAFE_UPLOAD_PATH.test(orderScreenshotUrl)) {
+    return bad("Invalid order screenshot path.", 400);
+  }
 
-  if (reviewScreenshotUrl && /^\/uploads\/[A-Za-z0-9._-]+$/.test(reviewScreenshotUrl)) {
+  // The same image cannot back claims for two different orders. Re-using a
+  // screenshot for the *same* order is allowed, so a buyer can retry freely.
+  if (isScreenshotUsedByAnotherClaim(reviewScreenshotUrl, order.external_order_id)) {
+    return bad(
+      "Duplicate review screenshot detected. This image has already been used for another order's claim.",
+      409
+    );
+  }
+  if (isScreenshotUsedByAnotherClaim(orderScreenshotUrl, order.external_order_id)) {
+    return bad(
+      "Duplicate order screenshot detected. This image has already been used for another order's claim.",
+      409
+    );
+  }
+
+  // Resolve inside the uploads directory only. These URLs are caller-supplied
+  // text, and a plain path.join would let `..` segments read arbitrary files and
+  // forward them to the OCR provider.
+  const uploadsRoot = path.join(process.cwd(), "public", "uploads");
+  async function ocrScreenshot(url: string): Promise<{ text: string; ok: boolean }> {
+    const filePath = path.join(process.cwd(), "public", url);
+    if (!filePath.startsWith(uploadsRoot + path.sep) || !fs.existsSync(filePath)) {
+      return { text: "", ok: false };
+    }
     try {
-      // Resolve inside the uploads directory only. `reviewScreenshotUrl` is
-      // caller-supplied text, and a plain path.join would let `..` segments
-      // read arbitrary files and forward them to the OCR provider.
-      const uploadsRoot = path.join(process.cwd(), "public", "uploads");
-      const filePath = path.join(process.cwd(), "public", reviewScreenshotUrl);
-      if (!filePath.startsWith(uploadsRoot + path.sep)) {
-        return bad("Invalid review screenshot path.", 400);
-      }
-      if (fs.existsSync(filePath)) {
-        const buf = fs.readFileSync(filePath);
-        const ext = path.extname(filePath).slice(1);
-        const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
-        const ocr = await runOcrOnBuffer(buf, mime);
-        if (ocr.ok && ocr.text) {
-          ocrText = ocr.text;
-          ocrStatus = "done";
-          has5StarRating = ocr.has5StarRating || false;
-          hasVerifiedPurchase = ocr.hasVerifiedPurchase || false;
-        }
-        // Duplicate detection: the same review screenshot must not be reused
-        // across different orders. The old uploads-table hash check always
-        // matched this screenshot's own upload row and rejected every claim.
-        // Resubmitting the same screenshot for the *same* order is allowed.
-        const reused = db
-          .prepare(
-            "SELECT id FROM reimbursements WHERE review_screenshot_url = ? AND external_order_id != ? LIMIT 1"
-          )
-          .get(reviewScreenshotUrl, order.external_order_id) as { id: number } | undefined;
-        if (reused) {
-          return bad(
-            "Duplicate review screenshot detected. This image has already been used for another order's claim.",
-            409
-          );
-        }
-      }
+      const buf = fs.readFileSync(filePath);
+      const ext = path.extname(filePath).slice(1).toLowerCase();
+      const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
+      const ocr = await runOcrOnBuffer(buf, mime);
+      return { text: ocr.ok ? ocr.text || "" : "", ok: !!(ocr.ok && ocr.text) };
     } catch {
-      ocrStatus = "pending";
+      return { text: "", ok: false };
     }
   }
 
-  // A submitted review screenshot must be machine-readable. An OCR failure is
-  // not treated as verified evidence — low-confidence results never auto-pass.
-  if (reviewScreenshotUrl && ocrStatus !== "done") {
+  // Review screenshot: must be machine-readable, 5 stars and Verified Purchase.
+  const reviewOcr = await ocrScreenshot(reviewScreenshotUrl);
+  if (!reviewOcr.ok) {
     return bad(
-      "We could not read your review screenshot. Please upload a clearer image showing the 5-star rating and 'Verified Purchase' badge."
+      "We could not read your review screenshot. Please upload a clear image showing the 5-star rating and the 'Verified Purchase' badge."
+    );
+  }
+  const reviewFlags = analyzeReviewText(reviewOcr.text);
+  if (!reviewFlags.has5StarRating || !reviewFlags.hasVerifiedPurchase) {
+    return bad(
+      "Review screenshot must show a 5-star rating and a 'Verified Purchase' badge. Please upload a clear screenshot of the live review."
     );
   }
 
-  // OCR validation: must show 5-star and verified purchase
-  if (ocrStatus === "done" && (!has5StarRating || !hasVerifiedPurchase)) {
+  // Order screenshot: must show this order's ID and a closed return window.
+  const orderOcr = await ocrScreenshot(orderScreenshotUrl);
+  if (!orderOcr.ok) {
     return bad(
-      "Review screenshot must show a 5-star rating and 'Verified Purchase' badge. Please upload a clear screenshot of the live review."
+      "We could not read your order screenshot. Please upload a clear screenshot of the order details page showing the Order ID and 'Return window closed'."
     );
   }
+  const ocrOrderId = extractOrderId(orderOcr.text);
+  if (!ocrOrderId) {
+    return bad(
+      "We could not find an Order ID in your order screenshot. Please upload a screenshot where the Order ID is clearly visible."
+    );
+  }
+  const scannedId = normalizeOrderId(ocrOrderId);
+  const expectedIds = [normalizeOrderId(order.external_order_id), normalizeOrderId(order.order_code)].filter(Boolean);
+  if (!expectedIds.includes(scannedId)) {
+    return bad(
+      `The Order ID in your screenshot (${ocrOrderId}) does not match this order (${order.external_order_id || order.order_code}). Please upload the correct order's screenshot.`
+    );
+  }
+  if (!hasReturnWindowClosed(orderOcr.text)) {
+    return bad(
+      "Your order screenshot must show that the return window has closed (e.g. 'Return window closed'). Please claim only after the return period ends."
+    );
+  }
+
+  const ocrText = reviewOcr.text;
+  const ocrStatus = "done";
 
   const insertStmt = db.prepare(`
     INSERT INTO reimbursements (
       reimbursement_code, order_id, user_id, deal_id, external_order_id,
       reviewer_name, review_rating, review_text, review_link, review_screenshot_url,
-      ocr_text, ocr_status, payout_method, upi_id, bank_name,
+      order_screenshot_url, ocr_text, order_ocr_text, ocr_status, payout_method, upi_id, bank_name,
       account_number, ifsc_code, account_holder, amount, status
     ) VALUES (
       ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, 'pending'
     )
   `);
@@ -330,7 +363,9 @@ export async function POST(req: Request) {
     reviewText,
     reviewLink,
     reviewScreenshotUrl,
+    orderScreenshotUrl,
     ocrText,
+    orderOcr.text,
     ocrStatus,
     payoutMethod,
     upiId,

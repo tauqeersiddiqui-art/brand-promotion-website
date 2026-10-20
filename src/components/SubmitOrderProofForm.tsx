@@ -45,12 +45,8 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
   const [notes, setNotes] = useState("");
 
   const [orderFile, setOrderFile] = useState<File | null>(null);
-  const [priceFile, setPriceFile] = useState<File | null>(null);
-  // Reuse the URL returned by the OCR upload instead of uploading the same
-  // file twice. The second upload hit the duplicate-hash check and failed the
-  // whole submission with a 409.
+  // Reuse the URL returned by the OCR upload so the file is uploaded once.
   const [orderFileUrl, setOrderFileUrl] = useState("");
-  const [priceFileUrl, setPriceFileUrl] = useState("");
   const [fileResetKey, setFileResetKey] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -138,7 +134,6 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
       // The order screenshot is usually already uploaded by the OCR pass; only
       // upload here if that did not produce a URL.
       let orderScreenshotUrl = orderFileUrl;
-      let priceScreenshotUrl = priceFileUrl;
 
       if (orderFile && !orderScreenshotUrl) {
         const fd = new FormData();
@@ -149,17 +144,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
         orderScreenshotUrl = d.url;
       }
 
-      if (priceFile && !priceScreenshotUrl) {
-        const fd = new FormData();
-        fd.append("file", priceFile);
-        const r = await fetch("/api/upload", { method: "POST", headers: getCsrfHeader(), body: fd });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || "Failed to upload price screenshot");
-        priceScreenshotUrl = d.url;
-      }
-
       if (!orderScreenshotUrl) throw new Error("Please upload your order screenshot.");
-      if (!priceScreenshotUrl) throw new Error("Please upload your price breakup screenshot.");
 
       const payload = {
         deal_id: dealId ? Number(dealId) : undefined,
@@ -178,7 +163,6 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
         unit_price: total ? Number(total) : 0,
         notes: notes.trim(),
         order_screenshot_url: orderScreenshotUrl,
-        price_screenshot_url: priceScreenshotUrl,
       };
 
       const res = await fetch("/api/orders", {
@@ -239,9 +223,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
               setSuccess(null);
               setExternalOrderId("");
               setOrderFile(null);
-              setPriceFile(null);
               setOrderFileUrl("");
-              setPriceFileUrl("");
               setOcrMsg("");
               // Remount the uncontrolled file inputs so their `required` state
               // and DOM values reset together with React state.
@@ -278,7 +260,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
       <div style={{ marginBottom: 18 }}>
         <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Submit order proof</h3>
         <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
-          Upload your order confirmation & price breakup after placing the order on Amazon/Flipkart.
+          Upload your order confirmation screenshot after placing the order on Amazon/Flipkart.
         </p>
       </div>
 
@@ -412,10 +394,10 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
           />
         </div>
 
-        {/* Screenshot uploads */}
+        {/* Screenshot upload */}
         <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
           <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            1. Order screenshot * (Auto-scanned by OCR)
+            Order screenshot * (Auto-scanned by OCR)
           </label>
           <input
             key={`order-${fileResetKey}`}
@@ -427,45 +409,6 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
           />
           <span className="muted" style={{ fontSize: 12 }}>
             Must clearly show the Order ID, Product Title, and Order Date.
-          </span>
-        </div>
-
-        <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
-          <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            2. Price breakup screenshot *
-          </label>
-          <input
-            key={`price-${fileResetKey}`}
-            className="input"
-            type="file"
-            required={!priceFileUrl}
-            accept="image/*"
-            onChange={async (e) => {
-              const f = e.target.files?.[0] ?? null;
-              setPriceFile(f);
-              setPriceFileUrl("");
-              if (!f) return;
-              setUploading(true);
-              try {
-                const fd = new FormData();
-                fd.append("file", f);
-                const r = await fetch("/api/upload", { method: "POST", headers: getCsrfHeader(), body: fd });
-                const d = await r.json();
-                if (!r.ok) {
-                  setPriceFile(null);
-                  setOcrMsg(d.error || "Price screenshot upload failed.");
-                  return;
-                }
-                setPriceFileUrl(d.url || "");
-              } catch {
-                setPriceFile(null);
-              } finally {
-                setUploading(false);
-              }
-            }}
-          />
-          <span className="muted" style={{ fontSize: 12 }}>
-            Screenshot of the Payment & Tax Summary / Price Breakdown page.
           </span>
         </div>
 

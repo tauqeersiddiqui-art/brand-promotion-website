@@ -52,6 +52,27 @@ export function analyzeReviewText(text: string): { hasVerifiedPurchase: boolean;
   return { hasVerifiedPurchase, has5StarRating };
 }
 
+/** Normalizes an order ID so OCR output and typed input compare reliably. */
+export function normalizeOrderId(id: string): string {
+  return (id || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+// Phrases the marketplaces show once the return window is over. Amazon renders
+// "Return window closed on 12 Aug 2024"; Flipkart shows "Return window: Closed"
+// or "Returns closed". OCR mangles spacing/punctuation, so stay lenient.
+const RETURN_WINDOW_CLOSED_REGEXES = [
+  /return\s*window\s*(?:is\s+|has\s+|was\s+|got\s+|:|-)?\s*(?:now\s+)?(?:closed|ended|expired|over)\b/i,
+  /(?:returns?|refund)\s*(?:window|period)?\s*(?:is\s+|has\s+|:|-)?\s*(?:now\s+)?(?:closed|ended|expired|over)\b/i,
+  /no\s+longer\s+(?:eligible\s+for\s+)?(?:returns?|returnable)\b/i,
+];
+
+/** True when the screenshot text says the return window has closed. */
+export function hasReturnWindowClosed(text: string): boolean {
+  if (!text) return false;
+  const normalized = text.replace(/\s+/g, " ");
+  return RETURN_WINDOW_CLOSED_REGEXES.some((re) => re.test(normalized));
+}
+
 /** Extracts order date from OCR text (ISO format YYYY-MM-DD or DD-MM-YYYY) */
 export function extractOrderDate(text: string): string | null {
   if (!text) return null;

@@ -170,7 +170,7 @@ export function checkCooldownAfterRejection(userId: number, cooldownDays: number
  */
 export function checkDuplicateOrderInReimbursements(externalOrderId: string): { duplicate: boolean; existingReimbId?: number } {
   const existing = db
-    .prepare("SELECT id FROM reimbursements WHERE external_order_id = ? AND status IN ('pending', 'approved', 'paid') LIMIT 1")
+    .prepare("SELECT id FROM reimbursements WHERE external_order_id = ? AND status IN ('pending', 'under_review', 'approved', 'paid') LIMIT 1")
     .get(externalOrderId) as { id: number } | undefined;
 
   return {
@@ -327,6 +327,79 @@ export function makeDecision(
 }
 
 /**
+ * p_hash of a stored screenshot URL, or "" when the URL is not one of ours.
+ */
+function uploadHashForUrl(url: string): string {
+  if (!url || !url.startsWith("/uploads/")) return "";
+  const row = db
+    .prepare("SELECT p_hash FROM uploads WHERE url = ? AND p_hash != '' LIMIT 1")
+    .get(url) as { p_hash: string } | undefined;
+  return row?.p_hash || "";
+}
+
+/**
+ * True when this screenshot, or a byte-identical copy of it, already belongs to
+ * another order. Comparing hashes (not just the URL) catches the same file being
+ * re-uploaded under a new name, while still letting a buyer retry a submission
+ * with the screenshot already attached to their own order.
+ */
+export function isScreenshotUsedByAnotherOrder(url: string, excludeOrderId?: number): boolean {
+  if (!url || !url.startsWith("/uploads/")) return false;
+  const excluded = excludeOrderId ?? -1;
+  const hash = uploadHashForUrl(url);
+
+  if (hash) {
+    const byHash = db
+      .prepare(`
+        SELECT o.id FROM orders o
+        JOIN uploads u ON u.url IN (o.order_screenshot_url, o.price_screenshot_url)
+        WHERE u.p_hash = ? AND o.id != ? LIMIT 1
+      `)
+      .get(hash, excluded) as { id: number } | undefined;
+    if (byHash) return true;
+  }
+
+  const byUrl = db
+    .prepare(
+      "SELECT id FROM orders WHERE (order_screenshot_url = ? OR price_screenshot_url = ?) AND id != ? LIMIT 1"
+    )
+    .get(url, url, excluded) as { id: number } | undefined;
+  return !!byUrl;
+}
+
+/**
+ * True when this screenshot, or a byte-identical copy of it, is already attached
+ * to a cashback claim for a different order.
+ */
+export function isScreenshotUsedByAnotherClaim(
+  url: string,
+  externalOrderId: string
+): boolean {
+  if (!url || !url.startsWith("/uploads/")) return false;
+  const hash = uploadHashForUrl(url);
+
+  if (hash) {
+    const byHash = db
+      .prepare(`
+        SELECT r.id FROM reimbursements r
+        JOIN uploads u ON u.url IN (r.review_screenshot_url, r.order_screenshot_url)
+        WHERE u.p_hash = ? AND r.external_order_id != ? LIMIT 1
+      `)
+      .get(hash, externalOrderId) as { id: number } | undefined;
+    if (byHash) return true;
+  }
+
+  const byUrl = db
+    .prepare(`
+      SELECT id FROM reimbursements
+      WHERE (review_screenshot_url = ? OR order_screenshot_url = ?) AND external_order_id != ?
+      LIMIT 1
+    `)
+    .get(url, url, externalOrderId) as { id: number } | undefined;
+  return !!byUrl;
+}
+
+/**
  * Full validation pipeline for order submission
  */
 export async function validateOrderSubmission(
@@ -369,15 +442,10 @@ export async function validateOrderSubmission(
   // very screenshot and hard-rejected every genuine submission.
   let imageHashUnique = true;
   for (const shotUrl of [orderScreenshotUrl, priceScreenshotUrl]) {
-    if (!shotUrl || !shotUrl.startsWith("/uploads/")) continue;
-    const usedBy = db
-      .prepare(
-        "SELECT id FROM orders WHERE order_screenshot_url = ? OR price_screenshot_url = ? LIMIT 1"
-      )
-      .get(shotUrl, shotUrl) as { id: number } | undefined;
-    if (usedBy) {
+    if (!shotUrl) continue;
+    if (isScreenshotUsedByAnotherOrder(shotUrl)) {
       imageHashUnique = false;
-      console.warn(`Duplicate screenshot detected: already used by order ${usedBy.id}`);
+      console.warn(`Duplicate screenshot detected: ${shotUrl} already used by another order`);
       break;
     }
   }

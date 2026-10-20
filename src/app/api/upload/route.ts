@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { saveUploadedImage, deleteUploadedImage } from "@/lib/upload";
+import { saveUploadedImage } from "@/lib/upload";
 import { runOcrOnBuffer, extractOrderId, extractAmount, extractOrderDate, analyzeReviewText } from "@/lib/ocr";
 import { applyRateLimit } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
@@ -67,29 +67,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // Compute perceptual hash for duplicate detection
+    // Compute a content hash for anti-fraud checks. Reuse is enforced at
+    // submission time (against orders and claims), never here: hard-rejecting a
+    // hash match meant a buyer could not re-upload their own screenshot after a
+    // failed or rejected submission.
     if (saved.buffer) {
       pHash = computeImageHash(saved.buffer);
-
-      // Check for duplicate screenshot. The file is already on disk at this
-      // point, so it is removed again: the 409 path used to leave an orphan
-      // file behind on every duplicate attempt.
-      const existing = db
-        .prepare("SELECT id FROM uploads WHERE p_hash = ? AND p_hash != '' LIMIT 1")
-        .get(pHash);
-      if (existing) {
-        deleteUploadedImage(saved.url);
-        // The other record's URL is deliberately not returned: those images are
-        // order/review screenshots containing order IDs, names and amounts.
-        return NextResponse.json(
-          {
-            ok: false,
-            error: "Duplicate screenshot detected. This image has already been uploaded.",
-            duplicate: true,
-          },
-          { status: 409 }
-        );
-      }
     }
 
     // Store upload record with OCR results

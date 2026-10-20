@@ -79,7 +79,7 @@ export default function AdminDealsPage() {
   const [editing, setEditing] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ type: "ok" | "err" | "warn"; text: string } | null>(null);
   const [filterPlatform, setFilterPlatform] = useState("All");
 
   async function load() {
@@ -190,9 +190,9 @@ export default function AdminDealsPage() {
         ...f,
         platform: d.platform,
         title: d.title || f.title,
-        price_original: String(d.priceOriginal || ""),
-        price_sale: String(d.priceSale || ""),
-        cashback_amount: String(calculatedCashback),
+        price_original: d.priceOriginal ? String(d.priceOriginal) : f.price_original,
+        price_sale: d.priceSale ? String(d.priceSale) : f.price_sale,
+        cashback_amount: salePrice > 0 ? String(calculatedCashback) : f.cashback_amount,
         deal_type: resolvedDealType,
         image_url: d.imageUrl || f.image_url,
         target_keyword: d.targetKeyword || f.target_keyword,
@@ -200,7 +200,14 @@ export default function AdminDealsPage() {
         // Keep the deal_url (don't clear it)
         deal_url: f.deal_url,
       }));
-      setMsg({ type: "ok", text: "Product details fetched! ✅ Review and adjust if needed." });
+      if (d.partial) {
+        setMsg({
+          type: "warn",
+          text: d.note || "Only the product title could be fetched. Please fill the price and image manually.",
+        });
+      } else {
+        setMsg({ type: "ok", text: "Product details fetched! ✅ Review and adjust if needed." });
+      }
     } catch {
       setMsg({ type: "err", text: "Network error fetching product." });
     } finally {
@@ -320,7 +327,7 @@ export default function AdminDealsPage() {
       </div>
 
       {msg && (
-        <div className={`alert ${msg.type === "ok" ? "alert-success" : "alert-error"}`}>
+        <div className={`alert ${msg.type === "ok" ? "alert-success" : msg.type === "warn" ? "alert-warn" : "alert-error"}`}>
           {msg.text}
         </div>
       )}

@@ -52,6 +52,88 @@ function firstNumber(html: string, patterns: RegExp[]): number {
   return 0;
 }
 
+/**
+ * Build a readable title from the product URL slug. Flipkart/Amazon block
+ * automated server requests, but the slug is always available locally:
+ * /motorola-amphisoundx-vibe-120-w.../p/itmXXX -> "Motorola Amphisoundx Vibe 120 W..."
+ */
+function titleFromUrlSlug(rawUrl: string): string {
+  try {
+    const u = new URL(rawUrl);
+    const m = u.pathname.match(/\/([a-z0-9][a-z0-9-]+)\/(?:p|dp)\//i);
+    if (!m) return "";
+    const SMALL = new Set(["and", "or", "with", "for", "the", "of", "in", "to", "on", "a", "an"]);
+    return m[1]
+      .split("-")
+      .filter(Boolean)
+      .map((w, i) =>
+        i > 0 && SMALL.has(w.toLowerCase())
+          ? w.toLowerCase()
+          : w.charAt(0).toUpperCase() + w.slice(1)
+      )
+      .join(" ")
+      .slice(0, 200);
+  } catch {
+    return "";
+  }
+}
+
+/** Parse title/price/image out of a Flipkart product page (live or archived). */
+function parseFlipkartHtml(html: string) {
+  const ogTitle = decodeEntities(metaContent(html, "og:title"));
+  const pageTitle = decodeEntities((html.match(/<title[^>]*>([^<]*)<\/title>/i) || [])[1] || "");
+  const rawTitle = (ogTitle || pageTitle).trim();
+
+  // Bot-wall pages still return HTTP 200, but with Flipkart's generic site
+  // title ("Buy Products Online at Best Price in India..."), so treat that as
+  // "no data" instead of autofilling garbage.
+  if (/^(Buy\s+)?Products Online at Best Price in India|^Online Shopping India|All Categories\s*\|\s*Flipkart\.com/i.test(rawTitle)) {
+    return { title: "", price: 0, originalPrice: 0, image: "", description: "" };
+  }
+
+  const title = rawTitle
+    .replace(/\s*[-\u2013|]\s*Price in India.*$/i, "")
+    .replace(/\s*[-\u2013|]\s*Buy\s.*$/i, "")
+    .replace(/^\s*Buy\s+/i, "")
+    .trim();
+
+  // Flipkart embeds pricing as JSON (escaped and unescaped variants):
+  // \"ppd\":{\"fsp\":199,\"finalPrice\":199,\"mrp\":550,...}
+  const price = firstNumber(html, [
+    /\\?"finalPrice\\?":\s*(\d+(?:\.\d+)?)/,
+    /\\?"fsp\\?":\s*(\d+(?:\.\d+)?)/,
+    /Nx9bqj[^>]*>\u20B9([\d,]+)/,
+    /VU-ZEz[^>]*>\u20B9([\d,]+)/,
+  ]);
+  const mrp = firstNumber(html, [/\\?"mrp\\?":\s*(\d+(?:\.\d+)?)/]);
+
+  let image = metaContent(html, "og:image");
+  // Bump Flipkart CDN thumbnails to a sharper standard size.
+  if (image) image = image.replace(/\/image\/\d+\/\d+\//, "/image/832/832/");
+
+  const description = decodeEntities(metaContent(html, "description")).slice(0, 500);
+
+  return { title, price, originalPrice: mrp || price, image, description };
+}
+
+/** Pull 5 useful SEO keywords out of a product title. */
+function keywordFromTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 3)
+    .slice(0, 5)
+    .join(" ");
+}
+
+/** True for error/captcha pages that must not be autofilled as a title. */
+function isUnusableTitle(title: string): boolean {
+  return /^(page not found|sorry!?\s+something went wrong|robot check|enter the characters you see below|amazon\.[a-z.]+)$/i.test(
+    title.trim()
+  );
+}
+
 /** Fetch product details from Amazon/Flipkart product URL. */
 export async function POST(req: NextRequest) {
   const { error } = await requireAdmin();
@@ -206,41 +288,28 @@ export async function POST(req: NextRequest) {
       }
       if (!description) description = decodeEntities(metaContent(html, "description")).slice(0, 500);
 
-      productData = { title, price, originalPrice: mrp || price, image, description };
+      productData = isUnusableTitle(title)
+        ? { title: "", price: 0, originalPrice: 0, image: "", description: "" }
+        : { title, price, originalPrice: mrp || price, image, description };
     } else if (platform === "Flipkart") {
-      // Fetch the exact product URL the admin pasted (keeps the pid param),
-      // because /p/<id> alone is not a valid Flipkart product route.
-      const response = await fetch(cleanUrl, {
-        headers: PAGE_HEADERS,
-        signal: AbortSignal.timeout(12000),
-      });
-      const html = await response.text();
+      // Flipkart now aggressively blocks server-side requests (PerimeterX
+      // bot-wall + 429s) from both residential and datacenter IPs, so the page
+      // may come back as a generic shell. Try the live page, then fall back to
+      // the title encoded in the URL slug. Never throws - a partial autofill
+      // is still useful.
+      let parsed = { title: "", price: 0, originalPrice: 0, image: "", description: "" };
+      try {
+        const response = await fetch(cleanUrl, {
+          headers: PAGE_HEADERS,
+          signal: AbortSignal.timeout(10000),
+        });
+        parsed = parseFlipkartHtml(await response.text());
+      } catch (err) {
+        console.warn("[ProductFetch] Flipkart direct fetch failed:", err);
+      }
 
-      const ogTitle = decodeEntities(metaContent(html, "og:title"));
-      const pageTitle = decodeEntities((html.match(/<title[^>]*>([^<]*)<\/title>/i) || [])[1] || "");
-      const title = (ogTitle || pageTitle)
-        .replace(/\s*[-\u2013|]\s*Price in India.*$/i, "")
-        .replace(/\s*[-\u2013|]\s*Buy\s.*$/i, "")
-        .replace(/^\s*Buy\s+/i, "")
-        .trim();
-
-      // Flipkart embeds pricing as JSON (escaped and unescaped variants):
-      // \"ppd\":{\"fsp\":199,\"finalPrice\":199,\"mrp\":550,...}
-      const price = firstNumber(html, [
-        /\\?"finalPrice\\?":\s*(\d+(?:\.\d+)?)/,
-        /\\?"fsp\\?":\s*(\d+(?:\.\d+)?)/,
-        /Nx9bqj[^>]*>\u20B9([\d,]+)/,
-        /VU-ZEz[^>]*>\u20B9([\d,]+)/,
-      ]);
-      const mrp = firstNumber(html, [/\\?"mrp\\?":\s*(\d+(?:\.\d+)?)/]);
-
-      let image = metaContent(html, "og:image");
-      // Bump Flipkart CDN thumbnails to a sharper standard size.
-      if (image) image = image.replace(/\/image\/\d+\/\d+\//, "/image/832/832/");
-
-      const description = decodeEntities(metaContent(html, "description")).slice(0, 500);
-
-      productData = { title, price, originalPrice: mrp || price, image, description };
+      if (!parsed.title) parsed.title = titleFromUrlSlug(cleanUrl);
+      productData = parsed;
     }
   } catch (err) {
     console.warn("[ProductFetch] Error fetching product:", err);
@@ -252,7 +321,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!productData || !productData.title || productData.price <= 0) {
+  const derivedTitle = productData?.title || titleFromUrlSlug(cleanUrl);
+
+  if (!derivedTitle) {
     return NextResponse.json(
       {
         error:
@@ -262,20 +333,32 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Generate suggested keyword from title
-  const keywords = productData.title
-    .toLowerCase()
-    .replace(/[^\w\s]/g, "")
-    .split(/\s+/)
-    .filter((w) => w.length > 3)
-    .slice(0, 5)
-    .join(" ");
+  const keywords = keywordFromTitle(derivedTitle);
+
+  if (!productData || productData.price <= 0) {
+    // The marketplace blocked the page, but we could still recover the title
+    // (from the slug or an archived copy) - return it as a partial autofill so
+    // the admin only has to type the price.
+    return NextResponse.json({
+      ok: true,
+      partial: true,
+      platform,
+      productId,
+      title: derivedTitle,
+      priceSale: 0,
+      priceOriginal: 0,
+      imageUrl: productData?.image || "",
+      targetKeyword: keywords,
+      description: productData?.description || "",
+      note: `We filled in the ${productData?.image ? "title and image" : "title"} from the product link, but the price could not be read automatically (${platform} may be blocking automated access, or the listing may be unavailable). Please enter the sale price and MRP manually${productData?.image ? "" : ", then add a product image (upload a screenshot or paste an image URL)"}.`,
+    });
+  }
 
   return NextResponse.json({
     ok: true,
     platform,
     productId,
-    title: productData.title,
+    title: derivedTitle,
     priceSale: productData.price,
     priceOriginal: productData.originalPrice || productData.price,
     imageUrl: productData.image,

@@ -22,12 +22,12 @@ function getCsp() {
     // Development: more permissive for HMR, webpack, etc.
     return [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.adtrafficquality.google",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.ocr.space https://www.google.com https://accounts.google.com ws:",
-      "frame-src 'self' https://accounts.google.com",
+      "connect-src 'self' https://api.ocr.space https://www.google.com https://accounts.google.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google ws:",
+      "frame-src 'self' https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -36,12 +36,12 @@ function getCsp() {
 
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // 'unsafe-inline' needed for Next.js inline scripts; 'unsafe-eval' for devtools in prod builds if needed
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.adtrafficquality.google", // AdSense loader and ad frames
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://api.ocr.space https://www.google.com https://accounts.google.com",
-    "frame-src 'self' https://accounts.google.com",
+    "connect-src 'self' https://api.ocr.space https://www.google.com https://accounts.google.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google",
+    "frame-src 'self' https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

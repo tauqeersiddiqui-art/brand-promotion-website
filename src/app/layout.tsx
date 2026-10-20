@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
 import { ADSENSE_CLIENT } from "@/lib/adsense";
 import { getSettings, type SiteSettings } from "@/lib/settings";
@@ -52,11 +51,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         {adsenseClient && (
-          <Script
+          <script
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
             crossOrigin="anonymous"
-            strategy="beforeInteractive"
           />
         )}
         <CsrfBootstrap />

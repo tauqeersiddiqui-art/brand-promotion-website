@@ -26,6 +26,8 @@ type Reimbursement = {
   review_screenshot_url: string;
   ocr_text: string;
   order_screenshot_url: string;
+  seller_feedback_url: string;
+  mediator_name: string;
   order_ocr_text: string;
   ocr_status: string;
   payout_method: string;
@@ -459,6 +461,10 @@ export default function AdminReimbursementsPage() {
                   <div>{activeItem.reviewer_name || activeItem.order_customer}</div>
                 </div>
                 <div>
+                  <span className="muted">Mediator Name:</span>
+                  <div>{activeItem.mediator_name || "—"}</div>
+                </div>
+                <div>
                   <span className="muted">WhatsApp / Phone:</span>
                   <div>{activeItem.customer_phone || "—"}</div>
                 </div>
@@ -483,9 +489,9 @@ export default function AdminReimbursementsPage() {
             </div>
 
             {/* Screenshots inspection */}
-            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
               {activeItem.review_screenshot_url && (
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
                   <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>⭐ Live Review Screenshot:</div>
                   <a href={activeItem.review_screenshot_url} target="_blank" rel="noopener noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -498,7 +504,7 @@ export default function AdminReimbursementsPage() {
                 </div>
               )}
               {activeItem.order_screenshot_url && (
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
                   <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>📦 Order page (return window closed):</div>
                   <a href={activeItem.order_screenshot_url} target="_blank" rel="noopener noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -510,8 +516,21 @@ export default function AdminReimbursementsPage() {
                   </a>
                 </div>
               )}
+              {activeItem.seller_feedback_url && (
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>🗣️ Seller feedback form:</div>
+                  <a href={activeItem.seller_feedback_url} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={activeItem.seller_feedback_url}
+                      alt="Seller feedback form"
+                      style={{ width: "100%", maxHeight: 160, objectFit: "contain", borderRadius: 8, background: "var(--bg)", border: "1px solid var(--border)" }}
+                    />
+                  </a>
+                </div>
+              )}
               {activeItem.order_proof_url && (
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
                   <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>🧾 Original order proof:</div>
                   <a href={activeItem.order_proof_url} target="_blank" rel="noopener noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}

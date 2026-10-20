@@ -230,7 +230,7 @@ export default function AccountPage() {
           onClick={() => setActiveTab("new_claim")}
           style={{ width: "auto" }}
         >
-          Submit payout claim
+          Submit refund request
         </button>
       </div>
 
@@ -372,7 +372,7 @@ export default function AccountPage() {
                   className="btn mt"
                   onClick={() => setActiveTab("new_claim")}
                 >
-                  Submit payout claim
+                  Submit refund request
                 </button>
             </div>
           ) : (

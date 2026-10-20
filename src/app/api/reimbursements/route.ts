@@ -50,6 +50,8 @@ export async function POST(req: Request) {
   const reviewLink = sanitizeText(str(body.review_link, 500), 500).trim();
   const reviewScreenshotUrl = sanitizeText(str(body.review_screenshot_url, 500), 500).trim();
   const orderScreenshotUrl = sanitizeText(str(body.order_screenshot_url, 500), 500).trim();
+  const sellerFeedbackUrl = sanitizeText(str(body.seller_feedback_url, 500), 500).trim();
+  const mediatorName = sanitizeText(str(body.mediator_name, 100), 100).trim();
   const payoutMethod = sanitizeText(str(body.payout_method, 10), 10).toLowerCase() === "bank" ? "bank" : "upi";
   const upiId = sanitizeUpiId(str(body.upi_id, 80));
   const bankName = sanitizeText(str(body.bank_name, 80), 80).trim();
@@ -259,6 +261,12 @@ export async function POST(req: Request) {
   if (!SAFE_UPLOAD_PATH.test(orderScreenshotUrl)) {
     return bad("Invalid order screenshot path.", 400);
   }
+  if (!sellerFeedbackUrl) {
+    return bad("Please upload a screenshot of the seller feedback form you submitted for this order.");
+  }
+  if (!SAFE_UPLOAD_PATH.test(sellerFeedbackUrl)) {
+    return bad("Invalid seller feedback screenshot path.", 400);
+  }
 
   // The same image cannot back claims for two different orders. Re-using a
   // screenshot for the *same* order is allowed, so a buyer can retry freely.
@@ -271,6 +279,12 @@ export async function POST(req: Request) {
   if (isScreenshotUsedByAnotherClaim(orderScreenshotUrl, order.external_order_id)) {
     return bad(
       "Duplicate order screenshot detected. This image has already been used for another order's claim.",
+      409
+    );
+  }
+  if (isScreenshotUsedByAnotherClaim(sellerFeedbackUrl, order.external_order_id)) {
+    return bad(
+      "Duplicate seller feedback screenshot detected. This image has already been used for another order's claim.",
       409
     );
   }
@@ -342,13 +356,13 @@ export async function POST(req: Request) {
     INSERT INTO reimbursements (
       reimbursement_code, order_id, user_id, deal_id, external_order_id,
       reviewer_name, review_rating, review_text, review_link, review_screenshot_url,
-      order_screenshot_url, ocr_text, order_ocr_text, ocr_status, payout_method, upi_id, bank_name,
-      account_number, ifsc_code, account_holder, amount, status
+      order_screenshot_url, seller_feedback_url, mediator_name, ocr_text, order_ocr_text,
+      ocr_status, payout_method, upi_id, bank_name, account_number, ifsc_code,
+      account_holder, amount, status
     ) VALUES (
-      ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, 'pending'
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, 'pending'
     )
   `);
 
@@ -364,6 +378,8 @@ export async function POST(req: Request) {
     reviewLink,
     reviewScreenshotUrl,
     orderScreenshotUrl,
+    sellerFeedbackUrl,
+    mediatorName,
     ocrText,
     orderOcr.text,
     ocrStatus,
@@ -383,7 +399,7 @@ export async function POST(req: Request) {
     amount: finalAmount,
     payout_method: payoutMethod,
     upi_id: upiId,
-    message: "Reimbursement claim submitted successfully! Cashback will be transferred via UPI after verification.",
+    message: "Refund request submitted successfully! Cashback will be transferred via UPI after verification.",
   });
 }
 

@@ -22,6 +22,7 @@ export default function ClaimCashbackForm() {
   const pathname = usePathname();
   const [externalOrderId, setExternalOrderId] = useState("");
   const [reviewerName, setReviewerName] = useState("");
+  const [mediatorName, setMediatorName] = useState("");
   const [payoutMethod, setPayoutMethod] = useState("upi");
   const [upiId, setUpiId] = useState("");
   // The API reads discrete fields (account_number / account_holder /
@@ -38,6 +39,8 @@ export default function ClaimCashbackForm() {
   const [reviewFileUrl, setReviewFileUrl] = useState("");
   const [orderFile, setOrderFile] = useState<File | null>(null);
   const [orderFileUrl, setOrderFileUrl] = useState("");
+  const [feedbackFile, setFeedbackFile] = useState<File | null>(null);
+  const [feedbackFileUrl, setFeedbackFileUrl] = useState("");
   const [fileResetKey, setFileResetKey] = useState(0);
 
   const [busy, setBusy] = useState(false);
@@ -105,6 +108,28 @@ export default function ClaimCashbackForm() {
     }
   }
 
+  async function handleFeedbackScreenshotChange(file: File | null) {
+    setFeedbackFile(file);
+    setFeedbackFileUrl("");
+    if (!file) return;
+    setOcrMsg("Uploading seller feedback screenshot…");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/upload", { method: "POST", headers: getCsrfHeader(), body: fd });
+      const d = await r.json();
+      if (!r.ok) {
+        setOcrMsg(d.error || "Screenshot upload failed. Please try again.");
+        setFeedbackFile(null);
+        return;
+      }
+      setFeedbackFileUrl(d.url || "");
+      setOcrMsg("✅ Seller feedback screenshot uploaded.");
+    } catch {
+      setOcrMsg("");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -134,9 +159,21 @@ export default function ClaimCashbackForm() {
       }
       if (!orderScreenshotUrl) throw new Error("Please upload your order details screenshot.");
 
+      let sellerFeedbackUrl = feedbackFileUrl;
+      if (feedbackFile && !sellerFeedbackUrl) {
+        const fd = new FormData();
+        fd.append("file", feedbackFile);
+        const r = await fetch("/api/upload", { method: "POST", headers: getCsrfHeader(), body: fd });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || "Failed to upload seller feedback screenshot");
+        sellerFeedbackUrl = d.url;
+      }
+      if (!sellerFeedbackUrl) throw new Error("Please upload your seller feedback form screenshot.");
+
       const payload = {
         external_order_id: externalOrderId.trim(),
         reviewer_name: reviewerName.trim(),
+        mediator_name: mediatorName.trim(),
         payout_method: payoutMethod,
         upi_id: upiId.trim(),
         account_number: accountNumber.trim(),
@@ -146,6 +183,7 @@ export default function ClaimCashbackForm() {
         amount: amount ? Number(amount) : undefined,
         review_screenshot_url: reviewScreenshotUrl,
         order_screenshot_url: orderScreenshotUrl,
+        seller_feedback_url: sellerFeedbackUrl,
         review_link: reviewLink.trim(),
         // The route reads `review_text`; `review_notes` was silently dropped.
         review_text: reviewNotes.trim(),
@@ -160,7 +198,7 @@ export default function ClaimCashbackForm() {
 
       const d = await res.json();
       if (!res.ok) {
-        setError(d.error || "Failed to submit reimbursement claim.");
+        setError(d.error || "Failed to submit refund request.");
       } else {
         setSuccess({
           reimbursement_code: d.reimbursement_code,
@@ -181,7 +219,7 @@ export default function ClaimCashbackForm() {
       <div className="card" style={{ textAlign: "center", padding: "36px 20px" }}>
         <div className="muted" style={{ fontSize: 44, marginBottom: 10, display: "block" }}>—</div>
         <h2 style={{ margin: "0 0 8px", fontSize: 24, color: "var(--accent)" }}>
-          Reimbursement claim submitted!
+          Refund request submitted!
         </h2>
         <p className="muted" style={{ maxWidth: 500, margin: "0 auto 16px" }}>
           Claim Ref: <strong style={{ color: "var(--brand)" }}>{success.reimbursement_code}</strong>.
@@ -206,6 +244,8 @@ export default function ClaimCashbackForm() {
               setReviewFileUrl("");
               setOrderFile(null);
               setOrderFileUrl("");
+              setFeedbackFile(null);
+              setFeedbackFileUrl("");
               setOcrMsg("");
               setFileResetKey((k) => k + 1);
             }}
@@ -238,10 +278,11 @@ export default function ClaimCashbackForm() {
   return (
     <form onSubmit={handleSubmit} className="card">
       <div style={{ marginBottom: 18 }}>
-        <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Claim review cashback / reimbursement</h3>
+        <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Submit refund request</h3>
         <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
-          Once your product is delivered, your review is live on Amazon/Flipkart and the return
-          window has closed, submit both screenshots for 100% UPI cashback.
+          Once your product is delivered, your 5-star review is live on Amazon/Flipkart and the
+          return window has closed, submit the order, review and seller feedback screenshots for
+          100% UPI cashback.
         </p>
       </div>
 
@@ -270,6 +311,16 @@ export default function ClaimCashbackForm() {
             value={reviewerName}
             onChange={(e) => setReviewerName(e.target.value)}
             placeholder="Name displayed on your review"
+          />
+        </div>
+
+        <div>
+          <label className="form-label">Mediator Name</label>
+          <input
+            className="input"
+            value={mediatorName}
+            onChange={(e) => setMediatorName(e.target.value)}
+            placeholder="Name of the mediator who handled this order"
           />
         </div>
 
@@ -375,25 +426,7 @@ export default function ClaimCashbackForm() {
 
         <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
           <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            1. Live review screenshot * (5 stars &amp; &quot;Verified Purchase&quot; badge)
-          </label>
-          <input
-            key={`review-${fileResetKey}`}
-            className="input"
-            type="file"
-            required={!reviewFileUrl}
-            accept="image/*"
-            onChange={(e) => handleReviewScreenshotChange(e.target.files?.[0] ?? null)}
-          />
-          <span className="muted" style={{ fontSize: 12 }}>
-            Screenshot of the published review. It must clearly show the 5-star rating and the
-            &quot;Verified Purchase&quot; badge; unreadable screenshots are rejected.
-          </span>
-        </div>
-
-        <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
-          <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            2. Order details screenshot * (Order ID + &quot;Return window closed&quot;)
+            1. Order screenshots * (Order ID + &quot;Return window closed&quot;)
           </label>
           <input
             key={`claim-order-${fileResetKey}`}
@@ -410,6 +443,42 @@ export default function ClaimCashbackForm() {
           </span>
         </div>
 
+        <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
+          <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
+            2. Live review &amp; rating screenshot * (5 stars &amp; &quot;Verified Purchase&quot; badge)
+          </label>
+          <input
+            key={`review-${fileResetKey}`}
+            className="input"
+            type="file"
+            required={!reviewFileUrl}
+            accept="image/*"
+            onChange={(e) => handleReviewScreenshotChange(e.target.files?.[0] ?? null)}
+          />
+          <span className="muted" style={{ fontSize: 12 }}>
+            Screenshot of the published review with its star rating. It must clearly show the
+            5-star rating and the &quot;Verified Purchase&quot; badge; unreadable screenshots are rejected.
+          </span>
+        </div>
+
+        <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
+          <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
+            3. Seller feedback form screenshot *
+          </label>
+          <input
+            key={`feedback-${fileResetKey}`}
+            className="input"
+            type="file"
+            required={!feedbackFileUrl}
+            accept="image/*"
+            onChange={(e) => handleFeedbackScreenshotChange(e.target.files?.[0] ?? null)}
+          />
+          <span className="muted" style={{ fontSize: 12 }}>
+            Screenshot of the seller feedback form you submitted for this order, showing your
+            feedback/rating for the seller.
+          </span>
+        </div>
+
         <div className="full">
           <label className="form-label">Comments / Additional Details</label>
           <textarea
@@ -423,7 +492,7 @@ export default function ClaimCashbackForm() {
 
         <div className="full">
           <button className="btn btn-block" disabled={busy}>
-            {busy ? "Submitting Claim…" : "💸 Claim 100% Payout Now →"}
+            {busy ? "Submitting Refund Request…" : "💸 Submit Refund Request →"}
           </button>
         </div>
       </div>

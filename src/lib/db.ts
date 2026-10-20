@@ -117,6 +117,8 @@ const SCHEMA_DDL = `
       review_link TEXT NOT NULL DEFAULT '',
       review_screenshot_url TEXT NOT NULL DEFAULT '',
       order_screenshot_url TEXT NOT NULL DEFAULT '',
+      seller_feedback_url TEXT NOT NULL DEFAULT '',
+      mediator_name TEXT NOT NULL DEFAULT '',
       ocr_text TEXT NOT NULL DEFAULT '',
       order_ocr_text TEXT NOT NULL DEFAULT '',
       ocr_status TEXT NOT NULL DEFAULT 'pending' CHECK (ocr_status IN ('pending','done','failed')),
@@ -204,9 +206,24 @@ const SCHEMA_DDL = `
     );
   `;
 
+/**
+ * `next build` collects pages in parallel workers and each one opens the same
+ * SQLite file, so two workers can race to add the same column. The loser gets
+ * "duplicate column name", which is harmless: the column now exists.
+ */
+function execTolerateDuplicate(database: Database.Database, sql: string) {
+  try {
+    database.exec(sql);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (!/duplicate column name/i.test(message)) throw err;
+  }
+}
+
 function createDb(): Database.Database {
   const db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
+  db.pragma("busy_timeout = 10000");
   db.pragma("foreign_keys = ON");
 
   db.exec(SCHEMA_DDL);
@@ -325,10 +342,18 @@ function createDb(): Database.Database {
     (c) => c.name
   );
   if (!reimbCols.includes("order_screenshot_url")) {
-    db.exec("ALTER TABLE reimbursements ADD COLUMN order_screenshot_url TEXT NOT NULL DEFAULT ''");
+    execTolerateDuplicate(db, "ALTER TABLE reimbursements ADD COLUMN order_screenshot_url TEXT NOT NULL DEFAULT ''");
   }
   if (!reimbCols.includes("order_ocr_text")) {
-    db.exec("ALTER TABLE reimbursements ADD COLUMN order_ocr_text TEXT NOT NULL DEFAULT ''");
+    execTolerateDuplicate(db, "ALTER TABLE reimbursements ADD COLUMN order_ocr_text TEXT NOT NULL DEFAULT ''");
+  }
+  // Refund claims also need the seller-feedback form screenshot and the name of
+  // the mediator who handled the order, as requested by the ops team.
+  if (!reimbCols.includes("seller_feedback_url")) {
+    execTolerateDuplicate(db, "ALTER TABLE reimbursements ADD COLUMN seller_feedback_url TEXT NOT NULL DEFAULT ''");
+  }
+  if (!reimbCols.includes("mediator_name")) {
+    execTolerateDuplicate(db, "ALTER TABLE reimbursements ADD COLUMN mediator_name TEXT NOT NULL DEFAULT ''");
   }
 
   // Create indexes now that all columns are guaranteed to exist

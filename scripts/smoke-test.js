@@ -441,6 +441,15 @@ async function req(jar, path, opts = {}) {
     check("GET /api/orders/me 200", mine.status === 200, `got ${mine.status}`);
     const mineOrder = mine.json?.orders?.find((o) => o.id === orderId);
     check("order visible to owner", !!mineOrder);
+    const adminList = await req(
+      admin,
+      `/api/admin/orders?search=${encodeURIComponent(orderCode)}`
+    );
+    check(
+      "new order visible in admin list",
+      adminList.status === 200 && (adminList.json?.total || 0) >= 1,
+      `status=${adminList.status} total=${adminList.json?.total}`
+    );
     check("orders/me hides fraud_score", !mineOrder || !("fraud_score" in mineOrder));
     check("orders/me hides ip", !mineOrder || !("ip" in mineOrder));
     check("order status is delivered", mineOrder?.status === "delivered", `got ${mineOrder?.status}`);
@@ -495,6 +504,28 @@ async function req(jar, path, opts = {}) {
       claimNoProof.text.slice(0, 150)
     );
 
+    const claimNoFeedback = await req(guest, "/api/reimbursements", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-csrf-token": guest.get("bp_csrf_js") },
+      body: JSON.stringify({
+        order_identifier: orderCode,
+        payout_method: "upi",
+        upi_id: "smoketester@okaxis",
+        review_screenshot_url: "/uploads/smoke-review.png",
+        order_screenshot_url: "/uploads/smoke-order.png",
+      }),
+    });
+    check(
+      "claim without seller feedback rejected (400)",
+      claimNoFeedback.status === 400,
+      `got ${claimNoFeedback.status} ${claimNoFeedback.text.slice(0, 150)}`
+    );
+    check(
+      "rejection names the seller feedback screenshot",
+      /seller feedback/i.test(claimNoFeedback.json?.error || ""),
+      claimNoFeedback.text.slice(0, 150)
+    );
+
     // 6. OCR.space cannot be made to read a fixture as a 5-star Verified
     // Purchase review, so the payout state machine is exercised with the exact
     // row the validated API would have inserted.
@@ -506,11 +537,12 @@ async function req(jar, path, opts = {}) {
           `INSERT INTO reimbursements (
              reimbursement_code, order_id, user_id, deal_id, external_order_id,
              reviewer_name, review_rating, amount, payout_method, upi_id,
-             review_screenshot_url, order_screenshot_url, ocr_status, status
+             review_screenshot_url, order_screenshot_url, seller_feedback_url,
+             ocr_status, status
            )
            SELECT ?, o.id, o.user_id, o.deal_id, o.external_order_id,
                   o.reviewer_name, 5, o.total, 'upi', 'smoketester@okaxis',
-                  '', '', 'done', 'pending'
+                  '', '', '', 'done', 'pending'
            FROM orders o WHERE o.id = ?`
         )
         .run(`SMOKE-RM-${Date.now()}`, orderId);

@@ -382,7 +382,7 @@ export function isScreenshotUsedByAnotherClaim(
     const byHash = db
       .prepare(`
         SELECT r.id FROM reimbursements r
-        JOIN uploads u ON u.url IN (r.review_screenshot_url, r.order_screenshot_url)
+        JOIN uploads u ON u.url IN (r.review_screenshot_url, r.order_screenshot_url, r.seller_feedback_url)
         WHERE u.p_hash = ? AND r.external_order_id != ? LIMIT 1
       `)
       .get(hash, externalOrderId) as { id: number } | undefined;
@@ -392,10 +392,10 @@ export function isScreenshotUsedByAnotherClaim(
   const byUrl = db
     .prepare(`
       SELECT id FROM reimbursements
-      WHERE (review_screenshot_url = ? OR order_screenshot_url = ?) AND external_order_id != ?
+      WHERE (review_screenshot_url = ? OR order_screenshot_url = ? OR seller_feedback_url = ?) AND external_order_id != ?
       LIMIT 1
     `)
-    .get(url, url, externalOrderId) as { id: number } | undefined;
+    .get(url, url, url, externalOrderId) as { id: number } | undefined;
   return !!byUrl;
 }
 

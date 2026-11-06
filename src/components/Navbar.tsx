@@ -48,11 +48,14 @@ export default function Navbar({ siteName }: { siteName: string }) {
 
   const links = [
     { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
     { href: "/browse", label: "Live Deals" },
     { href: "/stores", label: "Stores" },
     { href: "/#submit-order", label: "Submit Order" },
     { href: "/#claim-cashback", label: "Claim Cashback" },
     { href: "/track", label: "Track Status" },
+    { href: "/cancel", label: "Cancel" },
+    { href: "/help", label: "Need help?" },
     ...(me?.role === "mediator" ? [{ href: "/mediator", label: "Mediator" }] : []),
     ...(me?.role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
   ];

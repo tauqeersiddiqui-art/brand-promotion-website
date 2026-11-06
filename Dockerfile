@@ -14,6 +14,7 @@ RUN npm run build
 # Production environment
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV DATA_DIR=/data
 
 EXPOSE 3000
 

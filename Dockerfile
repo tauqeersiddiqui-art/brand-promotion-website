@@ -15,6 +15,7 @@ RUN npm ci --ignore-scripts --no-audit --no-fund --omit=dev
 
 # Copy source and build
 COPY . .
+ENV __NEXT_BUILD__=true
 RUN npm run build
 
 # Production environment

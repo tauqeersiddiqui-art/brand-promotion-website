@@ -5,8 +5,11 @@ import { db } from "./db";
 
 // Fail closed on a missing/short secret rather than silently falling back to a
 // publicly known value, which would let anyone forge an admin session token.
+// Skip the check during Next.js builds (__NEXT_BUILD__ is set in the Dockerfile)
+// so that static page generation can complete without requiring production secrets.
+const isBuild = process.env.__NEXT_BUILD__ === "true";
 const secretString = process.env.AUTH_SECRET || "";
-if (secretString.length < 32) {
+if (secretString.length < 32 && !isBuild) {
   if (process.env.NODE_ENV === "production") {
     throw new Error(
       "AUTH_SECRET must be set to a random string of at least 32 characters. Generate one with: openssl rand -base64 48"

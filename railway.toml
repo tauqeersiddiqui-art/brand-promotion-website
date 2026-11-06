@@ -1,20 +1,13 @@
-# Railway Deployment Configuration
-# This file tells Railway how to deploy your app
+# Railway Configuration
+# Uses Dockerfile to build with Debian and native tools (g++, python3, make)
+# needed for better-sqlite3 compilation
 
-services = [
-  {
-    name = "brand-promotion",
-    type = "web",
-    plan = "standard",
-    env = "node",
-    buildCommand = "npm ci --ignore-scripts --no-audit --no-fund && npm run build",
-    startCommand = "npm start",
-    healthCheckPath = "/",
-    restartPolicy = "on-failure",
-    disk = {
-      name = "data",
-      mountPath = "/data",
-      sizeGB = 1
-    }
-  }
-]
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

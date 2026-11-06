@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install production dependencies only (skip dev deps to speed up builds)
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts --no-audit --no-fund --omit=dev
+RUN npm ci --no-audit --no-fund --omit=dev && \
+    npm rebuild better-sqlite3
 
 # Copy source and build
 COPY . .

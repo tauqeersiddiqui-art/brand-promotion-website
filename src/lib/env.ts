@@ -85,7 +85,8 @@ export function getConfig(): Record<RequiredEnv | OptionalEnv, string> {
     // In development a missing optional var is common and must not take the
     // whole app down with an opaque 500 on every request, so fall back to an
     // empty string. Production already threw at module load (see above).
-    if (process.env.NODE_ENV === "production") {
+    // Skip throw during Next.js build - env vars are needed at runtime, not build time.
+    if (process.env.NODE_ENV === "production" && !isBuildTime) {
       throw new Error("Environment validation failed - check startup logs");
     }
     return result.config as Record<RequiredEnv | OptionalEnv, string>;

@@ -223,7 +223,7 @@ export default function HomePage() {
       <HomeActionTabs />
 
       {/* How it works */}
-      <section className="container section" style={{ marginTop: 8 }}>
+      <section id="how-it-works" className="container section" style={{ marginTop: 8 }}>
         <div className="section-head" style={{ textAlign: "center", justifyContent: "center" }}>
           <h2>How it works</h2>
           <p className="muted" style={{ margin: "6px auto 0", maxWidth: 620, textAlign: "center" }}>

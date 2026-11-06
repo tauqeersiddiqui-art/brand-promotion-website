@@ -73,9 +73,18 @@ export default function BrowsePage() {
             Explore 100% cashback deals across Amazon, Flipkart, Myntra and direct brand stores.
           </p>
         </div>
-        <span className="muted" style={{ fontSize: 14 }}>
-          {data ? `${data.total} deals found` : "…"}
-        </span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <span className="muted" style={{ fontSize: 14 }}>
+            {data ? `${data.total} deals found` : "…"}
+          </span>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline"
+            onClick={() => window.location.href = "/#how-it-works"}
+          >
+            How deals work
+          </button>
+        </div>
       </div>
 
       {/* Filter toolbar */}

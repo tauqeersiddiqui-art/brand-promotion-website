@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import bcrypt from "bcryptjs";
 import { DATA_DIR, ensureStorageDirs } from "./storage";
 
 ensureStorageDirs();
@@ -577,8 +578,115 @@ function reconcileCheckConstraints(
   }
 }
 
+/**
+ * Auto-seed settings + owner account on first run (empty database).
+ * This runs at app startup so the admin account is created automatically
+ * even if scripts/seed.js was never executed manually.
+ */
+function autoSeed(): void {
+  // Only seed settings that don't already exist (never overwrite admin changes)
+  const settingStmt = db.prepare(
+    "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO NOTHING"
+  );
+  [
+    ["site_name", "Brand Promotion"],
+    ["tagline", "India's #1 Influencer Refund & Brand Promotion Platform"],
+    ["announcement", "🔥 100% Refund Campaign Live! Buy on Amazon/Flipkart, share review & get full UPI reimbursement."],
+    ["whatsapp", "918527324446"],
+    ["telegram", "brandreviewer"],
+    ["support_email", "support@brandpromotion.in"],
+    ["instagram", "brandpromotion.in"],
+    ["mediators", "Direct,Amit Mediator,Rahul Agency,Pooja Deals,VIP Campaigns,Social Reach"],
+    ["rules_instructions", "1. Check available slots before ordering.\n2. Search product with specified keyword on Amazon/Flipkart.\n3. Upload the order confirmation screenshot (must show the Order ID).\n4. After delivery, post a genuine 5-star review with photos.\n5. Once the return window closes, claim refund with your review screenshot and an order-page screenshot showing the Order ID and 'Return window closed'."],
+  ].forEach(([k, v]) => settingStmt.run(k, v));
+
+  // Owner account: ADMIN_PASSWORD env var is authoritative on boot
+  const adminEmail = (process.env.ADMIN_EMAIL || "admin@brandpromotion.in").toLowerCase();
+  const envPassword = process.env.ADMIN_PASSWORD || "";
+  const existing = db.prepare("SELECT id, email, password_hash FROM users WHERE email = ?").get(adminEmail);
+  if (!existing) {
+    const initialPassword = envPassword || "ChangeMe@123";
+    const hash = bcrypt.hashSync(initialPassword, 12);
+    db.prepare(
+      "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')"
+    ).run("Administrator", adminEmail, hash);
+    console.log(`[seed] Owner account created: ${adminEmail} / ${initialPassword}`);
+  } else if (envPassword && !bcrypt.compareSync(envPassword, existing.password_hash)) {
+    db.prepare("UPDATE users SET password_hash = ?, role = 'admin' WHERE id = ?").run(
+      bcrypt.hashSync(envPassword, 12),
+      existing.id
+    );
+    console.log(`[seed] Owner password synced from ADMIN_PASSWORD for: ${adminEmail}`);
+  }
+
+  // Seed sample deals if none exist
+  const dealCount = db.prepare("SELECT COUNT(*) AS c FROM deals").get() as { c: number };
+  if (dealCount.c === 0) {
+    const deals = [
+      {
+        product_code: "SF-B202",
+        title: "Vitamin C & Hyaluronic Glowing Face Serum (30ml)",
+        description: "100% Natural brightening serum for all skin types. Flipkart review campaign with full refund.",
+        category: "Beauty",
+        platform: "Flipkart",
+        deal_type: "100% Refund",
+        image_url: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80",
+        deal_url: "https://www.flipkart.com",
+        target_keyword: "Search 'Vitamin C Glow Serum' and select seller GlowPure Official",
+        instructions: "Take unboxing photo + selfie with serum. Write at least 25 words review with 5 stars.",
+        coupon_code: "",
+        price_original: 899,
+        price_sale: 499,
+        refund_amount: 499,
+        total_slots: 100,
+        claimed_slots: 43,
+        stock: 57,
+        featured: 1
+      },
+      {
+        product_code: "SF-P006",
+        title: "Aluan 4-in-1 Portable Vacuum Cleaner",
+        description: "15000Pa cyclone suction, handheld vacuum for car and home.",
+        category: "Electronics",
+        platform: "Amazon",
+        deal_type: "100% Refund",
+        image_url: "https://m.media-amazon.com/images/I/619zjmkEtCL._SL1056_.jpg",
+        deal_url: "https://www.amazon.in/dp/B0HB47DL6L",
+        target_keyword: "aluan 4in1 portable vacuum cleaner",
+        instructions: "Search the keyword, buy, upload order screenshot, write 5-star review after delivery.",
+        coupon_code: "",
+        price_original: 999,
+        price_sale: 999,
+        refund_amount: 999,
+        total_slots: 50,
+        claimed_slots: 0,
+        stock: 50,
+        featured: 0
+      }
+    ];
+
+    const ins = db.prepare(
+      `INSERT INTO deals (product_code, title, description, category, platform, deal_type, image_url, deal_url,
+        target_keyword, instructions, coupon_code, price_original, price_sale, refund_amount,
+        total_slots, claimed_slots, stock, featured, active)
+       VALUES (@product_code, @title, @description, @category, @platform, @deal_type, @image_url, @deal_url,
+        @target_keyword, @instructions, @coupon_code, @price_original, @price_sale, @refund_amount,
+        @total_slots, @claimed_slots, @stock, @featured, 1)`
+    );
+    deals.forEach((d) => ins.run(d));
+    console.log(`[seed] Added ${deals.length} sample deals.`);
+  }
+}
+
 export const db = globalThis.__db ?? createDb();
 globalThis.__db = db;
+
+// Auto-seed on startup (idempotent - won't overwrite existing data)
+try {
+  autoSeed();
+} catch (e) {
+  console.error("[seed] Auto-seed failed:", e instanceof Error ? e.message : String(e));
+}
 
 export function generateCode(prefix: string): string {
   const rand = Math.random().toString(36).slice(2, 7).toUpperCase();

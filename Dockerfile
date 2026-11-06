@@ -1,11 +1,17 @@
 # syntax=docker/dockerfile:1
-FROM node:22-alpine
+FROM node:22-slim
 
 WORKDIR /app
 
-# Install dependencies first (layer for caching)
+# Install build tools needed for native modules (better-sqlite3)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ git \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install production dependencies only (skip dev deps to speed up builds)
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts --no-audit --no-fund
+RUN npm ci --ignore-scripts --no-audit --no-fund --omit=dev
 
 # Copy source and build
 COPY . .

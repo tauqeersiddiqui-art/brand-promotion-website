@@ -85,12 +85,9 @@ export default function HomePage() {
             <Link href="#campaigns" className="btn">
               Browse live deals
             </Link>
-            <a
-              href="#submit-order"
-              className="btn btn-outline"
-            >
-              Submit order proof
-            </a>
+            <Link href="/claim" className="btn btn-outline">
+              Claim cashback
+            </Link>
             {settings.telegram && (
               <a
                 href={telegramLink(settings.telegram)}

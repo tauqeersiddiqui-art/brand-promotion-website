@@ -19,6 +19,9 @@ const OPTIONAL_ENV = [
 type RequiredEnv = typeof REQUIRED_ENV[number];
 type OptionalEnv = typeof OPTIONAL_ENV[number];
 
+// Skip strict validation during build - these vars are needed at runtime, not build time
+const isBuildTime = process.env.__NEXT_BUILD__ === "true";
+
 function checkEnv():
   | { ok: true; config: Record<RequiredEnv | OptionalEnv, string> }
   | { ok: false; missing: string[]; config: Record<RequiredEnv | OptionalEnv, string> } {
@@ -50,7 +53,11 @@ function checkEnv():
 const result = checkEnv();
 
 if (!result.ok) {
-  const msg = `
+  // Don't fail during build - warn only
+  if (isBuildTime) {
+    console.warn(`⚠️  [build] Missing optional env vars: ${result.missing.join(", ")}. These will be required at runtime.`);
+  } else {
+    const msg = `
 ╔═══════════════════════════════════════════════════════════════════╗
 ║  🛑 MISSING REQUIRED ENVIRONMENT VARIABLES                        ║
 ╠═══════════════════════════════════════════════════════════════════╣
@@ -62,9 +69,10 @@ if (!result.ok) {
 ║  See .env.example for reference.                                  ║
 ╚═══════════════════════════════════════════════════════════════════╝
   `;
-  console.error(msg);
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(`Missing required environment variables: ${result.missing.join(", ")}`);
+    console.error(msg);
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(`Missing required environment variables: ${result.missing.join(", ")}`);
+    }
   }
 }
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { calculateCashback, parseDealTypePercentage } from "@/lib/cashback";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -82,6 +83,8 @@ export default function MediatorPage() {
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const cashbackPercentage = parseDealTypePercentage(form.deal_type);
+  const cashbackIsAuto = cashbackPercentage > 0;
 
   const load = useCallback(async () => {
     try {
@@ -107,7 +110,18 @@ export default function MediatorPage() {
   }, [load]);
 
   function set(k: keyof typeof EMPTY, v: string) {
-    setForm((f) => ({ ...f, [k]: v }));
+    setForm((f) => {
+      const updated = { ...f, [k]: v };
+      const dealType = k === "deal_type" ? v : f.deal_type;
+      const salePrice = k === "price_sale" ? Number(v) : Number(f.price_sale || 0);
+      const calculated = calculateCashback(dealType, salePrice);
+      if (calculated !== null) {
+        updated.cashback_amount = String(calculated);
+      } else if (parseDealTypePercentage(dealType) > 0 && (k === "deal_type" || k === "price_sale")) {
+        updated.cashback_amount = "";
+      }
+      return updated;
+    });
   }
 
   async function submit(e: React.FormEvent) {
@@ -293,7 +307,14 @@ export default function MediatorPage() {
           </div>
 
           <div>
-            <label className="form-label">Cashback / reimbursement (₹)</label>
+            <label className="form-label">
+              Cashback / reimbursement (₹)
+              {cashbackIsAuto && (
+                <span className="badge badge-cashback" style={{ marginLeft: 8, fontSize: 10 }}>
+                  Auto {cashbackPercentage}%
+                </span>
+              )}
+            </label>
             <input
               className="input"
               type="number"
@@ -302,7 +323,23 @@ export default function MediatorPage() {
               value={form.cashback_amount}
               onChange={(e) => set("cashback_amount", e.target.value)}
               placeholder="Defaults to the purchase price"
+              disabled={cashbackIsAuto}
             />
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              {cashbackIsAuto
+                ? `Calculated automatically from ${cashbackPercentage}% of the purchase price.`
+                : "Fixed reimbursement amount. Choose a percentage deal type to auto-calculate it."}
+            </p>
+            {cashbackIsAuto && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ marginTop: 6 }}
+                onClick={() => set("deal_type", "Flat Cashback")}
+              >
+                Enter a custom amount instead
+              </button>
+            )}
           </div>
 
           <div>

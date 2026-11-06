@@ -8,6 +8,7 @@ import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { writeAutoBackupSafe } from "@/lib/auto-backup";
+import { resolveCashbackAmount } from "@/lib/cashback";
 
 export const dynamic = "force-dynamic";
 
@@ -112,9 +113,13 @@ export async function PATCH(
   const priceSale = has("price_sale")
     ? num(form.get("price_sale"), 0, 10_000_000, existing.price_sale)
     : existing.price_sale;
-  const cashbackAmount = has("cashback_amount")
+  const cashbackInput = has("cashback_amount")
     ? num(form.get("cashback_amount"), 0, 10_000_000, existing.cashback_amount)
     : existing.cashback_amount;
+  const cashbackAmount =
+    has("deal_type") || has("price_sale")
+      ? resolveCashbackAmount(dealType, priceSale, cashbackInput)
+      : cashbackInput;
   const reviewAmount = has("review_amount")
     ? num(form.get("review_amount"), 0, 10_000_000, existing.review_amount)
     : existing.review_amount;

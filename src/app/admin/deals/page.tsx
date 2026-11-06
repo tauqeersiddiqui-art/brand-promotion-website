@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { calculateCashback, parseDealTypePercentage } from "@/lib/cashback";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -100,11 +101,6 @@ type BulkImportResult = {
   error?: string;
 };
 
-function parseDealTypePercentage(dealType: string | undefined | null): number {
-  const match = (dealType || "").match(/^(\d+)%\s*Cashback$/i);
-  return match ? parseInt(match[1], 10) : 0;
-}
-
 export default function AdminDealsPage() {
   const [deals, setDeals] = useState<Deal[] | null>(null);
   const [form, setForm] = useState<typeof EMPTY>(EMPTY);
@@ -116,6 +112,8 @@ export default function AdminDealsPage() {
   const [bulkLinks, setBulkLinks] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
+  const cashbackPercentage = parseDealTypePercentage(form.deal_type);
+  const cashbackIsAuto = cashbackPercentage > 0;
 
   async function load() {
     try {
@@ -151,8 +149,13 @@ export default function AdminDealsPage() {
       const salePrice = k === "price_sale" ? Number(v) : Number(f.price_sale || 0);
       const percentage = parseDealTypePercentage(dealType);
 
-      if ((k === "deal_type" || k === "price_sale") && percentage > 0 && salePrice > 0) {
-        updated.cashback_amount = String(Math.round(salePrice * percentage / 100));
+      if (k === "deal_type" || k === "price_sale") {
+        const calculated = calculateCashback(dealType, salePrice);
+        if (calculated !== null) {
+          updated.cashback_amount = String(calculated);
+        } else if (percentage > 0) {
+          updated.cashback_amount = "";
+        }
       }
       // Backward compat: if deal_type is not percentage-based, keep existing logic
       if (k === "price_sale" && percentage === 0 && (!f.cashback_amount || f.cashback_amount === f.price_sale)) {
@@ -164,6 +167,7 @@ export default function AdminDealsPage() {
 
   function startEdit(d: Deal) {
     setEditing(true);
+    const calculatedCashback = calculateCashback(d.deal_type, Number(d.price_sale || 0));
     setForm({
       id: d.id,
       product_code: d.product_code || "",
@@ -179,7 +183,7 @@ export default function AdminDealsPage() {
       coupon_code: d.coupon_code || "",
       price_original: String(d.price_original || ""),
       price_sale: String(d.price_sale || ""),
-      cashback_amount: String(d.cashback_amount || d.price_sale || ""),
+      cashback_amount: String(calculatedCashback ?? d.cashback_amount ?? d.price_sale ?? ""),
       review_amount: String(d.review_amount || ""),
       rating_amount: String(d.rating_amount || ""),
       only_order_amount: String(d.only_order_amount || ""),
@@ -624,17 +628,40 @@ export default function AdminDealsPage() {
           </div>
 
           <div>
-            <label className="form-label">Cashback / Reimbursement Amount (₹) *</label>
+            <label className="form-label">
+              Cashback / Reimbursement Amount (₹) *
+              {cashbackIsAuto && (
+                <span className="badge badge-cashback" style={{ marginLeft: 8, fontSize: 10 }}>
+                  Auto {cashbackPercentage}%
+                </span>
+              )}
+            </label>
             <input
               className="input"
               type="number"
-              required
+              required={!cashbackIsAuto}
               min={0}
               step="0.01"
               value={form.cashback_amount}
               onChange={(e) => set("cashback_amount", e.target.value)}
               placeholder="1999"
+              disabled={cashbackIsAuto}
             />
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              {cashbackIsAuto
+                ? `Calculated automatically from ${cashbackPercentage}% of the purchase price.`
+                : "Fixed reimbursement amount. Choose a percentage deal type to auto-calculate it."}
+            </p>
+            {cashbackIsAuto && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ marginTop: 6 }}
+                onClick={() => set("deal_type", "Flat Cashback")}
+              >
+                Enter a custom amount instead
+              </button>
+            )}
           </div>
 
           <div>

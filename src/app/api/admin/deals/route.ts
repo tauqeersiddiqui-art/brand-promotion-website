@@ -9,6 +9,7 @@ import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { postDealToTelegram } from "@/lib/telegram";
 import { writeAutoBackupSafe } from "@/lib/auto-backup";
+import { resolveCashbackAmount } from "@/lib/cashback";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +80,8 @@ export async function POST(req: Request) {
   const coupon = sanitizeText(str(form.get("coupon_code"), 40), 40);
   const priceOriginal = num(form.get("price_original"), 0, 10_000_000, 0);
   const priceSale = num(form.get("price_sale"), 0, 10_000_000, 0);
-  const cashbackAmount = num(form.get("cashback_amount"), 0, 10_000_000, priceSale);
+  const cashbackInput = num(form.get("cashback_amount"), 0, 10_000_000, priceSale);
+  const cashbackAmount = resolveCashbackAmount(dealType, priceSale, cashbackInput);
   const reviewAmount = num(form.get("review_amount"), 0, 10_000_000, 0);
   const ratingAmount = num(form.get("rating_amount"), 0, 10_000_000, 0);
   const onlyOrderAmount = num(form.get("only_order_amount"), 0, 10_000_000, 0);

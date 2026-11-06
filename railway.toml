@@ -1,0 +1,16 @@
+# Railway Deployment Configuration
+# This file tells Railway how to deploy your app
+
+services:
+  - name: brand-promotion
+    type: web
+    plan: standard
+    env: node
+    buildCommand: npm ci --ignore-scripts --no-audit --no-fund && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    restartPolicy: on-failure
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1

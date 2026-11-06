@@ -77,7 +77,7 @@ export async function POST(req: Request) {
   // Find the order
   const order = db
     .prepare(
-      `SELECT o.*, d.cashback_amount, d.price_sale
+      `SELECT o.*, d.refund_amount, d.price_sale
        FROM orders o
        LEFT JOIN deals d ON d.id = o.deal_id
        WHERE o.order_code = ?
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
         user_id: number | null;
         email: string;
         total: number;
-        cashback_amount: number | null;
+        refund_amount: number | null;
         price_sale: number | null;
         reviewer_name: string;
         status: string;
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
   // filing the claim against the victim's user_id.
   const session = await getSession();
   if (!session) {
-    return bad("Please log in to submit a cashback claim for your order.", 401);
+    return bad("Please log in to submit a refund claim for your order.", 401);
   }
 
   const rlUser = await applyRateLimit("reimbursementClaim", `user:${session.userId}`);
@@ -237,10 +237,10 @@ export async function POST(req: Request) {
     );
   }
 
-  // Compute reimbursement amount: capped at deal's cashback_amount (never exceeds it)
-  // Priority: custom amount > deal.cashback_amount > deal.price_sale > order.total
-  const maxAllowedAmount = order.cashback_amount && order.cashback_amount > 0
-    ? order.cashback_amount
+  // Compute reimbursement amount: capped at deal's refund_amount (never exceeds it)
+  // Priority: custom amount > deal.refund_amount > deal.price_sale > order.total
+  const maxAllowedAmount = order.refund_amount && order.refund_amount > 0
+    ? order.refund_amount
     : order.price_sale && order.price_sale > 0
       ? order.price_sale
       : order.total > 0
@@ -430,7 +430,7 @@ export async function POST(req: Request) {
     amount: finalAmount,
     payout_method: payoutMethod,
     upi_id: upiId,
-    message: "Refund request submitted successfully! Cashback will be transferred via UPI after verification.",
+    message: "Refund request submitted successfully! Refund will be transferred via UPI after verification.",
   });
 }
 

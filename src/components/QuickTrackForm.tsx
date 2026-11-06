@@ -202,7 +202,7 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
                   </div>
                   <div className="timeline-content">
                     <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
-                      <strong>3. Review Cashback Claim ({rem.reimbursement_code})</strong>
+                      <strong>3. Review Refund Claim ({rem.reimbursement_code})</strong>
                       <span className={`pill pill-${rem.status}`}>{rem.status}</span>
                     </div>
                     <p className="muted" style={{ margin: "6px 0 0", fontSize: 13 }}>
@@ -220,7 +220,7 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
                         }}
                       >
                         <div style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13.5 }}>
-                          🎉 Cashback Disbursed Successfully!
+                          🎉 Refund Disbursed Successfully!
                         </div>
                         {rem.utr_number && (
                           <div style={{ fontSize: 13, marginTop: 4 }}>
@@ -241,11 +241,11 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
               <div className="timeline-item">
                 <div className="timeline-dot">3</div>
                 <div className="timeline-content">
-                  <strong>3. Submit Review Cashback Claim</strong>
+                  <strong>3. Submit Review Refund Claim</strong>
                   <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-                    Once delivered, post a 5-star review on {result.order.platform} and claim your 100% cashback.
+                    Once delivered, post a 5-star review on {result.order.platform} and claim your 100% refund.
                   </p>
-                    <Link href="/#claim-cashback" className="btn btn-sm btn-ghost" style={{ marginTop: 8 }}>
+                    <Link href="/#claim-refund" className="btn btn-sm btn-ghost" style={{ marginTop: 8 }}>
                       Submit review proof now →
                     </Link>
                 </div>

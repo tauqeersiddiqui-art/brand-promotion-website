@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     `INSERT INTO deals (
       product_code, title, description, category, platform, deal_type,
       image_url, deal_url, target_keyword, instructions, coupon_code,
-      price_original, price_sale, cashback_amount, review_amount, rating_amount,
+      price_original, price_sale, refund_amount, review_amount, rating_amount,
       only_order_amount, order_form_url, refund_form_url, total_slots, claimed_slots,
       stock, featured, active, submitted_by, approval_status, mediator_commission_amount
     ) VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, '', '', ?, ?, ?, 0, 0, 0, '', '', 50, 0, 50, 0, 0, ?, 'pending', 0)`
@@ -179,7 +179,7 @@ export async function POST(req: Request) {
       description,
       category,
       platform,
-      "100% Cashback",
+      "100% Refund",
       imageUrl,
       product.url,
       targetKeyword,

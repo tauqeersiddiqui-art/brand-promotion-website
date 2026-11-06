@@ -61,7 +61,7 @@ export default function SignupPage() {
     <div className="auth-wrap">
       <div className="auth-card">
         <h1>Create your account</h1>
-        <p className="sub">Free forever. Track orders, claim cashback, and grab deals first.</p>
+        <p className="sub">Free forever. Track orders, claim refunds, and grab deals first.</p>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={submit}>
           <label className="form-label">Full name *</label>

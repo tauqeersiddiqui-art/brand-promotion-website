@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import ClaimCashbackForm from "@/components/ClaimCashbackForm";
+import ClaimRefundForm from "@/components/ClaimRefundForm";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -136,7 +136,7 @@ export default function AccountPage() {
           type: "ok",
           text:
             d.note ||
-            `Review ${d.review_code} submitted! Our team will verify and process your review cashback.`,
+            `Review ${d.review_code} submitted! Our team will verify and process your review refund.`,
         });
         setReviewFor(null);
         setReviewText("");
@@ -187,7 +187,7 @@ export default function AccountPage() {
         <div>
           <h1>Reviewer dashboard</h1>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-            Manage your submitted campaign orders, review proofs, and track UPI cashback disbursements.
+            Manage your submitted campaign orders, review proofs, and track UPI refund disbursements.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -222,7 +222,7 @@ export default function AccountPage() {
           onClick={() => setActiveTab("reimbursements")}
           style={{ width: "auto" }}
         >
-          Cashback &amp; payouts ({reimbursements.length})
+          Refunds &amp; payouts ({reimbursements.length})
         </button>
         <button
           type="button"
@@ -293,7 +293,7 @@ export default function AccountPage() {
                         </td>
                         <td>
                             <Link
-                              href={`/#claim-cashback`}
+                              href={`/#claim-refund`}
                               className="btn btn-ghost btn-sm"
                               style={{ fontSize: 12, padding: "5px 10px" }}
                             >
@@ -363,9 +363,9 @@ export default function AccountPage() {
           {reimbursements.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 48 }}>
               <div className="muted" style={{ fontSize: 34, marginBottom: 10, display: "block" }}>—</div>
-              <h3>No reimbursement claims recorded yet</h3>
+              <h3>No refund claims recorded yet</h3>
               <p className="muted">
-                Once you post your 5-star review on Amazon/Flipkart, claim your reimbursement here.
+                Once you post your 5-star review on Amazon/Flipkart, claim your refund here.
               </p>
                 <button
                   type="button"
@@ -428,7 +428,7 @@ export default function AccountPage() {
 
       {activeTab === "new_claim" && (
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <ClaimCashbackForm />
+          <ClaimRefundForm />
         </div>
       )}
 

@@ -34,7 +34,7 @@ export default function PrivacyPage() {
               1. Information We Collect
             </h3>
             <p className="muted" style={{ margin: "0 0 10px" }}>
-              To facilitate 100% review cashback and brand promotion campaigns, {settings.site_name} collects the following necessary information:
+              To facilitate 100% review refunds and brand promotion campaigns, {settings.site_name} collects the following necessary information:
             </p>
             <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
               <li>
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
                 <strong>Verification Artifacts:</strong> Uploaded images of your desktop/mobile order confirmation, price breakup invoice, and live 5-star review screenshots.
               </li>
               <li>
-                <strong>Payout Details:</strong> UPI Virtual Payment Address (VPA) or bank account transfer details solely for issuing reimbursement payouts.
+                <strong>Payout Details:</strong> UPI Virtual Payment Address (VPA) or bank account transfer details solely for issuing refund payouts.
               </li>
             </ul>
           </section>
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
             <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
               <li>To cross-check and verify your purchase with brand campaign managers and mediators.</li>
               <li>To process automated Optical Character Recognition (OCR) verification of order and review screenshots.</li>
-              <li>To issue UPI cashback reimbursements directly to your bank account and provide transparent UTR tracking references.</li>
+              <li>To issue UPI refunds directly to your bank account and provide transparent UTR tracking references.</li>
               <li>To notify you of new campaign drops, slot replenishments, and payment statuses via WhatsApp/Email.</li>
             </ul>
           </section>
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="muted" style={{ margin: 0 }}>
               Blocking non-essential cookies does not stop you from using the store links, submitting
-              order proofs, or claiming cashback.
+              order proofs, or claiming refunds.
             </p>
           </section>
 

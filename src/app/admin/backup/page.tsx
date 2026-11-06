@@ -112,7 +112,7 @@ export default function AdminBackupPage() {
           <h3 style={{ marginTop: 0, fontSize: 17 }}>1. Download a backup</h3>
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
             Downloads a JSON file with <strong>everything</strong>: campaigns, users,
-            order proofs, cashback claims, reviews, settings and payouts. Keep it
+            order proofs, refund claims, reviews, settings and payouts. Keep it
             somewhere safe (e.g. Google Drive). Do this after every admin
             session that adds or edits campaigns.
           </p>

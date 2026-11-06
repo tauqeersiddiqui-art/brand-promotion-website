@@ -3,7 +3,7 @@ import { getSettings } from "@/lib/settings";
 
 export const metadata = {
   title: "About Us | Brand Promotion",
-  description: "Learn about Brand Promotion - India's #1 influencer cashback and brand deals platform.",
+  description: "Learn about Brand Promotion - India's #1 influencer refunds and brand deals platform.",
 };
 
 export default function AboutPage() {
@@ -19,7 +19,7 @@ export default function AboutPage() {
         About {s.site_name}
       </h1>
       <p style={{ fontSize: 18, color: "var(--muted)", marginBottom: 36, maxWidth: 640 }}>
-        We connect verified reviewers with brands for honest product reviews and 100% cashback on
+        We connect verified reviewers with brands for honest product reviews and 100% refunds on
         purchases from Amazon, Flipkart, Myntra, and direct brand stores.
       </p>
 
@@ -28,7 +28,7 @@ export default function AboutPage() {
           <h3 style={{ color: "var(--brand)", marginBottom: 12 }}>Our Mission</h3>
           <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: 15 }}>
             To create a transparent marketplace where brands get authentic reviews and reviewers
-            earn real cashback — with no hidden fees, no subscriptions, and direct UPI payouts.
+            earn real refunds — with no hidden fees, no subscriptions, and direct UPI payouts.
           </p>
         </div>
         <div className="card" style={{ padding: 28 }}>
@@ -51,7 +51,7 @@ export default function AboutPage() {
         <h2 style={{ marginBottom: 20 }}>Why Reviewers Choose Us</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
           {[
-            ["100% Cashback", "Get the full purchase amount reimbursed to your UPI or bank account."],
+            ["100% Refunds", "Get the full purchase amount reimbursed to your UPI or bank account."],
             ["Verified Payouts", "Every payout is tracked with a UTR reference for transparency."],
             ["Multiple Platforms", "Shop from Amazon, Flipkart, Myntra, or direct brand stores."],
             ["Screenshot Verification", "Submit order and price breakup screenshots for instant verification."],
@@ -72,7 +72,7 @@ export default function AboutPage() {
       <div style={{ background: "var(--brand-soft)", borderRadius: "var(--radius-lg)", padding: 32, textAlign: "center" }}>
         <h2 style={{ marginBottom: 12 }}>Ready to start?</h2>
         <p style={{ margin: "0 0 20px", color: "var(--ink-soft)" }}>
-          Join thousands of verified reviewers earning cashback today.
+          Join thousands of verified reviewers earning refunds today.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/signup" className="btn">Join free</Link>

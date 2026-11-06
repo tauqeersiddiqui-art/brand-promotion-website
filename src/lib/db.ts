@@ -44,7 +44,7 @@ const SCHEMA_DDL = `
       description TEXT NOT NULL DEFAULT '',
       category TEXT NOT NULL DEFAULT 'General',
       platform TEXT NOT NULL DEFAULT 'Amazon',
-      deal_type TEXT NOT NULL DEFAULT '100% Cashback',
+      deal_type TEXT NOT NULL DEFAULT '100% Refund',
       image_url TEXT NOT NULL DEFAULT '',
       deal_url TEXT NOT NULL DEFAULT '',
       target_keyword TEXT NOT NULL DEFAULT '',
@@ -52,7 +52,7 @@ const SCHEMA_DDL = `
       coupon_code TEXT NOT NULL DEFAULT '',
       price_original REAL NOT NULL DEFAULT 0,
       price_sale REAL NOT NULL DEFAULT 0,
-      cashback_amount REAL NOT NULL DEFAULT 0,
+      refund_amount REAL NOT NULL DEFAULT 0,
       review_amount REAL NOT NULL DEFAULT 0,
       rating_amount REAL NOT NULL DEFAULT 0,
       only_order_amount REAL NOT NULL DEFAULT 0,
@@ -86,7 +86,7 @@ const SCHEMA_DDL = `
       email TEXT NOT NULL,
       phone TEXT NOT NULL,
       platform TEXT NOT NULL DEFAULT 'Amazon',
-      deal_type TEXT NOT NULL DEFAULT '100% Cashback',
+      deal_type TEXT NOT NULL DEFAULT '100% Refund',
       mediator_name TEXT NOT NULL DEFAULT 'Direct',
       order_date TEXT NOT NULL DEFAULT '',
       address TEXT NOT NULL DEFAULT '',
@@ -270,7 +270,7 @@ function createDb(): Database.Database {
     db.exec("ALTER TABLE deals ADD COLUMN platform TEXT NOT NULL DEFAULT 'Amazon'");
   }
   if (!dealCols.includes("deal_type")) {
-    db.exec("ALTER TABLE deals ADD COLUMN deal_type TEXT NOT NULL DEFAULT '100% Cashback'");
+    db.exec("ALTER TABLE deals ADD COLUMN deal_type TEXT NOT NULL DEFAULT '100% Refund'");
   }
   if (!dealCols.includes("target_keyword")) {
     db.exec("ALTER TABLE deals ADD COLUMN target_keyword TEXT NOT NULL DEFAULT ''");
@@ -278,8 +278,8 @@ function createDb(): Database.Database {
   if (!dealCols.includes("instructions")) {
     db.exec("ALTER TABLE deals ADD COLUMN instructions TEXT NOT NULL DEFAULT ''");
   }
-  if (!dealCols.includes("cashback_amount")) {
-    db.exec("ALTER TABLE deals ADD COLUMN cashback_amount REAL NOT NULL DEFAULT 0");
+  if (!dealCols.includes("refund_amount")) {
+    execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN refund_amount REAL NOT NULL DEFAULT 0");
   }
   if (!dealCols.includes("review_amount")) {
     execTolerateDuplicate(db, "ALTER TABLE deals ADD COLUMN review_amount REAL NOT NULL DEFAULT 0");
@@ -347,7 +347,7 @@ function createDb(): Database.Database {
     db.exec("ALTER TABLE orders ADD COLUMN platform TEXT NOT NULL DEFAULT 'Amazon'");
   }
   if (!orderCols.includes("deal_type")) {
-    db.exec("ALTER TABLE orders ADD COLUMN deal_type TEXT NOT NULL DEFAULT '100% Cashback'");
+    db.exec("ALTER TABLE orders ADD COLUMN deal_type TEXT NOT NULL DEFAULT '100% Refund'");
   }
   if (!orderCols.includes("mediator_name")) {
     db.exec("ALTER TABLE orders ADD COLUMN mediator_name TEXT NOT NULL DEFAULT 'Direct'");

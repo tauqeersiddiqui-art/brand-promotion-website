@@ -1,41 +1,44 @@
 :root {
-  /* Soft violet-tinted canvas with layered color washes */
-  --bg: #f6f7fd;
-  --bg-soft: #eef0fa;
+  /* Clean modern palette - inspired by ShopFluencer's approach */
+  --bg: #f8fafc;
+  --bg-soft: #f1f5f9;
   --surface: #ffffff;
   --card: #ffffff;
-  --card-hover: #f8f8fe;
-  --border: #e3e7f5;
-  --border-hover: #c9cff0;
-  --ring: rgba(124, 58, 237, 0.22);
+  --card-hover: #f8fafc;
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --ring: rgba(37, 99, 235, 0.2);
 
   /* Typography */
-  --ink: #171a2e;
-  --ink-soft: #333856;
-  --muted: #5f6683;
-  --muted-soft: #9298b4;
+  --ink: #0f172a;
+  --ink-soft: #334155;
+  --muted: #64748b;
+  --muted-soft: #94a3b8;
 
-  /* Brand: deep violet with magenta reach */
-  --brand: #6d28d9;
-  --brand-hover: #5b21b6;
-  --brand-soft: #f1ecfe;
-  --gradient-brand: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 55%, #c026d3 120%);
-  --gradient-brand-hover: linear-gradient(135deg, #5b21b6 0%, #7c3aed 55%, #a21caf 120%);
+  /* Brand: calm blue with green accents */
+  --brand: #2563eb;
+  --brand-hover: #1d4ed8;
+  --brand-soft: #dbeafe;
+  --gradient-brand: linear-gradient(135deg, #2563eb 0%, #3b82f6 55%, #60a5fa 120%);
+  --gradient-brand-hover: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 55%, #60a5fa 120%);
 
   /* Semantic accents */
-  --accent: #059669;          /* cashback / success */
-  --accent-soft: #e7f9f1;
+  --accent: #059669;          /* green - refund / success */
+  --accent-soft: #d1fae5;
   --danger: #dc2626;
   --danger-soft: #fef2f2;
-  --warn: #b45309;
+  --warn: #d97706;
   --warn-soft: #fffbeb;
+  --link: #25d366;
+  --link-hover: #16a34a;
 
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius: 10px;
+  --radius-lg: 16px;
 
-  --shadow-sm: 0 1px 2px 0 rgb(23 26 46 / 0.05);
-  --shadow: 0 2px 6px -1px rgb(23 26 46 / 0.08), 0 1px 3px -1px rgb(23 26 46 / 0.06);
-  --shadow-md: 0 10px 24px -12px rgb(23 26 46 / 0.22);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 2px 6px -1px rgb(0 0 0 / 0.08), 0 1px 3px -1px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.12);
+  --shadow-lg: 0 8px 24px -12px rgb(0 0 0 / 0.2);
 }
 
 * { box-sizing: border-box; }
@@ -211,7 +214,7 @@ label.form-label {
   border-radius: 999px;
 }
 .badge-brand { background: var(--brand-soft); color: #5b21b6; }
-.badge-cashback { background: var(--accent-soft); color: #065f46; }
+.badge-refund { background: var(--accent-soft); color: #065f46; }
 .badge-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
 
 .pill {
@@ -375,7 +378,7 @@ label.form-label {
   position: absolute; top: 12px; left: 12px;
   font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px; z-index: 2;
 }
-.deal-tag-cashback { background-image: linear-gradient(135deg, #059669, #34d399); color: #ffffff; }
+.deal-tag-refund { background-image: linear-gradient(135deg, #059669, #34d399); color: #ffffff; }
 .deal-tag-discount { background: var(--ink); color: #ffffff; }
 .deal-platform {
   position: absolute; top: 12px; right: 12px;
@@ -691,7 +694,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width
 .footer h4 { color: var(--ink); margin: 0 0 14px; font-size: 15px; font-weight: 700; }
 .footer a { display: block; padding: 5px 0; color: #c3c6e4; text-decoration: none; }
 .footer a:hover { color: #ffffff; text-decoration: underline; }
-.footer .badge-cashback { background: rgba(16, 185, 129, 0.18); color: #7ff0c8; }
+.footer .badge-refund { background: rgba(16, 185, 129, 0.18); color: #7ff0c8; }
 .footer .badge-outline { border-color: rgba(255, 255, 255, 0.22); color: #c3c6e4; }
 
 /* ---------- auth pages ---------- */

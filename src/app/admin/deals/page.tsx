@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { calculateCashback, parseDealTypePercentage } from "@/lib/cashback";
+import { calculateRefund, parseDealTypePercentage } from "@/lib/refund";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -29,7 +29,7 @@ type Deal = {
   coupon_code: string;
   price_original: number;
   price_sale: number;
-  cashback_amount: number;
+  refund_amount: number;
   review_amount: number;
   rating_amount: number;
   only_order_amount: number;
@@ -55,7 +55,7 @@ const EMPTY = {
   description: "",
   category: "Electronics",
   platform: "Amazon",
-  deal_type: "100% Cashback",
+  deal_type: "100% Refund",
   image_url: "",
   deal_url: "",
   target_keyword: "",
@@ -63,7 +63,7 @@ const EMPTY = {
   coupon_code: "",
   price_original: "",
   price_sale: "",
-  cashback_amount: "",
+  refund_amount: "",
   review_amount: "",
   rating_amount: "",
   only_order_amount: "",
@@ -79,9 +79,9 @@ const EMPTY = {
 
 const PLATFORMS = ["Amazon", "Flipkart", "Myntra", "Brand Store", "Meesho", "Nykaa"];
 const DEAL_TYPES = [
-  "100% Cashback", "90% Cashback", "80% Cashback", "70% Cashback", "60% Cashback",
-  "50% Cashback", "40% Cashback", "30% Cashback", "20% Cashback", "10% Cashback",
-  "Review Incentive", "Flat Cashback", "Review Deal", "Rating Deal", "Only Order Deal"
+  "100% Refund", "90% Refund", "80% Refund", "70% Refund", "60% Refund",
+  "50% Refund", "40% Refund", "30% Refund", "20% Refund", "10% Refund",
+  "Review Incentive", "Flat Refund", "Review Deal", "Rating Deal", "Only Order Deal"
 ];
 const CATEGORIES = ["Electronics", "Footwear", "Fashion", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Health & Wellness", "General"];
 
@@ -112,8 +112,8 @@ export default function AdminDealsPage() {
   const [bulkLinks, setBulkLinks] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
-  const cashbackPercentage = parseDealTypePercentage(form.deal_type);
-  const cashbackIsAuto = cashbackPercentage > 0;
+  const refundPercentage = parseDealTypePercentage(form.deal_type);
+  const refundIsAuto = refundPercentage > 0;
 
   async function load() {
     try {
@@ -144,22 +144,22 @@ export default function AdminDealsPage() {
   function set(k: keyof typeof EMPTY, v: unknown) {
     setForm((f) => {
       const updated = { ...f, [k]: v };
-      // Auto-calculate cashback when deal_type or price_sale changes
+      // Auto-calculate refund when deal_type or price_sale changes
       const dealType = k === "deal_type" ? String(v) : f.deal_type;
       const salePrice = k === "price_sale" ? Number(v) : Number(f.price_sale || 0);
       const percentage = parseDealTypePercentage(dealType);
 
       if (k === "deal_type" || k === "price_sale") {
-        const calculated = calculateCashback(dealType, salePrice);
+        const calculated = calculateRefund(dealType, salePrice);
         if (calculated !== null) {
-          updated.cashback_amount = String(calculated);
+          updated.refund_amount = String(calculated);
         } else if (percentage > 0) {
-          updated.cashback_amount = "";
+          updated.refund_amount = "";
         }
       }
       // Backward compat: if deal_type is not percentage-based, keep existing logic
-      if (k === "price_sale" && percentage === 0 && (!f.cashback_amount || f.cashback_amount === f.price_sale)) {
-        updated.cashback_amount = String(v);
+      if (k === "price_sale" && percentage === 0 && (!f.refund_amount || f.refund_amount === f.price_sale)) {
+        updated.refund_amount = String(v);
       }
       return updated;
     });
@@ -167,7 +167,7 @@ export default function AdminDealsPage() {
 
   function startEdit(d: Deal) {
     setEditing(true);
-    const calculatedCashback = calculateCashback(d.deal_type, Number(d.price_sale || 0));
+    const calculatedRefund = calculateRefund(d.deal_type, Number(d.price_sale || 0));
     setForm({
       id: d.id,
       product_code: d.product_code || "",
@@ -175,7 +175,7 @@ export default function AdminDealsPage() {
       description: d.description || "",
       category: d.category || "General",
       platform: d.platform || "Amazon",
-      deal_type: d.deal_type || "100% Cashback",
+      deal_type: d.deal_type || "100% Refund",
       image_url: d.image_url || "",
       deal_url: d.deal_url || "",
       target_keyword: d.target_keyword || "",
@@ -183,7 +183,7 @@ export default function AdminDealsPage() {
       coupon_code: d.coupon_code || "",
       price_original: String(d.price_original || ""),
       price_sale: String(d.price_sale || ""),
-      cashback_amount: String(calculatedCashback ?? d.cashback_amount ?? d.price_sale ?? ""),
+      refund_amount: String(calculatedRefund ?? d.refund_amount ?? d.price_sale ?? ""),
       review_amount: String(d.review_amount || ""),
       rating_amount: String(d.rating_amount || ""),
       only_order_amount: String(d.only_order_amount || ""),
@@ -229,7 +229,7 @@ export default function AdminDealsPage() {
       const salePrice = Number(d.priceSale || 0);
       const resolvedDealType = d.deal_type || form.deal_type;
       const percentage = parseDealTypePercentage(resolvedDealType);
-      const calculatedCashback = percentage > 0 ? Math.round(salePrice * percentage / 100) : salePrice;
+      const calculatedRef = percentage > 0 ? Math.round(salePrice * percentage / 100) : salePrice;
 
       setForm((f) => ({
         ...f,
@@ -238,7 +238,7 @@ export default function AdminDealsPage() {
         category: d.category || f.category,
         price_original: d.priceOriginal ? String(d.priceOriginal) : f.price_original,
         price_sale: d.priceSale ? String(d.priceSale) : f.price_sale,
-        cashback_amount: salePrice > 0 ? String(calculatedCashback) : f.cashback_amount,
+        refund_amount: salePrice > 0 ? String(calculatedRef) : f.refund_amount,
         deal_type: resolvedDealType,
         image_url: d.imageUrl || f.image_url,
         target_keyword: d.targetKeyword || f.target_keyword,
@@ -320,7 +320,7 @@ export default function AdminDealsPage() {
       fd.set("coupon_code", form.coupon_code);
       fd.set("price_original", form.price_original || "0");
       fd.set("price_sale", form.price_sale);
-      fd.set("cashback_amount", form.cashback_amount || form.price_sale);
+      fd.set("refund_amount", form.refund_amount || form.price_sale);
       fd.set("review_amount", form.review_amount || "0");
       fd.set("rating_amount", form.rating_amount || "0");
       fd.set("only_order_amount", form.only_order_amount || "0");
@@ -570,7 +570,7 @@ export default function AdminDealsPage() {
               minLength={3}
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
-              placeholder="e.g. Noise Cancelling Bluetooth Earbuds — 100% UPI Cashback"
+              placeholder="e.g. Noise Cancelling Bluetooth Earbuds — 100% UPI Refund"
             />
           </div>
 
@@ -629,35 +629,35 @@ export default function AdminDealsPage() {
 
           <div>
             <label className="form-label">
-              Cashback / Reimbursement Amount (₹) *
-              {cashbackIsAuto && (
-                <span className="badge badge-cashback" style={{ marginLeft: 8, fontSize: 10 }}>
-                  Auto {cashbackPercentage}%
+              Refund Amount (₹) *
+              {refundIsAuto && (
+                <span className="badge badge-refund" style={{ marginLeft: 8, fontSize: 10 }}>
+                  Auto {refundPercentage}%
                 </span>
               )}
             </label>
             <input
               className="input"
               type="number"
-              required={!cashbackIsAuto}
+              required={!refundIsAuto}
               min={0}
               step="0.01"
-              value={form.cashback_amount}
-              onChange={(e) => set("cashback_amount", e.target.value)}
+              value={form.refund_amount}
+              onChange={(e) => set("refund_amount", e.target.value)}
               placeholder="1999"
-              disabled={cashbackIsAuto}
+              disabled={refundIsAuto}
             />
             <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-              {cashbackIsAuto
-                ? `Calculated automatically from ${cashbackPercentage}% of the purchase price.`
+              {refundIsAuto
+                ? `Calculated automatically from ${refundPercentage}% of the purchase price.`
                 : "Fixed reimbursement amount. Choose a percentage deal type to auto-calculate it."}
             </p>
-            {cashbackIsAuto && (
+            {refundIsAuto && (
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
                 style={{ marginTop: 6 }}
-                onClick={() => set("deal_type", "Flat Cashback")}
+                onClick={() => set("deal_type", "Flat Refund")}
               >
                 Enter a custom amount instead
               </button>
@@ -928,7 +928,7 @@ export default function AdminDealsPage() {
                 <th>Image</th>
                 <th>Campaign & Code</th>
                 <th>Platform</th>
-                <th>Price & Cashback</th>
+                <th>Price & Refund</th>
                 <th>Commission</th>
                 <th>Slots Status</th>
                 <th>Orders</th>
@@ -974,7 +974,7 @@ export default function AdminDealsPage() {
                         ₹{d.price_sale.toLocaleString("en-IN")}
                       </strong>
                       <div className="muted" style={{ fontSize: 11 }}>
-                        Reimbursement: ₹{(d.cashback_amount || d.price_sale).toLocaleString("en-IN")}
+                        Reimbursement: ₹{(d.refund_amount || d.price_sale).toLocaleString("en-IN")}
                       </div>
                     </td>
                     <td>

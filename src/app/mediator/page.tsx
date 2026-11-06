@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { calculateCashback, parseDealTypePercentage } from "@/lib/cashback";
+import { calculateRefund, parseDealTypePercentage } from "@/lib/refund";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -24,7 +24,7 @@ type MediatorDeal = {
   deal_type: string;
   image_url: string;
   price_sale: number;
-  cashback_amount: number;
+  refund_amount: number;
   total_slots: number;
   stock: number;
   active: number;
@@ -48,7 +48,7 @@ const EMPTY = {
   description: "",
   category: "General",
   platform: "Amazon",
-  deal_type: "100% Cashback",
+  deal_type: "100% Refund",
   image_url: "",
   deal_url: "",
   target_keyword: "",
@@ -56,7 +56,7 @@ const EMPTY = {
   coupon_code: "",
   price_original: "",
   price_sale: "",
-  cashback_amount: "",
+  refund_amount: "",
   review_amount: "",
   rating_amount: "",
   only_order_amount: "",
@@ -69,9 +69,9 @@ const EMPTY = {
 
 const PLATFORMS = ["Amazon", "Flipkart", "Myntra", "Brand Store", "Meesho", "Nykaa"];
 const DEAL_TYPES = [
-  "100% Cashback", "90% Cashback", "80% Cashback", "70% Cashback", "60% Cashback",
-  "50% Cashback", "40% Cashback", "30% Cashback", "20% Cashback", "10% Cashback",
-  "Review Incentive", "Flat Cashback", "Review Deal", "Rating Deal", "Only Order Deal",
+  "100% Refund", "90% Refund", "80% Refund", "70% Refund", "60% Refund",
+  "50% Refund", "40% Refund", "30% Refund", "20% Refund", "10% Refund",
+  "Review Incentive", "Flat Refund", "Review Deal", "Rating Deal", "Only Order Deal",
 ];
 const CATEGORIES = ["Electronics", "Footwear", "Fashion", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Health & Wellness", "General"];
 
@@ -83,8 +83,8 @@ export default function MediatorPage() {
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const cashbackPercentage = parseDealTypePercentage(form.deal_type);
-  const cashbackIsAuto = cashbackPercentage > 0;
+  const refundPercentage = parseDealTypePercentage(form.deal_type);
+  const refundIsAuto = refundPercentage > 0;
 
   const load = useCallback(async () => {
     try {
@@ -114,11 +114,11 @@ export default function MediatorPage() {
       const updated = { ...f, [k]: v };
       const dealType = k === "deal_type" ? v : f.deal_type;
       const salePrice = k === "price_sale" ? Number(v) : Number(f.price_sale || 0);
-      const calculated = calculateCashback(dealType, salePrice);
+      const calculated = calculateRefund(dealType, salePrice);
       if (calculated !== null) {
-        updated.cashback_amount = String(calculated);
+        updated.refund_amount = String(calculated);
       } else if (parseDealTypePercentage(dealType) > 0 && (k === "deal_type" || k === "price_sale")) {
-        updated.cashback_amount = "";
+        updated.refund_amount = "";
       }
       return updated;
     });
@@ -308,10 +308,10 @@ export default function MediatorPage() {
 
           <div>
             <label className="form-label">
-              Cashback / reimbursement (₹)
-              {cashbackIsAuto && (
-                <span className="badge badge-cashback" style={{ marginLeft: 8, fontSize: 10 }}>
-                  Auto {cashbackPercentage}%
+              Refund amount (₹)
+              {refundIsAuto && (
+                <span className="badge badge-refund" style={{ marginLeft: 8, fontSize: 10 }}>
+                  Auto {refundPercentage}%
                 </span>
               )}
             </label>
@@ -320,22 +320,22 @@ export default function MediatorPage() {
               type="number"
               min={0}
               step="0.01"
-              value={form.cashback_amount}
-              onChange={(e) => set("cashback_amount", e.target.value)}
+              value={form.refund_amount}
+              onChange={(e) => set("refund_amount", e.target.value)}
               placeholder="Defaults to the purchase price"
-              disabled={cashbackIsAuto}
+              disabled={refundIsAuto}
             />
             <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-              {cashbackIsAuto
-                ? `Calculated automatically from ${cashbackPercentage}% of the purchase price.`
-                : "Fixed reimbursement amount. Choose a percentage deal type to auto-calculate it."}
+              {refundIsAuto
+                ? `Calculated automatically from ${refundPercentage}% of the purchase price.`
+                : "Fixed refund amount. Choose a percentage deal type to auto-calculate it."}
             </p>
-            {cashbackIsAuto && (
+            {refundIsAuto && (
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
                 style={{ marginTop: 6 }}
-                onClick={() => set("deal_type", "Flat Cashback")}
+                onClick={() => set("deal_type", "Flat Refund")}
               >
                 Enter a custom amount instead
               </button>

@@ -12,3 +12,5 @@ public/uploads/
 .DS_Store
 tsconfig.tsbuildinfo
 .vscode/
+rea/
+awesome-reverse-engineer-anything/

@@ -92,7 +92,7 @@ export default function AdminSettingsPage() {
         <div>
           <h1>⚙️ Brand Platform Settings</h1>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-            Configure site metadata, WhatsApp/Telegram integration, agency mediators list, and cashback instructions.
+            Configure site metadata, WhatsApp/Telegram integration, agency mediators list, and reimbursement instructions.
           </p>
         </div>
       </div>

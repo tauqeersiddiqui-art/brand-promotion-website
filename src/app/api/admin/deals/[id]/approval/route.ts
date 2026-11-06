@@ -17,7 +17,7 @@ type DealRow = {
   platform: string;
   deal_type: string;
   price_sale: number;
-  cashback_amount: number;
+  refund_amount: number;
   image_url: string;
   target_keyword: string;
   total_slots: number;
@@ -57,7 +57,7 @@ export async function POST(
 
   const deal = db
     .prepare(
-      `SELECT id, title, platform, deal_type, price_sale, cashback_amount,
+      `SELECT id, title, platform, deal_type, price_sale, refund_amount,
               image_url, target_keyword, total_slots, mediator_commission_amount
        FROM deals WHERE id = ?`
     )
@@ -111,7 +111,7 @@ export async function POST(
     platform: deal.platform,
     deal_type: deal.deal_type,
     price_sale: deal.price_sale,
-    cashback_amount: deal.cashback_amount,
+    refund_amount: deal.refund_amount,
     image_url: deal.image_url,
     target_keyword: deal.target_keyword,
     total_slots: deal.total_slots,

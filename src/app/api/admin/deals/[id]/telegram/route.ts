@@ -38,7 +38,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const deal = db
     .prepare(
-      `SELECT id, title, platform, deal_type, price_sale, cashback_amount,
+      `SELECT id, title, platform, deal_type, price_sale, refund_amount,
               image_url, target_keyword, total_slots
        FROM deals WHERE id = ? AND approval_status = 'approved'`
     )

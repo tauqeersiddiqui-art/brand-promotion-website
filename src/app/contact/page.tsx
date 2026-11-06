@@ -10,7 +10,7 @@ export default function ContactPage() {
     <ContactClient
       whatsappHref={
         settings.whatsapp
-          ? whatsappLink(settings.whatsapp, "Hi, I have a question about my deal cashback.")
+          ? whatsappLink(settings.whatsapp, "Hi, I have a question about my deal refund.")
           : ""
       }
       telegramHref={settings.telegram ? telegramLink(settings.telegram) : ""}

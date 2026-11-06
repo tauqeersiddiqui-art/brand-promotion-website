@@ -19,7 +19,7 @@ export type TelegramDeal = {
   platform?: string;
   deal_type?: string;
   price_sale: number;
-  cashback_amount?: number;
+  refund_amount?: number;
   image_url?: string;
   target_keyword?: string;
   total_slots?: number;
@@ -60,14 +60,14 @@ export async function postDealToTelegram(
     `\u{1F525} NEW CAMPAIGN: ${deal.title}`,
     "",
     `\u{1F4B0} Price: ${inr(deal.price_sale)}`,
-    deal.cashback_amount && deal.cashback_amount > 0
-      ? `\u{1F381} Cashback: ${inr(deal.cashback_amount)}`
+    deal.refund_amount && deal.refund_amount > 0
+      ? `\u{1F381} Refund: ${inr(deal.refund_amount)}`
       : null,
     deal.platform ? `\u{1F6D2} Buy on: ${deal.platform}` : null,
     deal.total_slots && deal.total_slots > 0 ? `\u{1F3AB} Slots: ${deal.total_slots}` : null,
     deal.target_keyword ? `\u{1F50D} Keyword: ${deal.target_keyword}` : null,
     "",
-    "\u{2705} Buy it, review it honestly, get cashback via UPI.",
+    "\u{2705} Buy it, review it honestly, get refund via UPI.",
     dealUrl,
   ];
   const caption = lines.filter((l): l is string => l !== null).join("\n").slice(0, 1024);

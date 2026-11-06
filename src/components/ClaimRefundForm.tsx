@@ -17,7 +17,7 @@ function getCsrfHeader(): Record<string, string> {
   return token ? { "x-csrf-token": token } : {};
 }
 
-export default function ClaimCashbackForm() {
+export default function ClaimRefundForm() {
   const { user, loading: authLoading } = useSessionUser();
   const pathname = usePathname();
   const [externalOrderId, setExternalOrderId] = useState("");
@@ -197,9 +197,8 @@ export default function ClaimCashbackForm() {
       });
 
       const d = await res.json();
-      if (!res.ok) {
-        setError(d.error || "Failed to submit refund request.");
-      } else {
+      if (!res.ok) setError(d.error || "Failed to submit refund request.");
+      else {
         setSuccess({
           reimbursement_code: d.reimbursement_code,
           amount: d.amount,
@@ -223,16 +222,16 @@ export default function ClaimCashbackForm() {
         </h2>
         <p className="muted" style={{ maxWidth: 500, margin: "0 auto 16px" }}>
           Claim Ref: <strong style={{ color: "var(--brand)" }}>{success.reimbursement_code}</strong>.
-          Payout amount: <strong>₹{success.amount.toLocaleString("en-IN")}</strong>.
+          Refund amount: <strong>₹{success.amount.toLocaleString("en-IN")}</strong>.
         </p>
 
         <div className="alert alert-success" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
-          ⚡ Payouts are verified and disbursed directly to <strong>{success.upi_id || "your account"}</strong> within 24-48 hours. You will receive a UTR reference upon completion.
+          ⚡ Refunds are verified and disbursed directly to <strong>{success.upi_id || "your account"}</strong> within 24-48 hours. You will receive a UTR reference upon completion.
         </div>
 
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 20 }}>
           <Link href={`/track?q=${encodeURIComponent(externalOrderId || success.reimbursement_code)}`} className="btn">
-            🔍 Track Payout Status
+            🔍 Track Refund Status
           </Link>
           <button
             type="button"
@@ -250,7 +249,7 @@ export default function ClaimCashbackForm() {
               setFileResetKey((k) => k + 1);
             }}
           >
-            Claim Another
+            Request Another Refund
           </button>
         </div>
       </div>
@@ -268,9 +267,9 @@ export default function ClaimCashbackForm() {
   if (!user) {
     return (
       <LoginRequired
-        title="Log in to claim your cashback"
-        description="Claims are linked to the account that submitted the order proof so payouts go to the right person. Log in or create a free account to continue."
-        next={pathname && pathname !== "/" ? pathname : "/#claim-cashback"}
+        title="Log in to request your refund"
+        description="Refund requests are linked to the account that submitted the order proof so payouts go to the right person. Log in or create a free account to continue."
+        next={pathname && pathname !== "/" ? pathname : "/claim"}
       />
     );
   }
@@ -278,11 +277,11 @@ export default function ClaimCashbackForm() {
   return (
     <form onSubmit={handleSubmit} className="card">
       <div style={{ marginBottom: 18 }}>
-        <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Submit refund request</h3>
+        <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Request refund</h3>
         <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
           Once your product is delivered, your 5-star review is live on Amazon/Flipkart and the
           return window has closed, submit the order, review and seller feedback screenshots for
-          100% UPI cashback.
+          100% UPI refund.
         </p>
       </div>
 
@@ -325,7 +324,7 @@ export default function ClaimCashbackForm() {
         </div>
 
         <div>
-          <label className="form-label">Reimbursement Amount (₹) (Optional)</label>
+          <label className="form-label">Refund Amount (₹) (Optional)</label>
           <input
             className="input"
             type="number"
@@ -359,7 +358,7 @@ export default function ClaimCashbackForm() {
               placeholder="e.g. yourname@okhdfcbank or 9876543210@paytm"
             />
             <span className="muted" style={{ fontSize: 12 }}>
-              Double-check your UPI ID carefully for smooth cashback disbursement.
+              Double-check your UPI ID carefully for smooth refund disbursement.
             </span>
           </div>
         ) : (
@@ -426,7 +425,7 @@ export default function ClaimCashbackForm() {
 
         <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
           <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            1. Order screenshots * (Order ID + &quot;Return window closed&quot;)
+            1. Order screenshots * (Order ID + "Return window closed")
           </label>
           <input
             key={`claim-order-${fileResetKey}`}
@@ -439,13 +438,13 @@ export default function ClaimCashbackForm() {
           <span className="muted" style={{ fontSize: 12 }}>
             Open the order in the Amazon/Flipkart app and screenshot the order details page. It
             must show the order&apos;s Order ID and that the return window has closed (e.g.
-            &quot;Return window closed&quot;). Claims can only be filed after the return period ends.
+            "Return window closed"). Refund claims can only be filed after the return period ends.
           </span>
         </div>
 
         <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
           <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            2. Live review &amp; rating screenshot * (5 stars &amp; &quot;Verified Purchase&quot; badge)
+            2. Live review &amp; rating screenshot * (5 stars &amp; "Verified Purchase" badge)
           </label>
           <input
             key={`review-${fileResetKey}`}
@@ -457,7 +456,7 @@ export default function ClaimCashbackForm() {
           />
           <span className="muted" style={{ fontSize: 12 }}>
             Screenshot of the published review with its star rating. It must clearly show the
-            5-star rating and the &quot;Verified Purchase&quot; badge; unreadable screenshots are rejected.
+            5-star rating and the "Verified Purchase" badge; unreadable screenshots are rejected.
           </span>
         </div>
 

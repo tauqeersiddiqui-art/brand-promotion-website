@@ -69,7 +69,7 @@ function LoginForm() {
     <div className="auth-wrap">
       <div className="auth-card">
         <h1>Welcome back</h1>
-        <p className="sub">Sign in to track orders and claim cashback faster.</p>
+        <p className="sub">Sign in to track orders and claim refunds faster.</p>
 
         {oauthError && (
           <div className="alert alert-error">

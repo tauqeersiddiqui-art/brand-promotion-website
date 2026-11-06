@@ -51,7 +51,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
     { href: "/about", label: "About" },
     { href: "/browse", label: "Live Deals" },
     { href: "/stores", label: "Stores" },
-    { href: "/claim", label: "Claim Cashback" },
+    { href: "/claim", label: "Claim Refund" },
     { href: "/track", label: "Track Status" },
     { href: "/cancel", label: "Cancel" },
     { href: "/help", label: "Need help?" },

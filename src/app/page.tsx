@@ -14,7 +14,7 @@ export default function HomePage() {
     .prepare(
       `SELECT id, title, description, category, image_url, coupon_code,
               price_original, price_sale, stock, featured, product_code,
-              platform, deal_type, total_slots, claimed_slots, cashback_amount
+              platform, deal_type, total_slots, claimed_slots, refund_amount
        FROM deals WHERE active = 1 AND approval_status = 'approved' AND featured = 1
        ORDER BY datetime(created_at) DESC LIMIT 8`
     )
@@ -25,7 +25,7 @@ export default function HomePage() {
       .prepare(
         `SELECT id, title, description, category, image_url, coupon_code,
                 price_original, price_sale, stock, featured, product_code,
-                platform, deal_type, total_slots, claimed_slots, cashback_amount
+                platform, deal_type, total_slots, claimed_slots, refund_amount
          FROM deals WHERE active = 1 AND approval_status = 'approved'
          ORDER BY datetime(created_at) DESC LIMIT 12`
       )
@@ -67,16 +67,16 @@ export default function HomePage() {
       <section className="hero">
         <div className="container">
           <span className="badge badge-brand">
-            Brand promotion &amp; review cashback
+            Brand promotion &amp; review refunds
           </span>
 
           <h1>
             Buy great products. Share honest reviews.<br />
-            Get 100% cashback straight to your UPI.
+            Get 100% refunds straight to your UPI.
           </h1>
 
           <p className="sub">
-            Join verified reviewers earning cashback on Amazon, Flipkart and
+            Join verified reviewers earning refunds on Amazon, Flipkart and
             direct brand stores. Purchase, post your proof, and get paid —
             with UTR tracking on every payout.
           </p>
@@ -86,7 +86,7 @@ export default function HomePage() {
               Browse live deals
             </Link>
             <Link href="/claim" className="btn btn-outline">
-              Claim cashback
+              Claim refund
             </Link>
             {settings.telegram && (
               <a
@@ -128,7 +128,7 @@ export default function HomePage() {
       {/* Assurance bar */}
       <div className="assurance-bar">
         <div className="container assurance-inner">
-          <span className="trust-item">100% cashback deals</span>
+          <span className="trust-item">100% guaranteed refunds</span>
           <span className="trust-item">UPI payouts with UTR</span>
           <span className="trust-item">Brand-funded campaigns</span>
           <span className="trust-item">Verified reviewer slots</span>
@@ -227,7 +227,7 @@ export default function HomePage() {
         <div className="section-head" style={{ textAlign: "center", justifyContent: "center" }}>
           <h2>How it works</h2>
           <p className="muted" style={{ margin: "6px auto 0", maxWidth: 620, textAlign: "center" }}>
-            Four steps from purchase to cashback in your UPI handle.
+            Four steps from purchase to refund in your UPI handle.
           </p>
         </div>
         <div className="steps-grid">
@@ -250,7 +250,7 @@ export default function HomePage() {
             {
               num: "04",
               title: "Get paid via UPI",
-              desc: "Submit your live review link and UPI ID. Cashback is disbursed with a bank UTR reference.",
+              desc: "Submit your live review link and UPI ID. Refund is disbursed with a bank UTR reference.",
             },
           ].map((s) => (
             <div className="step-card" key={s.num}>
@@ -333,7 +333,7 @@ export default function HomePage() {
             <div style={{ marginTop: 22, display: "flex", gap: 10, flexWrap: "wrap" }}>
               {settings.whatsapp && (
                 <a
-                  href={whatsappLink(settings.whatsapp, "Hi, I have a question about my cashback payout.")}
+                  href={whatsappLink(settings.whatsapp, "Hi, I have a question about my refund payout.")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-sm"
@@ -367,7 +367,7 @@ export default function HomePage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
           {[
             {
-              q: "How does 100% cashback work?",
+              q: "How does 100% refund work?",
               a: "Brands fund promotion budgets to get genuine product reviews. You buy the product on Amazon or Flipkart, submit your order proof, post a review after delivery, and receive 100% of your purchase amount back via UPI.",
             },
             {

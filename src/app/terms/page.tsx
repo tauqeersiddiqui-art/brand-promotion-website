@@ -2,8 +2,8 @@ import Link from "next/link";
 import { getSettings, whatsappLink } from "@/lib/settings";
 
 export const metadata = {
-  title: "Terms & Conditions — Campaign Rules & Payout Policy",
-  description: "Guidelines and terms for reviewers, brand promotion campaigns, 100% review cashback, and UPI disbursements.",
+  title: "Terms & Conditions — Campaign Rules & Refund Policy",
+  description: "Guidelines and terms for reviewers, brand promotion campaigns, 100% review refunds, and UPI disbursements.",
 };
 
 export default function TermsPage() {
@@ -34,7 +34,7 @@ export default function TermsPage() {
               1. Platform Overview & Influencer Promotion Model
             </h3>
             <p className="muted" style={{ margin: 0 }}>
-              {settings.site_name} operates as a verified influencer brand promotion and review reimbursement bridge connecting e-commerce brands (selling on Amazon India, Flipkart, Myntra, and direct-to-consumer stores) with authentic product reviewers and shoppers across India. Reviewers purchase products at regular retail prices and receive 100% cashback / reimbursement via UPI upon posting genuine, verified reviews on the respective e-commerce platform.
+              {settings.site_name} operates as a verified influencer brand promotion and review reimbursement bridge connecting e-commerce brands (selling on Amazon India, Flipkart, Myntra, and direct-to-consumer stores) with authentic product reviewers and shoppers across India. Reviewers purchase products at regular retail prices and receive 100% refunds via UPI upon posting genuine, verified reviews on the respective e-commerce platform.
             </p>
           </section>
 
@@ -98,13 +98,13 @@ export default function TermsPage() {
             </h3>
             <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
               <li>
-                Reimbursements are disbursed directly via UPI (or IMPS Bank Transfer) within <strong>24 to 48 hours</strong> of review proof approval.
+                Refunds are disbursed directly via UPI (or IMPS Bank Transfer) within <strong>24 to 48 hours</strong> of review proof approval.
               </li>
               <li>
                 Upon disbursement, a valid 12-digit bank <strong>UTR Reference Number</strong> is generated and recorded. You can track this in real-time at <Link href="/track" className="link">/track</Link> or in your <Link href="/account" className="link">Reviewer Dashboard</Link>.
               </li>
               <li>
-                Reviewers are solely responsible for ensuring the accuracy of the provided UPI ID (e.g., <code>username@okhdfcbank</code>). Payouts disbursed to incorrectly submitted UPI IDs cannot be recovered or refunded.
+                Reviewers are solely responsible for ensuring the accuracy of the provided UPI ID (e.g., <code>username@okhdfcbank</code>). Refunds disbursed to incorrectly submitted UPI IDs cannot be recovered or refunded.
               </li>
             </ul>
           </section>

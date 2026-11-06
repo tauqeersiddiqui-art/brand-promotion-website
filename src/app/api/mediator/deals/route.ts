@@ -8,7 +8,7 @@ import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { writeAutoBackupSafe } from "@/lib/auto-backup";
-import { resolveCashbackAmount } from "@/lib/cashback";
+import { resolveRefundAmount } from "@/lib/refund";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,7 @@ export async function GET() {
   const deals = db
     .prepare(
       `SELECT d.id, d.product_code, d.title, d.category, d.platform, d.deal_type,
-              d.image_url, d.price_sale, d.cashback_amount, d.total_slots,
+              d.image_url, d.price_sale, d.refund_amount, d.total_slots,
               d.stock, d.active, d.approval_status, d.rejection_reason,
               d.mediator_commission_amount, d.created_at, d.approved_at,
               e.name AS approved_by_name
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
   const description = sanitizeHtml(str(form.get("description"), 2000));
   const category = sanitizeText(str(form.get("category"), 40), 40) || "General";
   const platform = sanitizeText(str(form.get("platform"), 40), 40) || "Amazon";
-  const dealType = sanitizeText(str(form.get("deal_type"), 60), 60) || "100% Cashback";
+  const dealType = sanitizeText(str(form.get("deal_type"), 60), 60) || "100% Refund";
   let dealUrl = sanitizeText(str(form.get("deal_url"), 500), 500);
   if (dealUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(dealUrl)) dealUrl = `https://${dealUrl}`;
   const targetKeyword = sanitizeText(str(form.get("target_keyword"), 255), 255);
@@ -103,8 +103,8 @@ export async function POST(req: Request) {
   const coupon = sanitizeText(str(form.get("coupon_code"), 40), 40);
   const priceOriginal = num(form.get("price_original"), 0, 10_000_000, 0);
   const priceSale = num(form.get("price_sale"), 0, 10_000_000, 0);
-  const cashbackInput = num(form.get("cashback_amount"), 0, 10_000_000, priceSale);
-  const cashbackAmount = resolveCashbackAmount(dealType, priceSale, cashbackInput);
+  const refundInput = num(form.get("refund_amount"), 0, 10_000_000, priceSale);
+  const refundAmount = resolveRefundAmount(dealType, priceSale, refundInput);
   const reviewAmount = num(form.get("review_amount"), 0, 10_000_000, 0);
   const ratingAmount = num(form.get("rating_amount"), 0, 10_000_000, 0);
   const onlyOrderAmount = num(form.get("only_order_amount"), 0, 10_000_000, 0);
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
       `INSERT INTO deals (
         product_code, title, description, category, platform, deal_type,
         image_url, deal_url, target_keyword, instructions, coupon_code,
-        price_original, price_sale, cashback_amount, review_amount, rating_amount,
+        price_original, price_sale, refund_amount, review_amount, rating_amount,
         only_order_amount, order_form_url, refund_form_url, total_slots, claimed_slots,
         stock, featured, active, submitted_by, approval_status,
         mediator_commission_amount
@@ -155,7 +155,7 @@ export async function POST(req: Request) {
       coupon,
       priceOriginal,
       priceSale,
-      cashbackAmount,
+      refundAmount,
       reviewAmount,
       ratingAmount,
       onlyOrderAmount,

@@ -205,12 +205,12 @@ async function req(jar, path, opts = {}) {
     fd.set("description", "temporary");
     fd.set("category", "General");
     fd.set("platform", "Amazon");
-    fd.set("deal_type", "100% Cashback");
+    fd.set("deal_type", "100% Refund");
     fd.set("deal_url", "https://example.com/p");
     fd.set("image_url", "https://example.com/i.png");
     fd.set("price_original", "500");
     fd.set("price_sale", "500");
-    fd.set("cashback_amount", "500");
+    fd.set("refund_amount", "500");
     fd.set("total_slots", "5");
     fd.set("stock", "5");
 
@@ -509,8 +509,8 @@ async function req(jar, path, opts = {}) {
     check("orders without CSRF -> 403", r.status === 403, `got ${r.status}`);
   }
 
-  // ---- Full cashback funnel: order -> delivered -> review -> claim -> payout ----
-  section("Cashback funnel");
+  // ---- Full refund funnel: order -> delivered -> review -> claim -> payout ----
+  section("Refund funnel");
   let reviewId = null;
   let reimbId = null;
   {

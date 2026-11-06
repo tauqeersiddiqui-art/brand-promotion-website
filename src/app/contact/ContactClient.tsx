@@ -47,7 +47,7 @@ export default function ContactClient({
               Get in touch with our team
             </h1>
           <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-            Have questions about a campaign, order proof approval, or UPI cashback payout? We&apos;re here to help!
+            Have questions about a campaign, order proof approval, or UPI refund payout? We&apos;re here to help!
           </p>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function ContactClient({
             <div style={{ fontSize: 24, marginBottom: 8, fontWeight: 800, color: "var(--muted)" }} aria-hidden="true">—</div>
             <h3 style={{ margin: "0 0 6px", fontSize: 17 }}>Telegram VIP deal channel</h3>
             <p className="muted" style={{ margin: "0 0 12px", fontSize: 13.5 }}>
-              Join our exclusive Telegram community to get instant alerts on new 100% cashback drops and slot refills.
+              Join our exclusive Telegram community to get instant alerts on new 100% refund drops and slot refills.
             </p>
             {telegramHref ? (
               <a

@@ -27,7 +27,7 @@ type DealRow = {
   claimed_slots?: number;
   target_keyword?: string;
   instructions?: string;
-  cashback_amount?: number;
+  refund_amount?: number;
   review_amount?: number;
   rating_amount?: number;
   only_order_amount?: number;
@@ -68,7 +68,7 @@ export default async function DealPage({
   const claimedSlots = deal.claimed_slots || 0;
   const remainingSlots = Math.max(0, totalSlots - claimedSlots);
   const outOfSlots = remainingSlots <= 0;
-  const is100Pct = deal.deal_type === "100% Cashback" || (deal.cashback_amount && deal.cashback_amount >= deal.price_sale);
+  const is100Pct = deal.deal_type === "100% Refund" || (deal.refund_amount && deal.refund_amount >= deal.price_sale);
 
   return (
     <div className="container" style={{ paddingTop: 32, paddingBottom: 60 }}>
@@ -96,7 +96,7 @@ export default async function DealPage({
                 <div className="deal-placeholder">—</div>
               )}
               {is100Pct ? (
-                <span className="deal-tag deal-tag-cashback">100% cashback</span>
+                <span className="deal-tag deal-tag-refund">100% refund</span>
               ) : disc > 0 ? (
                 <span className="deal-tag deal-tag-discount">{disc}% off</span>
               ) : null}

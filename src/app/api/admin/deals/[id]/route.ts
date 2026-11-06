@@ -8,7 +8,7 @@ import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { writeAutoBackupSafe } from "@/lib/auto-backup";
-import { resolveCashbackAmount } from "@/lib/cashback";
+import { resolveRefundAmount } from "@/lib/refund";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ type Deal = {
   coupon_code: string;
   price_original: number;
   price_sale: number;
-  cashback_amount: number;
+  refund_amount: number;
   review_amount: number;
   rating_amount: number;
   only_order_amount: number;
@@ -101,7 +101,7 @@ export async function PATCH(
   const description = has("description") ? sanitizeHtml(str(form.get("description"), 2000)) : existing.description;
   const category = has("category") ? sanitizeText(asStr("category") || "General", 40) : existing.category;
   const platform = has("platform") ? sanitizeText(asStr("platform") || "Amazon", 40) : existing.platform;
-  const dealType = has("deal_type") ? sanitizeText(asStr("deal_type") || "100% Cashback", 60) : existing.deal_type;
+  const dealType = has("deal_type") ? sanitizeText(asStr("deal_type") || "100% Refund", 60) : existing.deal_type;
   let dealUrl = has("deal_url") ? sanitizeText(asStr("deal_url"), 500) : existing.deal_url;
   if (dealUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(dealUrl)) dealUrl = `https://${dealUrl}`;
   const targetKeyword = has("target_keyword") ? sanitizeText(asStr("target_keyword"), 255) : existing.target_keyword;
@@ -113,13 +113,13 @@ export async function PATCH(
   const priceSale = has("price_sale")
     ? num(form.get("price_sale"), 0, 10_000_000, existing.price_sale)
     : existing.price_sale;
-  const cashbackInput = has("cashback_amount")
-    ? num(form.get("cashback_amount"), 0, 10_000_000, existing.cashback_amount)
-    : existing.cashback_amount;
-  const cashbackAmount =
+  const refundInput = has("refund_amount")
+    ? num(form.get("refund_amount"), 0, 10_000_000, existing.refund_amount)
+    : existing.refund_amount;
+  const refundAmount =
     has("deal_type") || has("price_sale")
-      ? resolveCashbackAmount(dealType, priceSale, cashbackInput)
-      : cashbackInput;
+      ? resolveRefundAmount(dealType, priceSale, refundInput)
+      : refundInput;
   const reviewAmount = has("review_amount")
     ? num(form.get("review_amount"), 0, 10_000_000, existing.review_amount)
     : existing.review_amount;
@@ -178,7 +178,7 @@ export async function PATCH(
     `UPDATE deals SET
       product_code = ?, title = ?, description = ?, category = ?, platform = ?, deal_type = ?,
       image_url = ?, deal_url = ?, target_keyword = ?, instructions = ?, coupon_code = ?,
-      price_original = ?, price_sale = ?, cashback_amount = ?, review_amount = ?,
+      price_original = ?, price_sale = ?, refund_amount = ?, review_amount = ?,
       rating_amount = ?, only_order_amount = ?, order_form_url = ?, refund_form_url = ?,
       total_slots = ?, claimed_slots = ?,
       stock = ?, featured = ?, active = ?, mediator_commission_amount = ?,
@@ -198,7 +198,7 @@ export async function PATCH(
     coupon,
     priceOriginal,
     priceSale,
-    cashbackAmount,
+    refundAmount,
     reviewAmount,
     ratingAmount,
     onlyOrderAmount,

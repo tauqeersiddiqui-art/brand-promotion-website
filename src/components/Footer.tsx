@@ -10,10 +10,10 @@ export default function Footer({ settings: s }: { settings: SiteSettings }) {
             <span className="logo">BP</span> {s.site_name}
           </div>
           <p style={{ margin: 0, maxWidth: 320, color: "var(--muted)", fontSize: 13.5 }}>
-            {s.tagline}. Genuine brand campaigns with direct UPI cashback for verified reviewers.
+            {s.tagline}. Genuine brand campaigns with direct UPI refund for verified reviewers.
           </p>
           <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <span className="badge badge-cashback">
+            <span className="badge badge-refund">
               Direct UPI Payouts
             </span>
             <span className="badge badge-outline">
@@ -27,7 +27,7 @@ export default function Footer({ settings: s }: { settings: SiteSettings }) {
           <Link href="/browse">Live brand deals</Link>
           <Link href="/stores">Shop all stores</Link>
           <Link href="/#submit-order">Submit order proof</Link>
-          <Link href="/#claim-cashback">Claim cashback</Link>
+          <Link href="/#claim-refund">Claim refund</Link>
           <Link href="/track">Track payout status</Link>
           <Link href="/account">My dashboard</Link>
         </div>
@@ -66,7 +66,7 @@ export default function Footer({ settings: s }: { settings: SiteSettings }) {
       </div>
 
       <div className="container" style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid var(--border)", fontSize: 13, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <span>© {new Date().getFullYear()} {s.site_name}. Brand campaigns &amp; reviewer cashback platform.</span>
+        <span>© {new Date().getFullYear()} {s.site_name}. Brand campaigns &amp; reviewer refund platform.</span>
         <span>For verified reviewers</span>
       </div>
     </footer>

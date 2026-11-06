@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import SubmitOrderProofForm from "./SubmitOrderProofForm";
-import ClaimCashbackForm from "./ClaimCashbackForm";
+import ClaimRefundForm from "./ClaimRefundForm";
 import QuickTrackForm from "./QuickTrackForm";
 
 export default function HomeActionTabs() {
@@ -11,7 +11,7 @@ export default function HomeActionTabs() {
   useEffect(() => {
     const syncFromHash = () => {
       const hash = window.location.hash;
-      if (hash === "#claim-cashback" || hash === "#claim") {
+      if (hash === "#claim-refund" || hash === "#claim") {
         setTab("claim");
       } else if (hash === "#track" || hash === "#track-status") {
         setTab("track");
@@ -27,13 +27,13 @@ export default function HomeActionTabs() {
   return (
     <section className="container section" id="quick-actions" style={{ marginTop: 8, marginBottom: 24 }}>
       <span id="submit-order" style={{ display: "block", position: "relative", top: -90 }} />
-      <span id="claim-cashback" style={{ display: "block", position: "relative", top: -90 }} />
+      <span id="claim-refund" style={{ display: "block", position: "relative", top: -90 }} />
       <span id="track" style={{ display: "block", position: "relative", top: -90 }} />
       <div className="action-panel">
         <div style={{ textAlign: "center", marginBottom: 22 }}>
           <h2 style={{ margin: "0 0 6px" }}>Reviewer actions</h2>
           <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-            Submit your order proof, claim your cashback, or track a payout status.
+            Submit your order proof, request your refund, or track a payout status.
           </p>
         </div>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
@@ -53,10 +53,10 @@ export default function HomeActionTabs() {
             className={`tab-btn ${tab === "claim" ? "active" : ""}`}
             onClick={() => {
               setTab("claim");
-              window.history.replaceState(null, "", "#claim-cashback");
+              window.history.replaceState(null, "", "#claim-refund");
             }}
           >
-            2. Claim cashback
+            2. Request refund
           </button>
           <button
             type="button"
@@ -71,7 +71,7 @@ export default function HomeActionTabs() {
         </div>
 
         {tab === "submit" && <SubmitOrderProofForm />}
-        {tab === "claim" && <ClaimCashbackForm />}
+        {tab === "claim" && <ClaimRefundForm />}
         {tab === "track" && <QuickTrackForm />}
         </div>
       </div>

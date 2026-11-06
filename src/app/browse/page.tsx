@@ -70,7 +70,7 @@ export default function BrowsePage() {
         <div>
           <h2>Live brand campaigns &amp; deals</h2>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-            Explore 100% cashback deals across Amazon, Flipkart, Myntra and direct brand stores.
+            Explore 100% refund deals across Amazon, Flipkart, Myntra and direct brand stores.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>

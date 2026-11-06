@@ -78,8 +78,8 @@ export default function AdminDashboard() {
     { label: "Order proofs submitted", value: stats.orders, color: "var(--ink)" },
     { label: "Pending order checks", value: stats.pendingOrders, color: "#b45309" },
     { label: "Reimbursement claims", value: stats.reimbursements, color: "var(--ink)" },
-    { label: "Pending cashback payouts", value: stats.pendingReimbursements, color: "var(--accent)" },
-    { label: "Total cashback disbursed", value: `₹${stats.totalDisbursed.toLocaleString("en-IN")}`, color: "var(--accent)" },
+    { label: "Pending refund payouts", value: stats.pendingReimbursements, color: "var(--accent)" },
+    { label: "Total refund disbursed", value: `₹${stats.totalDisbursed.toLocaleString("en-IN")}`, color: "var(--accent)" },
     { label: "Promotional order volume", value: `₹${stats.totalOrderValue.toLocaleString("en-IN")}`, color: "var(--muted)" },
   ];
 
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
         <div>
           <h1>Admin overview &amp; operations</h1>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-            Real-time influencer campaign metrics, review verifications, and UPI cashback disbursement pipeline.
+            Real-time influencer campaign metrics, review verifications, and UPI refund disbursement pipeline.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
         {/* Recent Reimbursement Claims */}
         <div>
           <div className="section-head" style={{ marginBottom: 12 }}>
-            <h3>Recent cashback claims</h3>
+            <h3>Recent refund claims</h3>
             <a className="link" href="/admin/reimbursements" style={{ fontSize: 13 }}>
               Process payouts ({stats.pendingReimbursements} pending) →
             </a>
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
                   <tr>
                     <th>Claim Code</th>
                     <th>Reviewer & UPI</th>
-                    <th>Cashback</th>
+                    <th>Amount</th>
                     <th>Status</th>
                   </tr>
                 </thead>

@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     .prepare(
       `SELECT id, product_code, title, description, category, platform, deal_type,
               image_url, deal_url, target_keyword, instructions, coupon_code,
-              price_original, price_sale, cashback_amount, review_amount, rating_amount,
+              price_original, price_sale, refund_amount, review_amount, rating_amount,
               only_order_amount, order_form_url, refund_form_url, total_slots, claimed_slots,
               stock, featured, created_at
        FROM deals WHERE ${whereSql}

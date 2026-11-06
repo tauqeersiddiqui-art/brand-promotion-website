@@ -104,7 +104,7 @@ function dealForm(overrides = {}) {
     deal_url: "https://example.com/product",
     price_original: "999",
     price_sale: "599",
-    cashback_amount: "599",
+    refund_amount: "599",
     review_amount: "100",
     total_slots: "5",
     stock: "5",

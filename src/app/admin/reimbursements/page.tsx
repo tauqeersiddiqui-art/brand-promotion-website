@@ -167,7 +167,7 @@ export default function AdminReimbursementsPage() {
         <div>
           <h1>Review reimbursements &amp; payouts</h1>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-            Verify reviewer proofs, copy UPI VPAs, and record bank IMPS/UPI UTR numbers for 100% cashback fulfillment.
+            Verify reviewer proofs, copy UPI VPAs, and record bank IMPS/UPI UTR numbers for 100% reimbursement fulfillment.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

@@ -282,7 +282,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
     return (
       <LoginRequired
         title="Log in to submit your order proof"
-        description="Order proofs must be linked to a free account so you can track approval and receive your cashback payout. It takes 30 seconds to sign up."
+        description="Order proofs must be linked to a free account so you can track approval and receive your refund payout. It takes 30 seconds to sign up."
         next={pathname && pathname !== "/" ? pathname : "/#submit-order"}
       />
     );

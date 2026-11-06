@@ -17,9 +17,9 @@ User flow
 
 What the page must say
 ----------------------
-- The page is a directory of links, not a shop or a cashback/refund service.
+- The page is a directory of links, not a shop or a refund service.
 - Orders, payments, delivery, returns and refunds are handled by the destination store.
-- No order proof, refund form, or cashback claim is needed for purchases made elsewhere.
+- No order proof, refund form, or refund claim is needed for purchases made elsewhere.
 - We never ask for payment, card details, OTPs, or order screenshots for other stores.
 - Some links may be affiliate/promotional links; the price the visitor pays is unchanged.
 
@@ -27,11 +27,11 @@ Copy rules
 ----------
 Do not use these phrases on /stores:
 - "submit your order proof"
-- "claim your cashback"
+- "claim your refund"
 - "claim after delivery"
 - "return window closes"
 - "campaign slots"
-- "never cancel or return after cashback"
+- "never cancel or return after refund"
 
 Preferred wording:
 - "Pick a store" -> "Buy on the store's site" -> "Use the store's support"

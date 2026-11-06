@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import QuickTrackForm from "@/components/QuickTrackForm";
 
 export const metadata = {
-  title: "Track Order & Cashback Payout Status | Brand Promotion",
-  description: "Check the live status of your order proof verification, review approval, and UPI reimbursement payout with bank UTR reference.",
+  title: "Track Order & Refund Payout Status | Brand Promotion",
+  description: "Check the live status of your order proof verification, review approval, and UPI refund payout with bank UTR reference.",
 };
 
 function TrackContent({ initialQuery }: { initialQuery?: string }) {

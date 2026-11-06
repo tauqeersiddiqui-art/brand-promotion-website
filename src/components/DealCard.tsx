@@ -17,7 +17,7 @@ export type Deal = {
   total_slots?: number;
   claimed_slots?: number;
   target_keyword?: string;
-  cashback_amount?: number;
+  refund_amount?: number;
 };
 
 export function discountPct(d: { price_original?: number; price_sale?: number }): number {
@@ -39,7 +39,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
   const claimedSlots = deal.claimed_slots || 0;
   const remainingSlots = Math.max(0, totalSlots - claimedSlots);
   const slotPct = Math.min(100, Math.round((claimedSlots / totalSlots) * 100));
-  const is100Pct = deal.deal_type === "100% Cashback" || (deal.cashback_amount && deal.cashback_amount >= deal.price_sale);
+  const is100Pct = deal.deal_type === "100% Refund" || (deal.refund_amount && deal.refund_amount >= deal.price_sale);
 
   return (
     <article className="deal-card">
@@ -50,7 +50,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
           <div className="deal-placeholder">—</div>
         )}
         {is100Pct ? (
-          <span className="deal-tag deal-tag-cashback">100% cashback</span>
+          <span className="deal-tag deal-tag-refund">100% refund</span>
         ) : disc > 0 ? (
           <span className="deal-tag deal-tag-discount">{disc}% off</span>
         ) : null}

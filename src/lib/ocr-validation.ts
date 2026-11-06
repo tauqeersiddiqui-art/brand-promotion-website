@@ -396,7 +396,7 @@ export function isScreenshotUsedByAnotherOrder(url: string, excludeOrderId?: num
 
 /**
  * True when this screenshot, or a byte-identical copy of it, is already attached
- * to a cashback claim for a different order.
+ * to a refund claim for a different order.
  */
 export function isScreenshotUsedByAnotherClaim(
   url: string,

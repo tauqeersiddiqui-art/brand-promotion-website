@@ -16,11 +16,11 @@ RUN npm ci --no-audit --no-fund --omit=dev && \
 
 # Copy source and build
 COPY . .
+ENV NODE_ENV=production
 ENV __NEXT_BUILD__=true
 RUN npm run build
 
 # Production environment
-ENV NODE_ENV=production
 ENV PORT=3000
 ENV DATA_DIR=/data
 

@@ -1,15 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import { ENV } from "@/lib/env";
 
 const COOKIE_NAME = "bp_session";
-const secret = new TextEncoder().encode(ENV.AUTH_SECRET);
+
+// Lazy load AUTH_SECRET to avoid throwing at module load time during build
+function getSecret(): Uint8Array {
+  const authSecret = process.env.AUTH_SECRET || "";
+  return new TextEncoder().encode(authSecret);
+}
 
 async function readSession(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getSecret());
     return payload as { userId?: number; role?: string };
   } catch {
     return null;

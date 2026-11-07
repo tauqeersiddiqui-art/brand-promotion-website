@@ -110,9 +110,7 @@ async function loadS3Module() {
 
   try {
     // Dynamic import - will fail gracefully if packages not installed
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const s3 = require('@aws-sdk/client-s3');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
     s3Module = { client: s3.S3Client, getSignedUrl, loaded: true };
   } catch (e) {

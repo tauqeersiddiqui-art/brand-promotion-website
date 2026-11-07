@@ -50,6 +50,9 @@ type Order = {
   price_screenshot_url: string;
   ocr_order_id: string;
   ocr_order_match: number;
+  fraud_score: number;
+  validation_score: number;
+  validation_details: string;
   admin_note: string;
   status: string;
   created_at: string;
@@ -58,6 +61,20 @@ type Order = {
 
 const STATUSES = ["confirmed", "rejected", "cancelled"];
 const PLATFORMS = ["All", "Amazon", "Flipkart", "Myntra", "Brand Store"];
+
+/** Risk signals recorded at submission time (identity reuse, price mismatch…). */
+function fraudSignals(o: Order): string[] {
+  try {
+    const d = JSON.parse(o.validation_details || "{}");
+    return [
+      ...(d?.fraudScore?.reasons ?? []),
+      ...(d?.ocrValidation?.errors ?? []),
+      ...(d?.ocrValidation?.warnings ?? []),
+    ].filter((s: unknown): s is string => typeof s === "string" && s.length > 0);
+  } catch {
+    return [];
+  }
+}
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[] | null>(null);
@@ -306,6 +323,24 @@ export default function AdminOrdersPage() {
                               Manual check
                             </span>
                           )}
+                          {(o.fraud_score || 0) >= 30 && (
+                            <span
+                              className="badge"
+                              title={fraudSignals(o).join(" • ")}
+                              style={{ position: "static", background: "rgba(239,68,68,0.18)", color: "#f87171", fontSize: 10, padding: "2px 6px", marginLeft: 4 }}
+                            >
+                              ⚠ Risk {o.fraud_score}
+                            </span>
+                          )}
+                          {(o.fraud_score || 0) > 0 && (o.fraud_score || 0) < 30 && (
+                            <span
+                              className="badge"
+                              title={fraudSignals(o).join(" • ")}
+                              style={{ position: "static", background: "rgba(245,158,11,0.16)", color: "#fbbf24", fontSize: 10, padding: "2px 6px", marginLeft: 4 }}
+                            >
+                              Risk {o.fraud_score}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -435,6 +470,30 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
             </div>
+
+            {/* Fraud signals collected at submission time. Without this the
+                score was computed and stored but never visible to an admin. */}
+            {fraudSignals(activeOrder).length > 0 && (
+              <div
+                style={{
+                  background: (activeOrder.fraud_score || 0) >= 30 ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)",
+                  border: `1px solid ${(activeOrder.fraud_score || 0) >= 30 ? "rgba(239,68,68,0.35)" : "rgba(245,158,11,0.35)"}`,
+                  borderRadius: 10,
+                  padding: 12,
+                  marginBottom: 16,
+                  fontSize: 12.5,
+                }}
+              >
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                  Fraud risk {activeOrder.fraud_score || 0}/100 · confidence {activeOrder.validation_score || 0}/100
+                </div>
+                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
+                  {fraudSignals(activeOrder).map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Screenshots Display */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>

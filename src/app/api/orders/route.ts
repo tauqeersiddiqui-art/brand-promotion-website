@@ -10,7 +10,17 @@ import { extractOrderId, extractAmount, normalizeOrderId, runOcrOnBuffer } from 
 import { sanitizeText, sanitizePhone } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
-import { validateOrderSubmission } from "@/lib/ocr-validation";
+import {
+  validateOrderSubmission,
+  makeDecision,
+  checkDuplicateOrderInReimbursements,
+  isScreenshotUsedByAnotherClaim,
+} from "@/lib/ocr-validation";
+import {
+  validateOrderIdFormat,
+  assessIdentityRisk,
+  checkSubmissionLimits,
+} from "@/lib/fraud";
 import { isStoredUploadUrl, uploadFilePath } from "@/lib/storage";
 import { claimDealSlot } from "@/lib/deal-slots";
 
@@ -184,6 +194,17 @@ export async function POST(req: Request) {
     );
   }
 
+  // Fabricated order IDs are cheap to type and expensive to chase: reject the
+  // ones that cannot be real, and flag ones that don't match the platform's
+  // shape (warning only — a wrong regex must never block a real customer).
+  const idVerdict = validateOrderIdFormat(externalOrderId, deal.platform || platform);
+  if (idVerdict.severity === "bad") {
+    return bad(
+      `${idVerdict.reason}. Please copy the Order ID exactly as shown on your order confirmation.`,
+      400
+    );
+  }
+
   // Check available slots if deal exists
   if (deal.total_slots > 0 && deal.claimed_slots >= deal.total_slots) {
     return bad("Slots for this campaign are currently full. Please try another deal or contact support.", 400);
@@ -218,7 +239,42 @@ export async function POST(req: Request) {
     if (!ensured.ok) return bad(ensured.error);
   }
 
-  const finalUnitPrice = unitPrice > 0 ? unitPrice : deal ? deal.price_sale : 0;
+  // --- Fraud gates that do not depend on OCR ---
+
+  // Velocity caps persisted in the database, so they survive deploys (the
+  // in-memory rate limiter does not).
+  const limits = checkSubmissionLimits(session.userId, deviceFingerprint || undefined);
+  if (!limits.ok) return bad(limits.reason, 429);
+
+  // An order ID already tied to a refund claim cannot be "ordered" again.
+  if (checkDuplicateOrderInReimbursements(externalOrderId).duplicate) {
+    return bad(
+      "This Order ID has already been used in a refund claim. Please contact support if you think this is a mistake.",
+      409
+    );
+  }
+
+  // A screenshot already used to claim a refund on another order cannot be
+  // recycled as proof for a new purchase.
+  for (const url of [orderScreenshotUrl, priceScreenshotUrl]) {
+    if (url && isScreenshotUsedByAnotherClaim(url, externalOrderId)) {
+      return bad(
+        "This screenshot is already attached to a refund claim. Please upload a fresh screenshot for this order.",
+        400
+      );
+    }
+  }
+
+  // The campaign price is authoritative. The client used to send any unit_price,
+  // which let a buyer inflate the order total (and therefore the refund) or
+  // claim a different product entirely.
+  const campaignPrice = Number(deal.price_sale) || 0;
+  const clientPrice = unitPrice > 0 ? unitPrice : 0;
+  const priceMismatch =
+    campaignPrice > 0 &&
+    clientPrice > 0 &&
+    Math.abs(clientPrice - campaignPrice) > Math.max(1, campaignPrice * 0.05);
+  const finalUnitPrice = campaignPrice > 0 ? campaignPrice : clientPrice;
   const total = Math.round(finalUnitPrice * quantity * 100) / 100;
   const orderCode = generateCode("BP");
 
@@ -234,6 +290,36 @@ export async function POST(req: Request) {
     ip,
     deviceFingerprint || undefined
   );
+
+  // Cross-account and metadata risk can only be judged after the basic checks,
+  // so fold them into the score and re-run the decision. Without this an order
+  // from a freshly created account on a shared device could still auto-approve.
+  const identityRisk = assessIdentityRisk({
+    userId: session.userId,
+    phone,
+    deviceFingerprint: deviceFingerprint || undefined,
+    ip,
+    address,
+    pincode,
+    reviewerName,
+  });
+  const extraPoints =
+    identityRisk.points +
+    (priceMismatch ? 10 : 0) +
+    (idVerdict.severity === "warn" ? 10 : 0);
+  if (extraPoints > 0) {
+    validation.fraudScore.score = Math.min(100, validation.fraudScore.score + extraPoints);
+    if (priceMismatch) {
+      validation.fraudScore.reasons.push(
+        `Submitted price ₹${clientPrice} differs from campaign price ₹${campaignPrice}`
+      );
+    }
+    if (idVerdict.severity === "warn" && idVerdict.reason) {
+      validation.fraudScore.reasons.push(idVerdict.reason);
+    }
+    validation.fraudScore.reasons.push(...identityRisk.reasons);
+    validation.decision = makeDecision(validation.ocrValidation, validation.fraudScore);
+  }
 
   // Reject if validation fails
   if (validation.decision.action === "reject") {

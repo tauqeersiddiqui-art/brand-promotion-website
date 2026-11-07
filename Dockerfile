@@ -27,4 +27,7 @@ ENV DATA_DIR=/data
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Seed the database schema (idempotent: CREATE TABLE IF NOT EXISTS) and
+# sync the owner account before starting the app. Without this, a fresh
+# Railway volume boots with an empty database -> "no such table: deals".
+CMD ["sh", "-c", "node scripts/seed.js && npm start"]

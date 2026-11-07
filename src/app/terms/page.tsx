@@ -78,7 +78,7 @@ export default function TermsPage() {
             </h3>
             <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
               <li>
-                Reviews must be posted only after the product is physically delivered.
+                Reviews must be posted after the order is confirmed.
               </li>
               <li>
                 Reviews must be genuine, constructive, 5-star rated, and include at least 1–2 real photos of the unboxed product on the e-commerce platform.

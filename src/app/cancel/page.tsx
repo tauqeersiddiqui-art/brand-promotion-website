@@ -154,7 +154,7 @@ export default function CancelPage() {
           {orderData.cancellable && (
             <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid var(--border)" }}>
               <p style={{ color: "var(--muted)", marginBottom: 16, fontSize: 14 }}>
-                You can cancel this order before it's delivered.
+                You can cancel this order at any time before it's processed.
               </p>
               <button className="btn" onClick={handleCancel} style={{ background: "var(--danger)" }}>
                 Request Cancellation

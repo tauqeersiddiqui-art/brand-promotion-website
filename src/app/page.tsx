@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import DealCard, { type Deal } from "@/components/DealCard";
-import HomeActionTabs from "@/components/HomeActionTabs";
 import AdSlot from "@/components/AdSlot";
 import { getSettings, whatsappLink, telegramLink } from "@/lib/settings";
 
@@ -58,8 +57,7 @@ export default function HomePage() {
     disbursed: totalDisbursed > 0 ? Math.round(totalDisbursed) : 0,
   };
 
-  const showFeatured = featured.slice(0, 8);
-  const showLatest = latest.slice(0, 4);
+  const showLatest = latest.slice(0, 1);
 
   return (
     <>
@@ -80,25 +78,6 @@ export default function HomePage() {
             direct brand stores. Purchase, post your proof, and get paid —
             with UTR tracking on every payout.
           </p>
-
-          <div className="hero-ctas">
-            <Link href="#campaigns" className="btn">
-              Browse live deals
-            </Link>
-            <Link href="/claim" className="btn btn-outline">
-              Claim refund
-            </Link>
-            {settings.telegram && (
-              <a
-                href={telegramLink(settings.telegram)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ghost"
-              >
-                Join Telegram channel
-              </a>
-            )}
-          </div>
 
           <div className="stats-row">
             <div className="stat-card">
@@ -135,92 +114,12 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Category strip */}
-      {categories.length > 0 && (
-        <div className="container">
-          <div className="category-strip">
-            <Link href="/browse" className="category-chip">
-              All deals
-            </Link>
-            {categories.map((c) => (
-              <Link
-                key={c}
-                href={`/browse?category=${encodeURIComponent(c)}`}
-                className="category-chip"
-              >
-                {c}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Featured Deals */}
-      {showFeatured.length > 0 && (
-        <section className="container section" id="campaigns" style={{ paddingBottom: 24 }}>
-          <div className="section-head">
-            <div>
-              <h2>Deals of the day</h2>
-              <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-                Featured brand campaigns with open reviewer slots.
-              </p>
-            </div>
-            <Link href="/browse" className="link">
-              View all {totals.deals} campaigns →
-            </Link>
-          </div>
-          <div className="deal-grid">
-            {showFeatured.map((d) => (
-              <DealCard key={d.id} deal={d} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Ad slot */}
-      <div className="container">
-        <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME} format="horizontal" />
-      </div>
-
-      {/* Fresh drops */}
+      {/* Latest Deal - show only ONE */}
       {showLatest.length > 0 && (
-        <section className="container" style={{ paddingBottom: 24 }}>
-          <div className="section-head">
-            <div>
-              <h2>New arrivals</h2>
-              <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-                Fresh offers across electronics, beauty, home and fitness.
-              </p>
-            </div>
-            <Link href="/browse" className="link">
-              View all →
-            </Link>
-          </div>
-          <div className="deal-grid">
-            {showLatest.map((d) => (
-              <DealCard key={d.id} deal={d} />
-            ))}
-          </div>
+        <section className="container section" style={{ paddingBottom: 24 }}>
+          <DealCard deal={showLatest[0]} />
         </section>
       )}
-
-      {showFeatured.length === 0 && showLatest.length === 0 && (
-        <section className="container section">
-          <div className="empty-state card">
-            <h3>Campaigns are being restocked</h3>
-            <p className="muted">
-              New brand campaigns drop regularly. Join the Telegram channel to
-              get notified the moment slots open.
-            </p>
-            <Link href="/browse" className="btn">
-              Check live deals
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* Quick actions (forms) */}
-      <HomeActionTabs />
 
       {/* How it works */}
       <section id="how-it-works" className="container section" style={{ marginTop: 8 }}>
@@ -245,7 +144,7 @@ export default function HomePage() {
             {
               num: "03",
               title: "Post your review",
-              desc: "After delivery, publish a genuine 5-star review with product photos on the marketplace.",
+              desc: "Publish a genuine 5-star review with product photos on the marketplace.",
             },
             {
               num: "04",
@@ -372,7 +271,7 @@ export default function HomePage() {
             },
             {
               q: "When do I receive my payout?",
-              a: "Once your review proof is verified, reimbursements are processed within 24 to 48 hours and sent to your UPI ID with a UTR reference.",
+              a: "Once your review proof is verified, refunds are processed within 10-15 days and sent to your UPI ID with a UTR reference.",
             },
             {
               q: "Can I track without an account?",

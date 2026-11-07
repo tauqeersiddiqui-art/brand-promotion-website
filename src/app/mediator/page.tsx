@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { calculateRefund, parseDealTypePercentage } from "@/lib/refund";
+import { calculateRefund } from "@/lib/refund";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -83,9 +83,6 @@ export default function MediatorPage() {
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const refundPercentage = parseDealTypePercentage(form.deal_type);
-  const refundIsAuto = refundPercentage > 0;
-
   const load = useCallback(async () => {
     try {
       const r = await fetch("/api/mediator/deals");
@@ -112,14 +109,6 @@ export default function MediatorPage() {
   function set(k: keyof typeof EMPTY, v: string) {
     setForm((f) => {
       const updated = { ...f, [k]: v };
-      const dealType = k === "deal_type" ? v : f.deal_type;
-      const salePrice = k === "price_sale" ? Number(v) : Number(f.price_sale || 0);
-      const calculated = calculateRefund(dealType, salePrice);
-      if (calculated !== null) {
-        updated.refund_amount = String(calculated);
-      } else if (parseDealTypePercentage(dealType) > 0 && (k === "deal_type" || k === "price_sale")) {
-        updated.refund_amount = "";
-      }
       return updated;
     });
   }
@@ -309,11 +298,6 @@ export default function MediatorPage() {
           <div>
             <label className="form-label">
               Refund amount (₹)
-              {refundIsAuto && (
-                <span className="badge badge-refund" style={{ marginLeft: 8, fontSize: 10 }}>
-                  Auto {refundPercentage}%
-                </span>
-              )}
             </label>
             <input
               className="input"
@@ -322,24 +306,11 @@ export default function MediatorPage() {
               step="0.01"
               value={form.refund_amount}
               onChange={(e) => set("refund_amount", e.target.value)}
-              placeholder="Defaults to the purchase price"
-              disabled={refundIsAuto}
+              placeholder="e.g. 199 (after review), 99 (after rating)"
             />
             <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-              {refundIsAuto
-                ? `Calculated automatically from ${refundPercentage}% of the purchase price.`
-                : "Fixed refund amount. Choose a percentage deal type to auto-calculate it."}
+              Enter the amount to refund after reviewer completes requirements.
             </p>
-            {refundIsAuto && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                style={{ marginTop: 6 }}
-                onClick={() => set("deal_type", "Flat Refund")}
-              >
-                Enter a custom amount instead
-              </button>
-            )}
           </div>
 
           <div>

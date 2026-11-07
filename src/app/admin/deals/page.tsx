@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { calculateRefund, parseDealTypePercentage } from "@/lib/refund";
+import { calculateRefund } from "@/lib/refund";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -112,8 +112,6 @@ export default function AdminDealsPage() {
   const [bulkLinks, setBulkLinks] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
-  const refundPercentage = parseDealTypePercentage(form.deal_type);
-  const refundIsAuto = refundPercentage > 0;
 
   async function load() {
     try {
@@ -142,32 +140,12 @@ export default function AdminDealsPage() {
   }, []);
 
   function set(k: keyof typeof EMPTY, v: unknown) {
-    setForm((f) => {
-      const updated = { ...f, [k]: v };
-      // Auto-calculate refund when deal_type or price_sale changes
-      const dealType = k === "deal_type" ? String(v) : f.deal_type;
-      const salePrice = k === "price_sale" ? Number(v) : Number(f.price_sale || 0);
-      const percentage = parseDealTypePercentage(dealType);
-
-      if (k === "deal_type" || k === "price_sale") {
-        const calculated = calculateRefund(dealType, salePrice);
-        if (calculated !== null) {
-          updated.refund_amount = String(calculated);
-        } else if (percentage > 0) {
-          updated.refund_amount = "";
-        }
-      }
-      // Backward compat: if deal_type is not percentage-based, keep existing logic
-      if (k === "price_sale" && percentage === 0 && (!f.refund_amount || f.refund_amount === f.price_sale)) {
-        updated.refund_amount = String(v);
-      }
-      return updated;
-    });
+    const updated = { ...form, [k]: v };
+    setForm(updated);
   }
 
   function startEdit(d: Deal) {
     setEditing(true);
-    const calculatedRefund = calculateRefund(d.deal_type, Number(d.price_sale || 0));
     setForm({
       id: d.id,
       product_code: d.product_code || "",
@@ -183,7 +161,7 @@ export default function AdminDealsPage() {
       coupon_code: d.coupon_code || "",
       price_original: String(d.price_original || ""),
       price_sale: String(d.price_sale || ""),
-      refund_amount: String(calculatedRefund ?? d.refund_amount ?? d.price_sale ?? ""),
+      refund_amount: String(d.refund_amount ?? d.price_sale ?? ""),
       review_amount: String(d.review_amount || ""),
       rating_amount: String(d.rating_amount || ""),
       only_order_amount: String(d.only_order_amount || ""),
@@ -223,13 +201,9 @@ export default function AdminDealsPage() {
         setMsg({ type: "err", text: d.error || "Failed to fetch product." });
         return;
       }
-      // The fetch endpoint does not return `deal_type`, so this used to throw on
-      // `undefined.match(...)` and the whole auto-fill was reported as a
-      // network error. Fall back to the deal type currently in the form.
+      // Fall back to the deal type currently in the form
       const salePrice = Number(d.priceSale || 0);
       const resolvedDealType = d.deal_type || form.deal_type;
-      const percentage = parseDealTypePercentage(resolvedDealType);
-      const calculatedRef = percentage > 0 ? Math.round(salePrice * percentage / 100) : salePrice;
 
       setForm((f) => ({
         ...f,
@@ -238,7 +212,7 @@ export default function AdminDealsPage() {
         category: d.category || f.category,
         price_original: d.priceOriginal ? String(d.priceOriginal) : f.price_original,
         price_sale: d.priceSale ? String(d.priceSale) : f.price_sale,
-        refund_amount: salePrice > 0 ? String(calculatedRef) : f.refund_amount,
+        refund_amount: salePrice > 0 ? String(salePrice) : f.refund_amount,
         deal_type: resolvedDealType,
         image_url: d.imageUrl || f.image_url,
         target_keyword: d.targetKeyword || f.target_keyword,
@@ -630,38 +604,20 @@ export default function AdminDealsPage() {
           <div>
             <label className="form-label">
               Refund Amount (₹) *
-              {refundIsAuto && (
-                <span className="badge badge-refund" style={{ marginLeft: 8, fontSize: 10 }}>
-                  Auto {refundPercentage}%
-                </span>
-              )}
             </label>
             <input
               className="input"
               type="number"
-              required={!refundIsAuto}
+              required
               min={0}
               step="0.01"
               value={form.refund_amount}
               onChange={(e) => set("refund_amount", e.target.value)}
-              placeholder="1999"
-              disabled={refundIsAuto}
+              placeholder="e.g. 199 (after review), 99 (after rating)"
             />
             <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-              {refundIsAuto
-                ? `Calculated automatically from ${refundPercentage}% of the purchase price.`
-                : "Fixed reimbursement amount. Choose a percentage deal type to auto-calculate it."}
+              Enter the amount to refund after reviewer completes requirements.
             </p>
-            {refundIsAuto && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                style={{ marginTop: 6 }}
-                onClick={() => set("deal_type", "Flat Refund")}
-              >
-                Enter a custom amount instead
-              </button>
-            )}
           </div>
 
           <div>

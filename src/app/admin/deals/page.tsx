@@ -544,6 +544,33 @@ export default function AdminDealsPage() {
             />
           </div>
 
+          <div className="full">
+            <label className="form-label">Direct Marketplace Listing URL (Optional fallback)</label>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <input
+                className="input"
+                type="url"
+                style={{ flex: 1, minWidth: 280 }}
+                value={form.deal_url}
+                onChange={(e) => set("deal_url", e.target.value)}
+                placeholder="https://www.amazon.in/dp/B0XXXXXXXX"
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={fetchProductFromUrl}
+                disabled={busy || !form.deal_url}
+                style={{ alignSelf: "flex-end", height: 44 }}
+              >
+                Fetch details
+              </button>
+            </div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+              Paste Amazon/Flipkart product URL (short share links work too) and click "Fetch details" to auto-fill title,
+              price, image &amp; keywords.
+            </p>
+          </div>
+
           <div>
             <label className="form-label">Category</label>
             <select
@@ -727,33 +754,6 @@ export default function AdminDealsPage() {
               onChange={(e) => set("target_keyword", e.target.value)}
               placeholder="e.g. true wireless gaming earbuds with low latency"
             />
-          </div>
-
-          <div className="full">
-            <label className="form-label">Direct Marketplace Listing URL (Optional fallback)</label>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <input
-                className="input"
-                type="url"
-                style={{ flex: 1, minWidth: 280 }}
-                value={form.deal_url}
-                onChange={(e) => set("deal_url", e.target.value)}
-                placeholder="https://www.amazon.in/dp/B0XXXXXXXX"
-              />
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={fetchProductFromUrl}
-                disabled={busy || !form.deal_url}
-                style={{ alignSelf: "flex-end", height: 44 }}
-              >
-                Fetch details
-              </button>
-            </div>
-            <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-              Paste Amazon/Flipkart product URL (short share links work too) and click "Fetch details" to auto-fill title,
-              price, image &amp; keywords.
-            </p>
           </div>
 
           <div>

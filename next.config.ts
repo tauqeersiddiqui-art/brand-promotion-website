@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const isProd = process.env.NODE_ENV === "production";
+const isProd = typeof process.env.NODE_ENV === "string" && process.env.NODE_ENV === "production";
 
 /**
  * Build a strict Content Security Policy for production.

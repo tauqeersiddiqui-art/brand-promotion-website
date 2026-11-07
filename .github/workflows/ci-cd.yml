@@ -76,13 +76,14 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     environment:
       name: production
-      url: ${{ steps.railway.outputs.url }}
     steps:
       - name: Deploy to Railway
-        uses: railwayapp/actions@v1
-        with:
-          command: up
-          detached: true
-        id: railway
+        # Note: Replace "my-service" with your actual Railway service name from
+        # https://railway.app/console > Your Project > Service Name
+        uses: bervProject/railway-deploy@main
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        with:
+          service: "my-service"
+          detach: true
+        id: railway

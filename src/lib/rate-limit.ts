@@ -139,10 +139,34 @@ export function maybeSweep() {
   }
 }
 
+/**
+ * Resolve the client IP from proxy headers.
+ *
+ * The LEFTMOST x-forwarded-for entry is whatever the caller sent, so an attacker
+ * can rotate it and get a fresh rate-limit bucket on every request. Proxies
+ * append the real peer address, so the rightmost entry is the trustworthy one.
+ * Prefer a proxy-set single-value header when present.
+ */
+export function clientIpFromHeaders(headersLike: {
+  get(name: string): string | null;
+}): string {
+  const direct =
+    headersLike.get("x-real-ip") || headersLike.get("cf-connecting-ip");
+  if (direct && direct.trim()) return direct.trim();
+
+  const fwd = headersLike.get("x-forwarded-for");
+  if (fwd) {
+    const hops = fwd
+      .split(",")
+      .map((h) => h.trim())
+      .filter(Boolean);
+    if (hops.length > 0) return hops[hops.length - 1];
+  }
+  return "unknown";
+}
+
 export function clientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  return req.headers.get("x-real-ip") || req.headers.get("cf-connecting-ip") || "unknown";
+  return clientIpFromHeaders(req.headers);
 }
 
 /**

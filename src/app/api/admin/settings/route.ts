@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { requireAdmin, bad } from "@/lib/api-helpers";
 import { str } from "@/lib/validation";
 import { getSettings, updateSettings, type SiteSettings } from "@/lib/settings";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { sanitizeHtml, sanitizeText } from "@/lib/sanitize";
 
 /** Keep the country code intact: +91 85273 24446 -> 918527324446. */
@@ -30,7 +30,7 @@ async function validateRequest(req: Request): Promise<NextResponse | null> {
   }
 
   // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("adminAction", ip);
   if (!rl.ok) {
     return NextResponse.json(

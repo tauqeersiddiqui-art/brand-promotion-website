@@ -7,7 +7,7 @@ import {
   hashPassword,
 } from "@/lib/auth";
 import { exchangeCodeForProfile, googleConfigured, canonicalOrigin } from "@/lib/google-auth";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import crypto from "crypto";
 import { ENV } from "@/lib/env";
 import { headers } from "next/headers";
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
   // Rate limiting
   const reqHeaders = await headers();
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("apiGeneral", ip);
   if (!rl.ok) return fail(req, "Too many attempts. Try again shortly.");
 

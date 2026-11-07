@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { bad } from "@/lib/api-helpers";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   // Rate limiting
   const reqHeaders = await headers();
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("apiGeneral", ip);
   if (!rl.ok) {
     return NextResponse.json(

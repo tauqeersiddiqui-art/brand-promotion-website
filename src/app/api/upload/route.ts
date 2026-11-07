@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { saveUploadedImage } from "@/lib/upload";
 import { runOcrOnBuffer, extractOrderId, extractAmount, extractOrderDate, analyzeReviewText } from "@/lib/ocr";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { getSession } from "@/lib/auth";
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   // Rate limiting keyed on the account first: X-Forwarded-For is client
   // controlled on some hosts, so an IP-only bucket is easy to rotate around.
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("upload", `user:${session.userId}`);
   const rlIp = await applyRateLimit("uploadIp", ip);
   if (!rl.ok || !rlIp.ok) {

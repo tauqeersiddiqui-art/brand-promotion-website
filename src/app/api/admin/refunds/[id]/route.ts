@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin, bad } from "@/lib/api-helpers";
 import { str, oneOf, parseId } from "@/lib/validation";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { sanitizeHtml, sanitizeText } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
+import { releaseDealSlot } from "@/lib/deal-slots";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ async function validateRequest(req: Request): Promise<NextResponse | null> {
   }
 
   // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("adminAction", ip);
   if (!rl.ok) {
     return NextResponse.json(
@@ -70,7 +71,14 @@ export async function PATCH(
 
   // If refund processed/approved, cancel the linked order so stock/status stay consistent
   if (decision === "processed" || decision === "approved") {
+    const order = db
+      .prepare("SELECT status, deal_id FROM orders WHERE id = ?")
+      .get(refund.order_id) as { status: string; deal_id: number | null } | undefined;
     db.prepare("UPDATE orders SET status = 'cancelled' WHERE id = ?").run(refund.order_id);
+    // Frees the campaign slot so a paid-out order is no longer counted as claimed.
+    if (order && order.status !== "cancelled" && order.status !== "rejected") {
+      releaseDealSlot(order.deal_id);
+    }
   }
 
   return NextResponse.json({ ok: true });

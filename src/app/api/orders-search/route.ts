@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { bad } from "@/lib/api-helpers";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { sanitizeText } from "@/lib/sanitize";
 import { headers } from "next/headers";
 import { getSession } from "@/lib/auth";
@@ -42,7 +42,7 @@ type OrderRow = {
  */
 export async function GET(req: NextRequest) {
   const reqHeaders = await headers();
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("apiSearch", ip);
   if (!rl.ok) {
     return NextResponse.json(

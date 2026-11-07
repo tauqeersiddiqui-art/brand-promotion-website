@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 import { getCsrfTokenFromCookies } from "@/lib/csrf";
 import { requireAdmin } from "@/lib/api-helpers";
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("apiGeneral", ip);
   if (!rl.ok) {
     return NextResponse.json(

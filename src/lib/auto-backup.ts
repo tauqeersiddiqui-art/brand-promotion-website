@@ -19,7 +19,10 @@ const UPLOAD_BACKUP_DIR = path.join(BACKUP_DIR, "uploads");
 
 const KEEP_BACKUPS = 20;
 const RESTORE_WINDOW_MS = 60 * 60 * 1000;
-const AUTO_RESTORE = process.env.AUTO_RESTORE !== "0";
+// Restoring is opt-in. It used to run by default on any database that looked
+// "freshly seeded", which silently brought back deleted users and orders on a
+// volume you had deliberately reset. Set AUTO_RESTORE=1 to enable it.
+const AUTO_RESTORE = process.env.AUTO_RESTORE === "1";
 const INTERVAL_MIN = Math.min(
   240,
   Math.max(1, parseInt(process.env.AUTO_BACKUP_MINUTES || "5", 10) || 5)

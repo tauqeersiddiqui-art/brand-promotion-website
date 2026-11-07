@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { requireAdmin, bad } from "@/lib/api-helpers";
 import { str, oneOf, parseId } from "@/lib/validation";
 import { runOcrOnBuffer } from "@/lib/ocr";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { sanitizeHtml, sanitizeText } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { uploadFilePath } from "@/lib/storage";
@@ -27,7 +27,7 @@ async function validateRequest(req: Request): Promise<NextResponse | null> {
   }
 
   // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("adminAction", ip);
   if (!rl.ok) {
     return NextResponse.json(

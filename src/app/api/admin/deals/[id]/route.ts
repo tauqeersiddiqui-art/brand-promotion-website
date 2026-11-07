@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { requireAdmin, bad } from "@/lib/api-helpers";
 import { str, isUrl, num, int, parseId } from "@/lib/validation";
 import { saveUploadedImage } from "@/lib/upload";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
@@ -58,7 +58,7 @@ async function validateRequest(req: Request): Promise<NextResponse | null> {
   }
 
   // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("adminAction", ip);
   if (!rl.ok) {
     return NextResponse.json(

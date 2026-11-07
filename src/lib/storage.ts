@@ -60,14 +60,22 @@ export function isR2Url(url: string): boolean {
   return R2_URL_RE.test(url);
 }
 
-/** Check if S3/R2 is configured */
+/**
+ * Check if S3/R2 is configured.
+ *
+ * Previously this returned true when ANY one key was present, so a half-filled
+ * env tried to use object storage and silently fell back to disk on every
+ * upload. Require the complete R2 set, or the complete AWS set.
+ */
 export function isS3Configured(): boolean {
-  return !!(
-    process.env.R2_ACCESS_KEY_ID ||
-    process.env.AWS_ACCESS_KEY_ID ||
-    (process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY &&
-     process.env.R2_BUCKET_NAME && process.env.R2_ENDPOINT)
-  );
+  const r2 =
+    !!process.env.R2_ACCESS_KEY_ID &&
+    !!process.env.R2_SECRET_ACCESS_KEY &&
+    !!process.env.R2_BUCKET_NAME &&
+    !!process.env.R2_ENDPOINT;
+  const aws =
+    !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY;
+  return r2 || aws;
 }
 
 /** Absolute path for an upload, checking private storage then the legacy dir. */

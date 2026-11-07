@@ -4,7 +4,7 @@ import path from "path";
 import { db, generateCode } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { str, isEmail, isPhone, int } from "@/lib/validation";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
 import { extractOrderId, extractAmount, normalizeOrderId, runOcrOnBuffer } from "@/lib/ocr";
 import { sanitizeText, sanitizePhone } from "@/lib/sanitize";
@@ -12,6 +12,7 @@ import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { validateOrderSubmission } from "@/lib/ocr-validation";
 import { isStoredUploadUrl, uploadFilePath } from "@/lib/storage";
+import { claimDealSlot } from "@/lib/deal-slots";
 
 export const dynamic = "force-dynamic";
 
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
 
   // Rate limiting: per account plus a looser per-IP ceiling. Keying only on
   // X-Forwarded-For let a caller rotate the header and submit without limit.
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("orderSubmit", `user:${session.userId}`);
   const rlIp = await applyRateLimit("orderIp", ip);
   if (!rl.ok || !rlIp.ok) {
@@ -307,9 +308,13 @@ export async function POST(req: Request) {
     )
   `);
 
-  let info;
-  try {
-    info = insertStmt.run(
+  // Claim the campaign slot and write the order in one transaction, so two
+  // concurrent submissions cannot both take the last slot.
+  const submitOrder = db.transaction(() => {
+    if (targetDealId && !claimDealSlot(targetDealId)) {
+      throw new Error("SLOTS_FULL");
+    }
+    return insertStmt.run(
       orderCode,
       externalOrderId,
       targetProductCode,
@@ -346,8 +351,17 @@ export async function POST(req: Request) {
       validationDetails,
       "confirmed" // Always auto-accept on submission; refund claim processing handles order-refund matching via OCR
     );
+  });
+
+  let info;
+  try {
+    info = submitOrder();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    if (msg === "SLOTS_FULL") {
+      // The advisory check above raced with another submission.
+      return bad("Slots for this campaign are currently full. Please try another deal or contact support.", 400);
+    }
     // click_id is a foreign key into click_tracking. A stale or fabricated value
     // must not surface as a 500.
     if (msg.includes("FOREIGN KEY")) {
@@ -374,11 +388,6 @@ export async function POST(req: Request) {
     } catch {
       // Ignore
     }
-  }
-
-  // Increment claimed slots
-  if (targetDealId) {
-    db.prepare("UPDATE deals SET claimed_slots = claimed_slots + 1, stock = MAX(0, stock - 1) WHERE id = ?").run(targetDealId);
   }
 
   return NextResponse.json({

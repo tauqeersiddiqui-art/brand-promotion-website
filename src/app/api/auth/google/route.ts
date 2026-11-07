@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SignJWT } from "jose";
 import { googleConfigured, googleAuthUrl, canonicalOrigin } from "@/lib/google-auth";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { ENV } from "@/lib/env";
 import { headers } from "next/headers";
 
@@ -11,7 +11,7 @@ const secret = new TextEncoder().encode(ENV.AUTH_SECRET);
 export async function GET(req: NextRequest) {
   // Rate limiting
   const reqHeaders = await headers();
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("apiGeneral", ip);
   if (!rl.ok) {
     return NextResponse.json({ error: "Too many attempts." }, { status: 429 });

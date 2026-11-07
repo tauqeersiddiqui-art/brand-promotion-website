@@ -7,7 +7,7 @@ import {
   isAdminEmail,
 } from "@/lib/auth";
 import { str, isEmail, isStrongPassword } from "@/lib/validation";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
 import { sanitizeText, sanitizePhone } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   }
 
   // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("signup", ip);
   if (!rl.ok) {
     return NextResponse.json(

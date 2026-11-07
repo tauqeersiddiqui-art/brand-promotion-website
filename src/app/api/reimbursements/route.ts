@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db, generateCode } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { str, int, isUrl } from "@/lib/validation";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
 import { runOcrOnBuffer, analyzeReviewText, extractOrderId, normalizeOrderId, hasReturnWindowClosed } from "@/lib/ocr";
 import fs from "fs";
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
   // Rate limiting (IP ceiling here; the per-account bucket is applied once the
   // session is known, so rotating X-Forwarded-For does not bypass it).
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rlIp = await applyRateLimit("reimbursementIp", ip);
   if (!rlIp.ok) {
     return NextResponse.json(

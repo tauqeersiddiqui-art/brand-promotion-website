@@ -177,6 +177,33 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews(user_id);
 `);
 
+// ---------- duplicate-order guard ----------
+// The HTTP layer checks for an existing external_order_id before inserting, but
+// a check-then-insert is a race: two simultaneous submissions both pass. The
+// unique index is what actually enforces it. Partial index (WHERE ... != '')
+// because orders without a platform order id must not collide with each other.
+try {
+  const dupes = db
+    .prepare(
+      `SELECT external_order_id, COUNT(*) AS c FROM orders
+        WHERE external_order_id != ''
+        GROUP BY external_order_id HAVING c > 1 LIMIT 5`
+    )
+    .all();
+  if (dupes.length > 0) {
+    console.warn(
+      `[seed] Duplicate external_order_id rows exist (${dupes.map((d) => d.external_order_id).join(", ")}); ` +
+        "skipping the unique index. Resolve these rows, then restart."
+    );
+  } else {
+    db.exec(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_ext_unique ON orders (external_order_id) WHERE external_order_id != ''"
+    );
+  }
+} catch (err) {
+  console.warn("[seed] Could not create the unique order index:", err.message);
+}
+
 const bcrypt = require("bcryptjs");
 
 // ---------- settings ----------
@@ -198,27 +225,34 @@ const settingStmt = db.prepare(
 ].forEach(([k, v]) => settingStmt.run(k, v));
 
 // ---------- owner account ----------
-// ADMIN_PASSWORD (when set) is authoritative: on boot it creates the owner
-// account or syncs the password of the existing one, so a lost admin password
-// is recovered by changing the env var and restarting the service.
+// Creation only. ADMIN_PASSWORD is used the FIRST time the account is created
+// and then never again: it used to be re-applied on every boot, which silently
+// reverted any password changed in the UI and printed the plaintext into the
+// deploy logs. To deliberately reset the password, pass --sync-password once.
 const adminEmail = (process.env.ADMIN_EMAIL || "admin@brandpromotion.in").toLowerCase();
 const envPassword = process.env.ADMIN_PASSWORD || "";
+const syncPassword = process.argv.includes("--sync-password");
 const existing = db.prepare("SELECT id, email, password_hash FROM users WHERE email = ?").get(adminEmail);
 if (!existing) {
-  const initialPassword = envPassword || "ChangeMe@123";
-  const hash = bcrypt.hashSync(initialPassword, 12);
-  db.prepare(
-    "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')"
-  ).run("Administrator", adminEmail, hash);
-  console.log(`Owner account created: ${adminEmail} / ${initialPassword}`);
-} else if (envPassword && !bcrypt.compareSync(envPassword, existing.password_hash)) {
+  if (!envPassword) {
+    console.warn(
+      `[seed] No admin account and ADMIN_PASSWORD is not set. Set ADMIN_PASSWORD ` +
+        "once, deploy, then remove it. Skipping owner creation (no default password)."
+    );
+  } else {
+    db.prepare(
+      "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')"
+    ).run("Administrator", adminEmail, bcrypt.hashSync(envPassword, 12));
+    console.log(`[seed] Owner account created: ${adminEmail}`);
+  }
+} else if (syncPassword && envPassword) {
   db.prepare("UPDATE users SET password_hash = ?, role = 'admin' WHERE id = ?").run(
     bcrypt.hashSync(envPassword, 12),
     existing.id
   );
-  console.log(`Owner password synced from ADMIN_PASSWORD for: ${adminEmail}`);
+  console.log(`[seed] Owner password reset from ADMIN_PASSWORD for: ${adminEmail}`);
 } else {
-  console.log(`Owner account already exists: ${adminEmail}`);
+  console.log(`[seed] Owner account already exists: ${adminEmail}`);
 }
 
 // ---------- sample deals (Influencer / 100% Refund Deals) ----------

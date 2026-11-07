@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db, generateCode } from "@/lib/db";
 import { requireUser, bad } from "@/lib/api-helpers";
 import { str, int } from "@/lib/validation";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { saveUploadedImage } from "@/lib/upload";
 import { runOcrOnBuffer } from "@/lib/ocr";
 import { computeImageHash } from "@/lib/ocr-validation";
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   if (error) return error;
 
   // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("apiGeneral", ip);
   if (!rl.ok) {
     return NextResponse.json(

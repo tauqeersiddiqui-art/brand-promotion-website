@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { requireMediator, bad } from "@/lib/api-helpers";
 import { str, isUrl, num, int } from "@/lib/validation";
 import { saveUploadedImage } from "@/lib/upload";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies } from "@/lib/csrf";
 import { headers } from "next/headers";
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     return bad("Your mediator account is suspended. Contact the admin.", 403);
   }
 
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rlUser = await applyRateLimit("mediatorAction", String(user.id));
   const rlIp = await applyRateLimit("mediatorAction", `ip:${ip}`);
   if (!rlUser.ok || !rlIp.ok) {

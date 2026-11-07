@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin, bad } from "@/lib/api-helpers";
 import { str, parseId } from "@/lib/validation";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { sanitizeText, sanitizeHtml } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
+import { releaseDealSlot } from "@/lib/deal-slots";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ async function validateRequest(req: Request): Promise<NextResponse | null> {
   }
 
   // Rate limiting
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("adminAction", ip);
   if (!rl.ok) {
     return NextResponse.json(
@@ -81,11 +82,23 @@ export async function PATCH(
 
   paramsList.push(id);
 
+  const existing = db
+    .prepare("SELECT status, deal_id FROM orders WHERE id = ?")
+    .get(id) as { status: string; deal_id: number | null } | undefined;
+
   const res = db
     .prepare(`UPDATE orders SET ${updates.join(", ")} WHERE id = ?`)
     .run(...paramsList);
 
   if (res.changes === 0) return bad("Order not found.", 404);
+
+  // Releasing the slot keeps claimed_slots honest: without this, cancelling or
+  // rejecting an order left the campaign permanently one slot short.
+  const freeing = status === "cancelled" || status === "rejected";
+  const wasActive = existing && existing.status !== "cancelled" && existing.status !== "rejected";
+  if (freeing && wasActive) {
+    releaseDealSlot(existing?.deal_id);
+  }
 
   return NextResponse.json({ ok: true });
 }
@@ -104,8 +117,16 @@ export async function DELETE(
   const id = parseId(idRaw);
   if (id === null) return bad("Invalid order id.");
 
+  const existing = db
+    .prepare("SELECT status, deal_id FROM orders WHERE id = ?")
+    .get(id) as { status: string; deal_id: number | null } | undefined;
+
   const res = db.prepare("DELETE FROM orders WHERE id = ?").run(id);
   if (res.changes === 0) return bad("Order not found.", 404);
+
+  if (existing && existing.status !== "cancelled" && existing.status !== "rejected") {
+    releaseDealSlot(existing.deal_id);
+  }
 
   return NextResponse.json({ ok: true });
 }

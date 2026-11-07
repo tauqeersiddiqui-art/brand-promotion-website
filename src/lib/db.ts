@@ -1,14 +1,14 @@
 /**
- * Database layer - Production ready (SQLite synchronous).
+ * Database layer - SQLite (synchronous, better-sqlite3).
  *
- * Uses SQLite by default (synchronous operations via better-sqlite3).
- *
- * For PostgreSQL support, see src/lib/postgres-db.ts. PostgreSQL will be
- * enabled automatically when DATABASE_URL is set, but note that route handlers
- * will need to be updated to await db.prepare().run() calls.
+ * This is the only database implementation. `pg` and the migration scripts in
+ * scripts/ are unused legacy experiments: DATABASE_URL does NOT switch the app
+ * to PostgreSQL. A move to Postgres requires porting every route handler from
+ * the synchronous API to async. See README before trusting anything else.
  */
 
 import Database from "better-sqlite3";
+import crypto from "crypto";
 import path from "path";
 import { DATA_DIR, ensureStorageDirs } from "./storage";
 
@@ -80,25 +80,17 @@ export const db = globalThis.__db ?? new DbClass();
 globalThis.__db = db;
 
 /**
- * Generate a unique code with prefix
+ * Generate a unique code with prefix.
+ *
+ * These codes double as tracking keys, so they must not be predictable.
+ * Math.random() is not a CSPRNG; crypto.randomBytes is.
  */
 export function generateCode(prefix: string): string {
-  const rand = Math.random().toString(36).slice(2, 7).toUpperCase();
+  const rand = crypto.randomBytes(4).toString("hex").toUpperCase();
   const ts = Date.now().toString(36).toUpperCase().slice(-5);
   return `${prefix}-${ts}${rand}`;
 }
 
-/**
- * Check if PostgreSQL is configured (for readiness)
- */
-export function isPostgresConfigured(): boolean {
-  return false;
-}
-
-/**
- * Export types for PostgreSQL compatibility
- * When DATABASE_URL is set, the app should migrate to async handlers.
- */
 export type DbResult = { changes: number; lastInsertRowid: number };
 export type QueryResult = DbRow | DbRow[];
 

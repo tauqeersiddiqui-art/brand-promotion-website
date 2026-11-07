@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, bad } from "@/lib/api-helpers";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { getCsrfTokenFromCookies } from "@/lib/csrf";
 import { headers } from "next/headers";
 import {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rl = await applyRateLimit("adminAction", ip);
   if (!rl.ok) {
     return NextResponse.json(

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyPassword, createSessionToken, setSessionCookie } from "@/lib/auth";
 import { str, isEmail } from "@/lib/validation";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
 import { sanitizeText, sanitizePhone } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
   // Rate limiting: a per-IP bucket stops spraying, and a per-email bucket stops
   // a distributed attacker from hammering one account from rotating IPs.
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const rlIp = await applyRateLimit("loginIp", ip);
   const rlEmail = email ? await applyRateLimit("login", email) : { ok: true, retryAfter: 0 };
   if (!rlIp.ok || !rlEmail.ok) {

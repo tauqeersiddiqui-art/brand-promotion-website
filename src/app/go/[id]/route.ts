@@ -3,8 +3,26 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { headers } from "next/headers";
 import crypto from "crypto";
+import { clientIpFromHeaders } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Reject URLs that are not plain http(s), and URLs with credentials in the
+ * authority (`https://amazon.in@evil.example`) — a classic phishing pattern that
+ * looks like a marketplace domain in the browser's address bar.
+ */
+function isSafeRedirect(raw: string): boolean {
+  if (!raw || !/^https?:\/\//i.test(raw)) return false;
+  try {
+    const u = new URL(raw);
+    if (u.username || u.password) return false;
+    if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /** Counts a click and 302s to the external deal URL with click tracking.
  *  Guest clicks are attributed with a null user_id so tracking never blocks
@@ -23,7 +41,7 @@ export async function GET(
     .prepare("SELECT deal_url FROM deals WHERE id = ? AND active = 1 AND approval_status = 'approved'")
     .get(id) as { deal_url: string } | undefined;
 
-  if (!deal || !deal.deal_url || !/^https?:\/\//i.test(deal.deal_url)) {
+  if (!deal || !isSafeRedirect(deal.deal_url)) {
     return NextResponse.redirect(new URL("/browse", req.url));
   }
 
@@ -39,7 +57,7 @@ export async function GET(
 
   const clickId = crypto.randomUUID();
 
-  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIpFromHeaders(reqHeaders);
   const userAgent = reqHeaders.get("user-agent") || "";
   const referrer = reqHeaders.get("referer") || "";
 
@@ -53,7 +71,10 @@ export async function GET(
   }
 
   const redirectUrl = new URL(deal.deal_url);
-  redirectUrl.searchParams.set("ref", clickId);
+  // Don't clobber an affiliate/marketplace `ref` the deal URL already carries.
+  if (!redirectUrl.searchParams.has("ref")) {
+    redirectUrl.searchParams.set("ref", clickId);
+  }
 
   return NextResponse.redirect(redirectUrl.toString(), 302);
 }

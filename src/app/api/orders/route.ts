@@ -344,7 +344,7 @@ export async function POST(req: Request) {
       fraudScore,
       validationScore,
       validationDetails,
-      validation.decision.action === "auto_approve" ? "confirmed" : "pending"
+      "confirmed" // Always auto-accept on submission; refund claim processing handles order-refund matching via OCR
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -393,8 +393,6 @@ export async function POST(req: Request) {
     ocr_extracted_amount: ocrAmount,
     validation_status: validation.decision.action,
     validation_reason: validation.decision.reason,
-    message: validation.decision.action === "auto_approve"
-      ? "Order auto-approved! Track your order status using your Order Code."
-      : "Order submitted for manual review. Track your order status using your Order Code.",
+    message: "Order confirmed! Track your order status using your Order Code.",
   });
 }

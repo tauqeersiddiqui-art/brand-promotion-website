@@ -241,7 +241,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
           </div>
         ) : (
           <div className="alert alert-info" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
-            ℹ️ Your order proof has been queued for quick admin verification.
+            ℹ️ Your order proof has been received. Ready for refund claims.
           </div>
         )}
 

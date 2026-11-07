@@ -1,11 +1,58 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { discountPct } from "@/components/DealCard";
 import SubmitOrderProofForm from "@/components/SubmitOrderProofForm";
 import AdSlot from "@/components/AdSlot";
+import { siteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id: idRaw } = await params;
+  const id = parseInt(idRaw, 10);
+  if (!Number.isInteger(id) || id < 1) return { title: "Campaign not found" };
+
+  const deal = db
+    .prepare(
+      "SELECT title, description, image_url, price_sale, price_original FROM deals WHERE id = ? AND active = 1 AND approval_status = 'approved'"
+    )
+    .get(id) as
+    | { title: string; description: string; image_url: string; price_sale: number; price_original: number }
+    | undefined;
+  if (!deal) return { title: "Campaign not found" };
+
+  const price = `₹${Number(deal.price_sale).toLocaleString("en-IN")}`;
+  const description = (
+    deal.description?.trim() ||
+    `${deal.title} — live brand campaign at ${price} with full refund after an honest review.`
+  ).slice(0, 155);
+  const path = `/deal/${id}`;
+
+  return {
+    title: deal.title,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      title: deal.title,
+      description,
+      url: path,
+      images: deal.image_url ? [{ url: deal.image_url, alt: deal.title }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: deal.title,
+      description,
+      images: deal.image_url ? [deal.image_url] : undefined,
+    },
+  };
+}
 
 type DealRow = {
   id: number;
@@ -70,8 +117,49 @@ export default async function DealPage({
   const outOfSlots = remainingSlots <= 0;
   const isFullRefund = deal.refund_amount && deal.refund_amount >= deal.price_sale;
 
+  // Product structured data: lets Google show price, availability and the
+  // review rating directly in search results.
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: deal.title,
+    description: deal.description || deal.title,
+    ...(deal.image_url ? { image: [deal.image_url] } : {}),
+    category: deal.category,
+    ...(deal.product_code ? { sku: deal.product_code, mpn: deal.product_code } : {}),
+    brand: { "@type": "Brand", name: deal.platform || "Brand Promotion" },
+    offers: {
+      "@type": "Offer",
+      price: Number(deal.price_sale),
+      priceCurrency: "INR",
+      availability: outOfSlots
+        ? "https://schema.org/SoldOut"
+        : "https://schema.org/InStock",
+      url: `${siteUrl()}/deal/${deal.id}`,
+    },
+    ...(avgRating > 0 && reviews.length > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: avgRating,
+            reviewCount: reviews.length,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="container" style={{ paddingTop: 32, paddingBottom: 60 }}>
+      <script
+        type="application/ld+json"
+        // JSON.stringify + `<` escaping keeps user-entered title/description
+        // from closing the script tag.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <div style={{ marginBottom: 16 }}>
         <Link href="/browse" className="link" style={{ fontSize: 14 }}>
           ← Back to all live campaigns

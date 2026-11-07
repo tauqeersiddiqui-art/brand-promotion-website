@@ -4,7 +4,7 @@ import { requireAdmin, bad } from "@/lib/api-helpers";
 import { str } from "@/lib/validation";
 import { getSettings, updateSettings, type SiteSettings } from "@/lib/settings";
 import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
-import { sanitizeHtml, sanitizeText } from "@/lib/sanitize";
+import { sanitizeText } from "@/lib/sanitize";
 
 /** Keep the country code intact: +91 85273 24446 -> 918527324446. */
 function normalizeWhatsapp(raw: string): string {
@@ -66,9 +66,10 @@ export async function PATCH(req: Request) {
   (Object.keys(getSettings()) as (keyof SiteSettings)[]).forEach((key) => {
     if (key in b) {
       const maxLen = key === "rules_instructions" || key === "announcement" ? 5000 : 500;
-      // Sanitize based on field type
+      // Announcement/rules are rendered as escaped TEXT (layout.tsx prints them
+      // directly), so storing HTML only made admins see literal <b> tags.
       if (key === "rules_instructions" || key === "announcement") {
-        partial[key] = sanitizeHtml(str(b[key], maxLen));
+        partial[key] = sanitizeText(str(b[key], maxLen), maxLen);
       } else if (key === "whatsapp") {
         partial[key] = normalizeWhatsapp(str(b[key], maxLen));
       } else {

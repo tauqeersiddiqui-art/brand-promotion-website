@@ -24,14 +24,24 @@ const DEFAULTS: SiteSettings = {
   rules_instructions: "1. Check available slots before ordering.\n2. Search product with specified keyword on Amazon/Flipkart.\n3. Upload the order confirmation screenshot (must show the Order ID).\n4. After delivery, post a genuine 5-star review with photos.\n5. Once the return window closes, claim refund with your review screenshot and an order-page screenshot showing the Order ID and 'Return window closed'.",
 };
 
+// Settings are read by the layout, the footer and several pages on every
+// request; a 30s cache removes repeated SQLite round-trips without making admin
+// edits feel stale (updateSettings clears it immediately).
+const CACHE_MS = 30_000;
+let cached: { value: SiteSettings; at: number } | null = null;
+
 export function getSettings(): SiteSettings {
+  const now = Date.now();
+  if (cached && now - cached.at < CACHE_MS) return cached.value;
   try {
     const rows = db.prepare("SELECT key, value FROM settings").all() as {
       key: string;
       value: string;
     }[];
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-    return { ...DEFAULTS, ...map } as SiteSettings;
+    const value = { ...DEFAULTS, ...map } as SiteSettings;
+    cached = { value, at: now };
+    return value;
   } catch {
     return DEFAULTS;
   }
@@ -46,6 +56,7 @@ export function updateSettings(partial: Partial<SiteSettings>) {
       stmt.run(key, value.slice(0, 5000));
     }
   }
+  cached = null;
 }
 
 export function whatsappLink(num: string, text?: string): string {

@@ -6,18 +6,36 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FloatingChat from "@/components/FloatingChat";
 import CsrfBootstrap from "@/components/CsrfBootstrap";
+import { siteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = getSettings();
   const adsenseClient = ADSENSE_CLIENT;
+  // metadataBase makes every relative canonical/OpenGraph URL absolute. Without
+  // it Next emits relative og:image URLs, which most crawlers ignore.
   return {
+    metadataBase: new URL(siteUrl()),
     title: {
       default: `${s.site_name} — ${s.tagline}`,
       template: `%s · ${s.site_name}`,
     },
     description: s.tagline,
+    applicationName: s.site_name,
+    openGraph: {
+      type: "website",
+      siteName: s.site_name,
+      title: `${s.site_name} — ${s.tagline}`,
+      description: s.tagline,
+      url: "/",
+      locale: "en_IN",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${s.site_name} — ${s.tagline}`,
+      description: s.tagline,
+    },
     ...(adsenseClient
       ? { other: { "google-adsense-account": adsenseClient } }
       : {}),

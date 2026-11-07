@@ -3,6 +3,11 @@ import { sanitizeText } from "./sanitize";
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+// Amazon serves a different (lighter) product page to mobile browsers, and that
+// variant is less likely to be replaced by the bot-check page.
+const MOBILE_UA =
+  "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+
 const PAGE_HEADERS = {
   "User-Agent": BROWSER_UA,
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -14,7 +19,8 @@ const PAGE_HEADERS = {
  * amzn.to/XXXX, fkrt.it/XXXX). These redirect to the real product page, so we
  * expand them before detecting the platform/product ID.
  */
-const SHORT_LINK_HOST = /^(?:link\.amazon|amzn\.to|amzn\.in|a\.co|dl\.flipkart\.com|fkrt\.it)$/i;
+const SHORT_LINK_HOST =
+  /^(?:link\.amazon(?:\.[a-z.]+)?|amzlinks\.in|amzn\.to|amzn\.in|a\.co|dl\.flipkart\.com|fkrt\.it)$/i;
 
 const AMAZON_HOST = /(^|\.)amazon\.(?:in|com|co\.uk|de|fr|ca|es|it|co\.jp|com\.au|ae|sa|sg|nl|se|pl)$/;
 const FLIPKART_HOST = /(^|\.)flipkart\.com$/;
@@ -94,15 +100,18 @@ async function expandShortLink(url: string, timeout = 10000): Promise<string> {
   } catch {
     return "";
   }
-  if (!SHORT_LINK_HOST.test(host)) return finalUrl;
+  // Already on a marketplace product host - nothing left to expand.
+  if (AMAZON_HOST.test(host) || FLIPKART_HOST.test(host)) return finalUrl;
 
-  // Some shorteners answer with a meta-refresh/JS redirect page instead of a
-  // 3xx. Pull the first Amazon/Flipkart URL out of the HTML as a fallback.
+  // Some shorteners (notably Amazon's link.amazon -> amzlinks.in chain) answer
+  // with a meta-refresh/JS redirect page instead of a 3xx, and the shortened
+  // hops keep changing. Pull the first Amazon/Flipkart URL out of the HTML as
+  // a fallback so those links still resolve.
   const html = await res.text();
   const match = html.match(
     /https?:\/\/(?:www\.)?(?:amazon\.[a-z.]{2,}|flipkart\.com)\/[^\s"'<>\\]+/i
   );
-  return match ? match[0] : finalUrl;
+  return match ? match[0].replace(/&amp;/g, "&") : finalUrl;
 }
 
 /** Read a <meta> tag content by property/name, in either attribute order. */
@@ -226,6 +235,73 @@ function keywordFromTitle(title: string): string {
     .filter((w) => w.length > 3)
     .slice(0, 5)
     .join(" ");
+}
+
+/** Parse title/price/image/description out of an Amazon product page. */
+function parseAmazonHtml(html: string) {
+  // Desktop pages use <span id="productTitle">, the mobile variant uses
+  // <span id="title"> and sometimes only a <meta name="title"> tag.
+  const titleMatch =
+    html.match(/<span id="productTitle"[^>]*>\s*([^<]+?)\s*<\/span>/) ||
+    html.match(/<span id="title"[^>]*>([\s\S]{0,600}?)<\/span>/);
+  let title = titleMatch
+    ? decodeEntities(titleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim())
+    : "";
+  if (!title) title = decodeEntities(metaContent(html, "title") || metaContent(html, "og:title"));
+  if (!title) {
+    // Fallback: <title> tag, stripped of the " : Amazon.in: ..." suffix.
+    const t = decodeEntities((html.match(/<title[^>]*>([^<]*)<\/title>/i) || [])[1] || "");
+    title = t.split(/\s*[:\|\-]\s*Amazon\./i)[0].trim();
+  }
+
+  const price = firstNumber(html, [
+    /<span class="a-price-whole">([\d,]+)/,
+    /"priceAmount":\s*([\d.]+)/,
+    /<span class="a-offscreen">\u20B9([\d,]+)/,
+  ]);
+  const mrp =
+    firstNumber(html, [/<span class="a-text-price"[^>]*>\s*<span class="a-offscreen">\u20B9([\d,]+)/]) ||
+    price;
+
+  let image =
+    (html.match(/id="landingImage"[^>]*src="([^"]+)"/) ||
+      html.match(/data-old-hires="([^"]+)"/) ||
+      html.match(/"hiRes":"([^"]+)"/) ||
+      [])[1] || "";
+  if (!image) {
+    // Mobile variant: the main image is a plain <img> thumbnail, or a gallery
+    // JSON blob in data-a-dynamic-image.
+    const img = html.match(/<img[^>]+src="(https:\/\/m\.media-amazon\.com\/images\/I\/[^"]+)"/i);
+    if (img) image = img[1];
+  }
+  if (!image) {
+    const dyn = html.match(/data-a-dynamic-image="([^"]+)"/);
+    const dynUrl = dyn && decodeEntities(dyn[1]).match(/https:\/\/[^"\s]+/);
+    if (dynUrl) image = dynUrl[0];
+  }
+  if (!image) image = metaContent(html, "og:image");
+  if (image.startsWith("//")) image = `https:${image}`;
+  // Upgrade small Amazon CDN thumbnails (._AC_SS96_, ._AC_UF350,350_ ...) to a
+  // larger, still-valid size; leave full-size image URLs untouched.
+  if (image && (/\._AC_/i.test(image) || /\._S[XY]\d+_\./i.test(image))) {
+    image = image.replace(/\._[A-Za-z0-9,_]+_\.(jpg|jpeg|png)$/i, "._SL1000_.$1");
+  }
+
+  const descMatch = html.match(/<div id="feature-bullets"[^>]*>([\s\S]*?)<\/div>/);
+  let description = "";
+  if (descMatch) {
+    description = decodeEntities(
+      descMatch[1]
+        .replace(/<[^>]+>/g, "\n")
+        .replace(/\s+/g, " ")
+        .trim()
+    ).slice(0, 500);
+  }
+  if (!description) description = decodeEntities(metaContent(html, "description")).slice(0, 500);
+
+  return isUnusableTitle(title)
+    ? { title: "", price: 0, originalPrice: 0, image: "", description: "" }
+    : { title, price, originalPrice: mrp || price, image, description };
 }
 
 /** True for error/captcha pages that must not be autofilled as a title. */
@@ -372,67 +448,51 @@ export async function fetchProductDetails(rawUrl: string): Promise<ProductFetchR
       // rather than always hitting .in - a .com link redirected to .in returns
       // a region/consent wall instead of the product page.
       const amazonTld = (parsedUrl.hostname.match(/amazon.([a-z.]+)$/i) || [])[1] || "in";
-      const response = await fetch(`https://www.amazon.${amazonTld}/dp/${productId}`, {
-        headers: PAGE_HEADERS,
-        signal: AbortSignal.timeout(12000),
-      });
-      if (response.status === 429) {
-        return {
-          ok: false,
-          status: 429,
-          error:
-            "Amazon is blocking automated requests (rate limit). Please wait a few minutes and try again, or fill the deal fields manually.",
-        };
-      }
-      if (response.status === 403) {
-        return {
-          ok: false,
-          status: 403,
-          error:
-            "Access forbidden by Amazon (bot detection). Please fill the deal fields manually.",
-        };
-      }
-      const html = await response.text();
 
-      const titleMatch = html.match(/<span id="productTitle"[^>]*>\s*([^<]+?)\s*<\/span>/);
-      let title = titleMatch ? decodeEntities(titleMatch[1].trim()) : "";
-      if (!title) {
-        // Fallback: <title> tag, stripped of the " : Amazon.in: ..." suffix.
-        const t = decodeEntities((html.match(/<title[^>]*>([^<]*)<\/title>/i) || [])[1] || "");
-        title = t.split(/\s*[:\|\-]\s*Amazon\./i)[0].trim();
-      }
+      // Amazon bot-walls the desktop /dp/ page for datacenter IPs (Railway and
+      // friends): it answers HTTP 200 with a tiny "Amazon.in" verification page
+      // instead of the product page. The mobile-lite product page (/gp/aw/d/)
+      // is still served to plain HTTP clients, so fall back to it.
+      const pageUrls = [
+        `https://www.amazon.${amazonTld}/dp/${productId}`,
+        `https://www.amazon.${amazonTld}/gp/aw/d/${productId}`,
+      ];
 
-      const price = firstNumber(html, [
-        /<span class="a-price-whole">([\d,]+)/,
-        /"priceAmount":\s*([\d.]+)/,
-        /<span class="a-offscreen">\u20B9([\d,]+)/,
+      // Try each page path as a desktop browser, then as a mobile browser: the
+      // bot-check wall is served per path/user-agent, so one of these usually
+      // still returns the real product page.
+      const candidates = pageUrls.flatMap((url) => [
+        { url, ua: BROWSER_UA },
+        { url, ua: MOBILE_UA },
       ]);
-      const mrp =
-        firstNumber(html, [/<span class="a-text-price"[^>]*>\s*<span class="a-offscreen">\u20B9([\d,]+)/]) ||
-        price;
 
-      let image =
-        (html.match(/id="landingImage"[^>]*src="([^"]+)"/) ||
-          html.match(/data-old-hires="([^"]+)"/) ||
-          html.match(/"hiRes":"([^"]+)"/) ||
-          [])[1] || "";
-      if (!image) image = metaContent(html, "og:image");
-      if (image.startsWith("//")) image = `https:${image}`;
+      for (const { url, ua } of candidates) {
+        const response = await fetch(url, {
+          headers: { ...PAGE_HEADERS, "User-Agent": ua },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (response.status === 429) {
+          return {
+            ok: false,
+            status: 429,
+            error:
+              "Amazon is blocking automated requests (rate limit). Please wait a few minutes and try again, or fill the deal fields manually.",
+          };
+        }
+        if (!response.ok) continue;
 
-      const descMatch = html.match(/<div id="feature-bullets"[^>]*>([\s\S]*?)<\/div>/);
-      let description = "";
-      if (descMatch) {
-        description = descMatch[1]
-          .replace(/<[^>]+>/g, "\n")
-          .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 500);
+        const parsed = parseAmazonHtml(await response.text());
+        if (parsed.title) {
+          productData = parsed;
+          break;
+        }
       }
-      if (!description) description = decodeEntities(metaContent(html, "description")).slice(0, 500);
 
-      productData = isUnusableTitle(title)
-        ? { title: "", price: 0, originalPrice: 0, image: "", description: "" }
-        : { title, price, originalPrice: mrp || price, image, description };
+      if (!productData) {
+        console.warn(
+          `[ProductFetch] Amazon returned no product data for ${productId} on any page variant (likely the bot-check wall).`
+        );
+      }
     } else if (platform === "Flipkart") {
       // Flipkart now aggressively blocks server-side requests (PerimeterX
       // bot-wall + 429s) from both residential and datacenter IPs, so the page

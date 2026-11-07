@@ -13,7 +13,13 @@ const OPTIONAL_ENV = [
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "ADMIN_EMAIL",
+  "ADMIN_PASSWORD",
   "NODE_ENV",
+  "TUTORIAL_MODE",
+  "R2_ACCESS_KEY_ID",
+  "R2_SECRET_ACCESS_KEY",
+  "R2_BUCKET_NAME",
+  "R2_ENDPOINT",
 ] as const;
 
 type RequiredEnv = typeof REQUIRED_ENV[number];

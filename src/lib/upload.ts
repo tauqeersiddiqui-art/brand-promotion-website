@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import { UPLOAD_DIR, ensureStorageDirs, uploadNameFromUrl } from "./storage";
+import { UPLOAD_DIR, ensureStorageDirs, isS3Configured, uploadToS3, isR2Url, r2KeyFromUrl, deleteFromS3 } from "./storage";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 
@@ -20,6 +20,8 @@ export type UploadResult = { ok: true; url: string; buffer: Buffer; ext: string 
  * - magic-byte sniffing (never trusts client MIME)
  * - random hex filename (no user-controlled path)
  * Returns the buffer too so callers can run OCR on the same bytes.
+ *
+ * If S3/R2 is configured, attempts to upload there first; otherwise falls back to local disk.
  */
 export async function saveUploadedImage(file: File): Promise<UploadResult> {
   if (!file || typeof file.arrayBuffer !== "function") {
@@ -42,6 +44,15 @@ export async function saveUploadedImage(file: File): Promise<UploadResult> {
     return { ok: false, error: "Corrupted WebP file." };
   }
 
+  // Try R2/S3 first if configured
+  if (isS3Configured()) {
+    const r2Result = await uploadToS3(buf, file.name, file.type);
+    if (r2Result) {
+      return { ok: true, url: r2Result.url, buffer: buf, ext: r2Result.ext };
+    }
+    // Fall through to local storage if R2 fails
+  }
+
   ensureStorageDirs();
 
   const name = `${Date.now().toString(36)}-${crypto.randomBytes(8).toString("hex")}.${match.ext}`;
@@ -57,8 +68,21 @@ export async function saveUploadedImage(file: File): Promise<UploadResult> {
  */
 export function deleteUploadedImage(url: string): void {
   try {
-    const name = uploadNameFromUrl(url);
-    if (!name) return;
+    const name = path.basename(url);
+    const ext = path.extname(name).slice(1).toLowerCase();
+    if (!["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) return;
+
+    // Delete from R2 if it's an R2 URL
+    if (isR2Url(url)) {
+      const key = r2KeyFromUrl(url);
+      if (key) {
+        // Sync delete - fire and forget
+        deleteFromS3(key).catch(() => {});
+      }
+      return;
+    }
+
+    // Delete from local storage
     const target = path.join(UPLOAD_DIR, name);
     // Defence in depth: never unlink anything outside the uploads directory.
     if (path.dirname(target) !== UPLOAD_DIR) return;

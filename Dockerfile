@@ -3,13 +3,14 @@ FROM node:22-slim
 
 WORKDIR /app
 
-# Install build tools needed for native modules (better-sqlite3)
+# Install runtime dependencies (PostgreSQL client libs, sqlite3 for backup tool)
+# Note: better-sqlite3 is compiled at build time; pg client needs no build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 make g++ git \
     sqlite3 \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install all dependencies (need dev deps for build - TypeScript, etc.)
+# Install all dependencies
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund && \
     npm rebuild better-sqlite3

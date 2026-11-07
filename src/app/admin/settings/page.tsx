@@ -32,6 +32,14 @@ export default function AdminSettingsPage() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [loadError, setLoadError] = useState("");
 
+  // Password reset state
+  const [resetMode, setResetMode] = useState<"none" | "current" | "emergency">("none");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [emergencyKey, setEmergencyKey] = useState("");
+  const [resetMsg, setResetMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [resetBusy, setResetBusy] = useState(false);
+
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => r.json())
@@ -67,6 +75,43 @@ export default function AdminSettingsPage() {
       setMsg({ type: "err", text: "Network error while saving. Please try again." });
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function resetPassword(mode: "current" | "emergency") {
+    setResetBusy(true);
+    setResetMsg(null);
+
+    try {
+      const body: Record<string, unknown> = {
+        newPassword,
+      };
+      if (mode === "current") {
+        body.currentPassword = currentPassword;
+      } else {
+        body.key = emergencyKey;
+      }
+
+      const r = await fetch("/api/admin/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getCsrfHeader() },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        setResetMsg({ type: "err", text: d.error || "Password reset failed." });
+      } else {
+        setResetMsg({ type: "ok", text: d.message || "Password reset successfully." });
+        setResetMode("none");
+        setCurrentPassword("");
+        setNewPassword("");
+        setEmergencyKey("");
+      }
+    } catch {
+      setResetMsg({ type: "err", text: "Network error. Please try again." });
+    } finally {
+      setResetBusy(false);
     }
   }
 
@@ -132,6 +177,100 @@ export default function AdminSettingsPage() {
           {busy ? "Saving…" : "💾 Save Platform Settings"}
         </button>
       </form>
+
+      {/* Password Reset Section */}
+      <div className="card" style={{ padding: 28, marginTop: 24 }}>
+        <h2 style={{ marginTop: 0, marginBottom: 16 }}>🔑 Admin Password Reset</h2>
+
+        {resetMode === "none" && (
+          <button
+            className="btn btn-secondary"
+            onClick={() => setResetMode("current")}
+            style={{ marginBottom: 12 }}
+          >
+            Reset with Current Password
+          </button>
+        )}
+
+        {resetMode === "none" && (
+          <div style={{ padding: 12, backgroundColor: "#fff5f5", borderRadius: 4, marginBottom: 12 }}>
+            <p style={{ margin: 0, fontSize: 13 }}>
+              <strong>Emergency access:</strong> If you've lost the password, set <code>RESET_PASSWORD_KEY</code>
+              in Railway environment variables, then use that key to reset without the current password.
+            </p>
+          </div>
+        )}
+
+        {(resetMode === "current" || resetMode === "emergency") && (
+          <div style={{ border: "1px solid #e0e0e0", borderRadius: 4, padding: 16, marginBottom: 12 }}>
+            {resetMode === "current" && (
+              <div style={{ marginBottom: 12 }}>
+                <label className="form-label" style={{ marginBottom: 4 }}>Current Password</label>
+                <input
+                  type="password"
+                  className="input"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password"
+                />
+              </div>
+            )}
+
+            {resetMode === "emergency" && (
+              <div style={{ marginBottom: 12 }}>
+                <label className="form-label" style={{ marginBottom: 4 }}>Emergency Reset Key</label>
+                <input
+                  type="password"
+                  className="input"
+                  value={emergencyKey}
+                  onChange={(e) => setEmergencyKey(e.target.value)}
+                  placeholder="Enter RESET_PASSWORD_KEY from Railsway env"
+                />
+              </div>
+            )}
+
+            <div style={{ marginBottom: 12 }}>
+              <label className="form-label" style={{ marginBottom: 4 }}>New Password (min 8 characters)</label>
+              <input
+                type="password"
+                className="input"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                className="btn"
+                onClick={() => setResetMode("none")}
+                style={{ flex: 1 }}
+                disabled={resetBusy}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => resetPassword(resetMode)}
+                style={{ flex: 1 }}
+                disabled={resetBusy || newPassword.length < 8}
+              >
+                {resetBusy ? "Resetting…" : "Reset Password"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {resetMsg && (
+          <div className={`alert ${resetMsg.type === "ok" ? "alert-success" : "alert-error"}`}>
+            {resetMsg.text}
+          </div>
+        )}
+
+        <p style={{ fontSize: 12, color: "#666", marginTop: 12 }}>
+          After resetting, you can log in with your admin email and new password.
+        </p>
+      </div>
     </div>
   );
 }

@@ -6,6 +6,10 @@
 import { db } from "@/lib/db";
 import { normalizeOrderId } from "@/lib/ocr";
 import { isStoredUploadUrl } from "@/lib/storage";
+import {
+  computePerceptualHash,
+  classifyScreenshotPair,
+} from "@/lib/image-hash";
 
 export interface OcrValidationResult {
   valid: boolean;
@@ -215,14 +219,14 @@ export function checkDailyClaimLimit(userId: number, maxPerDay: number = 3): { a
 }
 
 /**
- * Compute perceptual hash (pHash) for an image buffer
- * Using simple difference hash for now - can be upgraded to full pHash
+ * Fingerprint an uploaded image.
+ *
+ * Used to be a truncated SHA-256, which only recognised byte-identical copies.
+ * It is now a perceptual dHash (see lib/image-hash.ts), so a resized or
+ * re-compressed screenshot of the same order is still recognised.
  */
-export function computeImageHash(buf: Buffer): string {
-  // Simple implementation: resize to 32x32, grayscale, compare adjacent pixels
-  // For production, use a proper image processing library like sharp
-  const crypto = require("crypto");
-  return crypto.createHash("sha256").update(buf).digest("hex").slice(0, 16);
+export async function computeImageHash(buf: Buffer): Promise<string> {
+  return computePerceptualHash(buf);
 }
 
 /**
@@ -356,12 +360,53 @@ export function makeDecision(
 /**
  * p_hash of a stored screenshot URL, or "" when the URL is not one of ours.
  */
-function uploadHashForUrl(url: string): string {
-  if (!url || !isStoredUploadUrl(url)) return "";
+/** Fingerprint + OCR text for a stored screenshot, both used to compare reuse. */
+function uploadFingerprint(url: string): { hash: string; text: string } {
+  if (!url || !isStoredUploadUrl(url)) return { hash: "", text: "" };
   const row = db
-    .prepare("SELECT p_hash FROM uploads WHERE url = ? AND p_hash != '' LIMIT 1")
-    .get(url) as { p_hash: string } | undefined;
-  return row?.p_hash || "";
+    .prepare("SELECT p_hash, ocr_text FROM uploads WHERE url = ? LIMIT 1")
+    .get(url) as { p_hash: string; ocr_text: string } | undefined;
+  return { hash: row?.p_hash || "", text: row?.ocr_text || "" };
+}
+
+/**
+ * Compare a screenshot against screenshots already attached to orders.
+ * Returns "same", "similar" or "different".
+ */
+function compareWithOrders(
+  url: string,
+  excludeOrderId?: number
+): "same" | "similar" | "different" {
+  if (!url || !isStoredUploadUrl(url)) return "different";
+  const target = uploadFingerprint(url);
+  const excluded = excludeOrderId ?? -1;
+
+  if (target.hash) {
+    // Bounded to recent orders so this stays a fast lookup.
+    const candidates = db
+      .prepare(
+        `SELECT u.p_hash AS h, u.ocr_text AS t FROM orders o
+           JOIN uploads u ON u.url IN (o.order_screenshot_url, o.price_screenshot_url)
+          WHERE o.id != ? AND u.p_hash != ''
+          ORDER BY o.id DESC LIMIT 500`
+      )
+      .all(excluded) as { h: string; t: string }[];
+
+    let verdict: "same" | "similar" | "different" = "different";
+    for (const c of candidates) {
+      const v = classifyScreenshotPair(target.hash, c.h, target.text, c.t);
+      if (v === "same") return "same";
+      if (v === "similar") verdict = "similar";
+    }
+    if (verdict !== "different") return verdict;
+  }
+
+  const byUrl = db
+    .prepare(
+      "SELECT id FROM orders WHERE (order_screenshot_url = ? OR price_screenshot_url = ?) AND id != ? LIMIT 1"
+    )
+    .get(url, url, excluded) as { id: number } | undefined;
+  return byUrl ? "same" : "different";
 }
 
 /**
@@ -371,27 +416,15 @@ function uploadHashForUrl(url: string): string {
  * with the screenshot already attached to their own order.
  */
 export function isScreenshotUsedByAnotherOrder(url: string, excludeOrderId?: number): boolean {
-  if (!url || !isStoredUploadUrl(url)) return false;
-  const excluded = excludeOrderId ?? -1;
-  const hash = uploadHashForUrl(url);
+  return compareWithOrders(url, excludeOrderId) === "same";
+}
 
-  if (hash) {
-    const byHash = db
-      .prepare(`
-        SELECT o.id FROM orders o
-        JOIN uploads u ON u.url IN (o.order_screenshot_url, o.price_screenshot_url)
-        WHERE u.p_hash = ? AND o.id != ? LIMIT 1
-      `)
-      .get(hash, excluded) as { id: number } | undefined;
-    if (byHash) return true;
-  }
-
-  const byUrl = db
-    .prepare(
-      "SELECT id FROM orders WHERE (order_screenshot_url = ? OR price_screenshot_url = ?) AND id != ? LIMIT 1"
-    )
-    .get(url, url, excluded) as { id: number } | undefined;
-  return !!byUrl;
+/**
+ * A screenshot that looks like an earlier submission but cannot be proven to be
+ * the same. Used to add fraud points, never to block.
+ */
+export function isScreenshotSimilarToAnotherOrder(url: string, excludeOrderId?: number): boolean {
+  return compareWithOrders(url, excludeOrderId) === "similar";
 }
 
 /**
@@ -403,17 +436,24 @@ export function isScreenshotUsedByAnotherClaim(
   externalOrderId: string
 ): boolean {
   if (!url || !isStoredUploadUrl(url)) return false;
-  const hash = uploadHashForUrl(url);
+  const target = uploadFingerprint(url);
 
-  if (hash) {
-    const byHash = db
-      .prepare(`
-        SELECT r.id FROM reimbursements r
-        JOIN uploads u ON u.url IN (r.review_screenshot_url, r.order_screenshot_url, r.seller_feedback_url)
-        WHERE u.p_hash = ? AND r.external_order_id != ? LIMIT 1
-      `)
-      .get(hash, externalOrderId) as { id: number } | undefined;
-    if (byHash) return true;
+  if (target.hash) {
+    const candidates = db
+      .prepare(
+        `SELECT u.p_hash AS h, u.ocr_text AS t FROM reimbursements r
+           JOIN uploads u ON u.url IN (r.review_screenshot_url, r.order_screenshot_url, r.seller_feedback_url)
+          WHERE r.external_order_id != ? AND u.p_hash != ''
+          ORDER BY r.id DESC LIMIT 500`
+      )
+      .all(externalOrderId) as { h: string; t: string }[];
+    if (
+      candidates.some(
+        (c) => classifyScreenshotPair(target.hash, c.h, target.text, c.t) === "same"
+      )
+    ) {
+      return true;
+    }
   }
 
   const byUrl = db

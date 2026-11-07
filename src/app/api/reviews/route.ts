@@ -126,7 +126,7 @@ export async function POST(req: Request) {
       ocr.ok ? ocr.extractedAmount || 0 : 0,
       ocr.ok ? ocr.extractedDate || "" : "",
       ocrStatus,
-      computeImageHash(saved.buffer)
+      await computeImageHash(saved.buffer)
     );
   }
 

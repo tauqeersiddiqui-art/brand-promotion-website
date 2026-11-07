@@ -15,6 +15,7 @@ import {
   makeDecision,
   checkDuplicateOrderInReimbursements,
   isScreenshotUsedByAnotherClaim,
+  isScreenshotSimilarToAnotherOrder,
 } from "@/lib/ocr-validation";
 import {
   validateOrderIdFormat,
@@ -303,10 +304,16 @@ export async function POST(req: Request) {
     pincode,
     reviewerName,
   });
+  // A screenshot that visually resembles an earlier submission but could not be
+  // proven identical (different order on the same layout) is a signal only.
+  const looksReused = [orderScreenshotUrl, priceScreenshotUrl].some(
+    (u) => u && isScreenshotSimilarToAnotherOrder(u)
+  );
   const extraPoints =
     identityRisk.points +
     (priceMismatch ? 10 : 0) +
-    (idVerdict.severity === "warn" ? 10 : 0);
+    (idVerdict.severity === "warn" ? 10 : 0) +
+    (looksReused ? 15 : 0);
   if (extraPoints > 0) {
     validation.fraudScore.score = Math.min(100, validation.fraudScore.score + extraPoints);
     if (priceMismatch) {
@@ -316,6 +323,11 @@ export async function POST(req: Request) {
     }
     if (idVerdict.severity === "warn" && idVerdict.reason) {
       validation.fraudScore.reasons.push(idVerdict.reason);
+    }
+    if (looksReused) {
+      validation.fraudScore.reasons.push(
+        "Screenshot closely resembles an earlier submission"
+      );
     }
     validation.fraudScore.reasons.push(...identityRisk.reasons);
     validation.decision = makeDecision(validation.ocrValidation, validation.fraudScore);

@@ -86,7 +86,8 @@ export async function POST(req: Request) {
     // hash match meant a buyer could not re-upload their own screenshot after a
     // failed or rejected submission.
     if (saved.buffer) {
-      pHash = computeImageHash(saved.buffer);
+      // Perceptual (dHash) fingerprint: survives resize/re-compression.
+      pHash = await computeImageHash(saved.buffer);
     }
 
     // Store upload record with OCR results

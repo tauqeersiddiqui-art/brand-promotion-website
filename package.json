@@ -15,7 +15,8 @@
     "db:reset": "node scripts/reset-db.js",
     "migrate:pg": "tsx scripts/migrate-sqlite-to-postgres.ts",
     "verify:pg": "tsx scripts/verify-database-migration.ts",
-    "health": "node scripts/health-check.js"
+    "health": "node scripts/health-check.js",
+    "backfill:hashes": "node scripts/backfill-image-hashes.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",
@@ -27,7 +28,8 @@
     "next": "^15.5.29",
     "pg": "^8.23.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

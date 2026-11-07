@@ -56,7 +56,8 @@ function getCsp() {
 }
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["better-sqlite3"],
+  // Native modules: keep them out of the bundler.
+  serverExternalPackages: ["better-sqlite3", "sharp"],
   poweredByHeader: false,
   reactStrictMode: true,
 

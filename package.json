@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "echo \"No tests defined\" && exit 0",
+    "test": "node --import tsx --test \"tests/*.test.ts\"",
     "db:reset": "node scripts/reset-db.js",
     "migrate:pg": "node scripts/migrate-sqlite-to-postgres.ts",
     "verify:pg": "node scripts/verify-database-migration.ts",
@@ -38,6 +38,7 @@
     "@types/react-dom": "^19",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.29",
+    "tsx": "^4.23.15",
     "typescript": "5.8.2"
   }
 }

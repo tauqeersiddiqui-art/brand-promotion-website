@@ -8,7 +8,10 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "sh -c 'node scripts/seed.js && npm start'"
-healthcheckPath = "/"
+# /health checks SQLite and storage and returns 503 when either is broken. The
+# homepage used to be the health check, so a slow render could mark the deploy
+# unhealthy and every probe ran a full page render.
+healthcheckPath = "/health"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 

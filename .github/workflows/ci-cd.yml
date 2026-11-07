@@ -1,10 +1,18 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+
+# Superseded runs on the same ref are cancelled instead of queueing.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   NODE_VERSION: '22.x'
@@ -36,7 +44,7 @@ jobs:
       - run: npx tsc --noEmit
 
   test:
-    name: Run Tests
+    name: Tests
     runs-on: ubuntu-latest
     needs: typecheck
     steps:
@@ -46,7 +54,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci --no-audit
-      - run: npm test -- --passWithNoTests
+      # Real tests now: slot/oversell invariants, duplicate order IDs and code
+      # generation. This used to print "No tests defined" and always pass.
+      - run: npm test
 
   build:
     name: Build
@@ -69,21 +79,7 @@ jobs:
           path: .next/
           retention-days: 14
 
-  deploy:
-    name: Deploy to Railway
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    environment:
-      name: production
-    steps:
-      - name: Deploy to Railway
-        # Note: Replace "my-service" with your actual Railway service name from
-        # https://railway.app/console > Your Project > Service Name
-        uses: bervProject/railway-deploy@main
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        with:
-          service: "my-service"
-          detach: true
-        id: railway
+# No deploy job: it pointed at the placeholder service "my-service" and failed on
+# every push, turning the pipeline red while Railway's own GitHub integration did
+# the real deploy. If you want deploys gated on CI, add a job here with the real
+# service name and the RAILWAY_TOKEN secret.

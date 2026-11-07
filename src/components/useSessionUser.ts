@@ -20,7 +20,7 @@ let cachedFor: string | null = null;
 function loadSessionUser(pathname: string): Promise<SessionUser | null> {
   if (!cached || cachedFor !== pathname) {
     cachedFor = pathname;
-    cached = fetch("/api/auth/me", { cache: "no-store" })
+    cached = fetch("/api/me", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => (d?.user ? (d.user as SessionUser) : null))
       .catch(() => null);

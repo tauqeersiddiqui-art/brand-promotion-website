@@ -11,7 +11,7 @@ export async function GET() {
   const checks: {
     timestamp: string;
     database: { status: HealthStatus; error?: string };
-    storage: { status: HealthStatus; error?: string; uploads_dir?: string };
+    storage: { status: HealthStatus; error?: string };
   } = {
     timestamp: new Date().toISOString(),
     database: { status: "healthy" as const },
@@ -32,7 +32,9 @@ export async function GET() {
   try {
     const exists = fs.existsSync(UPLOAD_DIR);
     if (exists) {
-      checks.storage = { status: "healthy" as const, uploads_dir: UPLOAD_DIR };
+      // Don't echo the absolute path: it is attacker-useful and not needed by
+      // the uptime check.
+      checks.storage = { status: "healthy" as const };
     } else {
       checks.storage = { status: "unhealthy" as const, error: "Uploads directory missing" };
     }

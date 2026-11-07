@@ -1,0 +1,33 @@
+# Never ship local environment or credentials inside an image.
+.env
+.env.*
+!.env.example
+client_secret_*.json
+
+# Local state: the production database and uploads live on the mounted volume,
+# not in the image. Copying data/ also leaked real orders into any local build.
+data/
+public/uploads/
+*.db
+*.db-wal
+*.db-shm
+
+# Build output and dependencies are created inside the image.
+node_modules
+.next
+out
+build.log
+dev.log
+prod.log
+*.log
+
+# Repo/editor noise and local reference clones.
+.git
+.github
+.vscode
+.freebuff
+.claude
+rea/
+awesome-reverse-engineer-anything/
+*.md
+!README.md

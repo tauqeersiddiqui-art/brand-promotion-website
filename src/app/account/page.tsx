@@ -268,8 +268,7 @@ export default function AccountPage() {
                     const activeRefund = o.refunds?.some((r) =>
                       ["requested", "approved", "processed"].includes(r.status)
                     );
-                    const reviewEligible =
-                      ["confirmed", "verified", "shipped", "delivered"].includes(o.status) && !o.review;
+                    const reviewEligible = o.status === "confirmed" && !o.review;
                     return (
                       <tr key={o.id}>
                         <td>
@@ -332,7 +331,7 @@ export default function AccountPage() {
                                   {o.review.status}
                                 </span>
                               )}
-                            {o.status === "delivered" && !activeRefund && (
+                            {o.status === "confirmed" && !activeRefund && (
                               <button
                                 className="btn btn-ghost btn-sm"
                                 style={{ fontSize: 12, padding: "5px 10px" }}

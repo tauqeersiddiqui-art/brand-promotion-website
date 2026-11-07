@@ -56,27 +56,23 @@ export async function POST(req: Request) {
   if (!order) return bad("Order not found.", 404);
   if (order.status === "cancelled")
     return bad("Refunds are not available for cancelled orders.");
-  // Refund only allowed after delivery
-  if (order.status !== "delivered") {
-    return bad("Refund can only be requested after order is delivered.", 400);
+  // Refund only allowed for confirmed orders
+  if (order.status !== "confirmed") {
+    return bad("Refund can only be requested for confirmed orders.", 400);
   }
-  // Check return window (14 days after delivery)
+  // Check return window (14 days after order creation)
   const orderRecord = db
-    .prepare("SELECT created_at, updated_at, delivered_at FROM orders WHERE id = ?")
-    .get(orderId) as { created_at: string; updated_at: string; delivered_at: string } | undefined;
+    .prepare("SELECT created_at FROM orders WHERE id = ?")
+    .get(orderId) as { created_at: string } | undefined;
   if (orderRecord) {
-    // Prefer the immutable delivery stamp. `updated_at` was previously used and
-    // is bumped by every admin status change and note edit, so a reviewer
-    // annotating a delivered order restarted the buyer's 14-day clock.
-    const anchor = orderRecord.delivered_at || orderRecord.created_at;
     // SQLite `datetime('now')` yields "YYYY-MM-DD HH:MM:SS" in UTC with no
     // zone suffix; append Z so it is not silently parsed as local time.
-    const deliveryDate = new Date(anchor.replace(" ", "T") + "Z");
+    const orderDate = new Date(orderRecord.created_at.replace(" ", "T") + "Z");
     const now = new Date();
-    const daysSinceDelivery = Math.floor((now.getTime() - deliveryDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSinceDelivery < 14) {
+    const daysSinceOrder = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceOrder < 14) {
       return bad(
-        `Return window not over. Please wait ${14 - daysSinceDelivery} more day(s) after delivery to request refund.`,
+        `Return window not over. Please wait ${14 - daysSinceOrder} more day(s) after placing the order to request refund.`,
         400
       );
     }

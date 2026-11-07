@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
-/** Orders eligible for review (confirmed/shipped/delivered, not yet reviewed). */
+/** Orders eligible for review (confirmed, not yet reviewed). */
 export async function GET() {
   const { user, error } = await requireUser();
   if (error) return error;
@@ -30,7 +30,7 @@ export async function GET() {
        FROM orders o
        JOIN deals d ON d.id = o.deal_id
        LEFT JOIN reviews r ON r.order_id = o.id
-       WHERE o.user_id = ? AND o.status IN ('confirmed','shipped','delivered')
+       WHERE o.user_id = ? AND o.status = 'confirmed'
        ORDER BY datetime(o.created_at) DESC`
     )
     .all(user.id) as (Record<string, unknown> & { review_id: number | null })[];

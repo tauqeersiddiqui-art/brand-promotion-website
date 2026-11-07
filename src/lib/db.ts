@@ -111,7 +111,7 @@ const SCHEMA_DDL = `
       validation_score INTEGER NOT NULL DEFAULT 0,
       validation_details TEXT NOT NULL DEFAULT '',
       admin_note TEXT NOT NULL DEFAULT '',
-      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','confirmed','verified','shipped','delivered','rejected','cancelled')),
+      status TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed','rejected','cancelled')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       -- Stamped once when the order first reaches 'delivered'. Part of the
       -- canonical definition (not an ALTER) so the CHECK-constraint rebuild
@@ -474,9 +474,9 @@ function createDb(): Database.Database {
     },
     {
       table: "orders",
-      // The legacy table omitted 'verified' and 'rejected', so an admin marking
+      // The legacy table omitted 'rejected' and 'cancelled', so an admin marking
       // an order with either status hit "CHECK constraint failed" (HTTP 500).
-      mustContain: ["'verified'", "'rejected'"],
+      mustContain: ["'rejected'", "'cancelled'"],
     },
     {
       table: "reimbursements",

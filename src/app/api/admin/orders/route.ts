@@ -7,7 +7,7 @@ import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
-const STATUSES = ["pending", "confirmed", "verified", "shipped", "delivered", "rejected", "cancelled"] as const;
+const STATUSES = ["confirmed", "rejected", "cancelled"] as const;
 
 export async function GET(req: NextRequest) {
   const { error } = await requireAdmin();

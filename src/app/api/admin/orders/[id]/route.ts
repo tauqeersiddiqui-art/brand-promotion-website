@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
-const STATUSES = ["pending", "confirmed", "verified", "shipped", "delivered", "rejected", "cancelled"] as const;
+const STATUSES = ["confirmed", "rejected", "cancelled"] as const;
 
 async function validateRequest(req: Request): Promise<NextResponse | null> {
   const reqHeaders = await headers();
@@ -69,11 +69,6 @@ export async function PATCH(
   if (status) {
     updates.push("status = ?");
     paramsList.push(status);
-    // Stamp the delivery time once, on the transition into `delivered`, so the
-    // refund return window has a stable anchor.
-    if (status === "delivered") {
-      updates.push("delivered_at = COALESCE(NULLIF(delivered_at, ''), datetime('now'))");
-    }
   }
   if (adminNote !== undefined) {
     updates.push("admin_note = ?");

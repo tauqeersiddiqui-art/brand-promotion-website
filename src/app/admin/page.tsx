@@ -76,7 +76,7 @@ export default function AdminDashboard() {
     { label: "Active campaigns", value: `${stats.activeDeals}/${stats.deals}`, color: "var(--brand)" },
     { label: "Total reviewers / users", value: stats.users, color: "var(--ink)" },
     { label: "Order proofs submitted", value: stats.orders, color: "var(--ink)" },
-    { label: "Pending order checks", value: stats.pendingOrders, color: "#b45309" },
+    { label: "Confirmed orders", value: stats.pendingOrders, color: "var(--accent)" },
     { label: "Reimbursement claims", value: stats.reimbursements, color: "var(--ink)" },
     { label: "Pending refund payouts", value: stats.pendingReimbursements, color: "var(--accent)" },
     { label: "Total refund disbursed", value: `₹${stats.totalDisbursed.toLocaleString("en-IN")}`, color: "var(--accent)" },

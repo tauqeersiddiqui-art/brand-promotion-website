@@ -12,7 +12,7 @@ import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
-const ELIGIBLE_STATUSES = ["confirmed", "shipped", "delivered"];
+const ELIGIBLE_STATUSES = ["confirmed"];
 
 /**
  * Submit a review for a deal the user actually bought.
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     return bad("Order not found.", 404);
   }
   if (!ELIGIBLE_STATUSES.includes(order.status)) {
-    return bad("You can review this deal once your order is confirmed or delivered.");
+    return bad("You can review this deal once your order is confirmed.");
   }
 
   const existing = db

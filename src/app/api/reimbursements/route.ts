@@ -144,10 +144,10 @@ export async function POST(req: Request) {
 
   const userId = session.userId;
 
-  // Validate order status - must be delivered or verified
-  if (!["delivered", "verified"].includes(order.status)) {
+  // Validate order status - must be confirmed
+  if (order.status !== "confirmed") {
     return bad(
-      `Order must be delivered or verified before claiming reimbursement. Current status: ${order.status}`,
+      `Order must be confirmed before claiming reimbursement. Current status: ${order.status}`,
       400
     );
   }

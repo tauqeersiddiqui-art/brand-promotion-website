@@ -56,7 +56,7 @@ type Order = {
   reimbursements?: ReimbursementSummary[];
 };
 
-const STATUSES = ["pending", "verified", "confirmed", "shipped", "delivered", "rejected", "cancelled"];
+const STATUSES = ["confirmed", "rejected", "cancelled"];
 const PLATFORMS = ["All", "Amazon", "Flipkart", "Myntra", "Brand Store"];
 
 export default function AdminOrdersPage() {

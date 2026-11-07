@@ -180,13 +180,13 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
 
             {/* Step 2: Order Verified */}
             <div className="timeline-item">
-              <div className={`timeline-dot ${["verified", "confirmed", "shipped", "delivered"].includes(result.order.status) ? "done" : "active"}`}>
-                {["verified", "confirmed", "shipped", "delivered"].includes(result.order.status) ? "✓" : "2"}
+              <div className={`timeline-dot ${result.order.status === "confirmed" ? "done" : "active"}`}>
+                {result.order.status === "confirmed" ? "✓" : "2"}
               </div>
               <div className="timeline-content">
                 <strong>2. Order Verification</strong>
                 <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-                  {["verified", "confirmed", "shipped", "delivered"].includes(result.order.status)
+                  {result.order.status === "confirmed"
                     ? "Your order proof has been verified by the brand team."
                     : "Pending admin review. Usually confirmed within a few hours."}
                 </p>

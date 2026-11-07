@@ -89,8 +89,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Only allow cancellation for orders that are still pending or confirmed.
-  const cancellable = order.status === "pending" || order.status === "confirmed";
+  // Only allow cancellation for orders that are still confirmed.
+  const cancellable = order.status === "confirmed";
 
   return NextResponse.json({
     ok: true,

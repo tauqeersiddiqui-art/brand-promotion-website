@@ -145,7 +145,7 @@ export default function CancelPage() {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}>
               <span style={{ color: "var(--muted)" }}>Status</span>
-              <span className={`badge ${orderData.status === 'pending' || orderData.status === 'confirmed' ? 'badge-warning' : 'badge-success'}`}>
+              <span className={`badge ${orderData.status === 'confirmed' ? 'badge-warning' : 'badge-success'}`}>
                 {orderData.status || 'N/A'}
               </span>
             </div>

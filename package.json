@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "echo \"No tests defined\" && exit 0",
     "db:reset": "node scripts/reset-db.js",
     "migrate:pg": "node scripts/migrate-sqlite-to-postgres.ts",
     "verify:pg": "node scripts/verify-database-migration.ts",

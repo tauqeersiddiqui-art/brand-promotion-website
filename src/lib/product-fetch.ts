@@ -221,7 +221,7 @@ function keywordFromTitle(title: string): string {
 
 /** True for error/captcha pages that must not be autofilled as a title. */
 function isUnusableTitle(title: string): boolean {
-  return /^(page not found|sorry!?\s+something went wrong|robot check|enter the characters you see below|amazon\.[a-z.]+)$/i.test(
+  return /^(page not found|sorry!?\s+something went wrong|robot check|enter the characters you see below|amazon\.[a-z.]+|flipkart\.[a-z.]+|all categories\s*\|\s*flipkart|buy\s+products\s+online|online shopping\s+india)$/i.test(
     title.trim()
   );
 }
@@ -292,6 +292,7 @@ export async function fetchProductDetails(rawUrl: string): Promise<ProductFetchR
   // Detect platform and extract product ID
   let platform = "Amazon";
   let productId = "";
+  let amazonTld = "in"; // Default to amazon.in for Indian region
 
   const amazonPatterns = [
     /amazon\.(?:in|com|co\.uk|de|fr|ca|es|it|co\.jp|com\.au|ae|sa|sg|nl|se|pl)\/.*(?:\/dp\/|\/gp\/product\/)([A-Z0-9]{10})/i,
@@ -303,6 +304,12 @@ export async function fetchProductDetails(rawUrl: string): Promise<ProductFetchR
     /flipkart\.com\/.*[?&]pid=([A-Z0-9]+)/i,
     /flipkart\.com\/.*\/p\/([A-Z0-9]+)/i,
   ];
+
+  // Extract Amazon TLD from the original URL before fetching
+  const amazonTldMatch = host.match(/amazon\.(?:in|com|co\.uk|de|fr|ca|es|it|co\.jp|com\.au|ae|sa|sg|nl|se|pl)/i);
+  if (amazonTldMatch) {
+    amazonTld = amazonTldMatch[0].replace("amazon.", "");
+  }
 
   if (isAmazonHost) {
     if (/\/deals|\/gp\/best-sellers|\/gp\/most-wished-for|\/gp\/new-releases|\/s\?/i.test(searchableUrl)) {
@@ -359,10 +366,37 @@ export async function fetchProductDetails(rawUrl: string): Promise<ProductFetchR
 
   try {
     if (platform === "Amazon") {
-      const response = await fetch(`https://www.amazon.in/dp/${productId}`, {
+      // Validate the Amazon region is supported
+      if (!/^amazon\.(?:in|com|co\.uk|de|fr|ca|es|it|co\.jp|com\.au|ae|sa|sg|nl|se|pl)$/i.test(host)) {
+        return { ok: false, status: 400, error: "Amazon region not supported." };
+      }
+
+      // Build the fetch URL using the extracted region from the original URL
+      const fetchUrl = `https://www.amazon.${amazonTld}/dp/${productId}`;
+      const response = await fetch(fetchUrl, {
         headers: PAGE_HEADERS,
         signal: AbortSignal.timeout(12000),
       });
+
+      // Check for bot/blocked responses
+      if (response.status === 429) {
+        return {
+          ok: false,
+          status: 429,
+          error: "Amazon is blocking automated requests (rate limit). Please try again later or enter details manually.",
+          hint: "Amazon/Flipkart may be temporarily blocking server-side requests. You can fill the product details manually.",
+        };
+      }
+
+      if (response.status === 403) {
+        return {
+          ok: false,
+          status: 403,
+          error: "Access forbidden by Amazon. The product page may require a browser.",
+          hint: "Open the link in a browser to verify it's accessible, then try again or fill details manually.",
+        };
+      }
+
       const html = await response.text();
 
       const titleMatch = html.match(/<span id="productTitle"[^>]*>\s*([^<]+?)\s*<\/span>/);
@@ -403,7 +437,7 @@ export async function fetchProductDetails(rawUrl: string): Promise<ProductFetchR
 
       productData = isUnusableTitle(title)
         ? { title: "", price: 0, originalPrice: 0, image: "", description: "" }
-        : { title, price, originalPrice: mrp || price, image, description };
+        : { title, price: mrp || price, originalPrice: mrp || price, image, description };
     } else if (platform === "Flipkart") {
       // Flipkart now aggressively blocks server-side requests (PerimeterX
       // bot-wall + 429s) from both residential and datacenter IPs, so the page
@@ -416,7 +450,16 @@ export async function fetchProductDetails(rawUrl: string): Promise<ProductFetchR
           headers: PAGE_HEADERS,
           signal: AbortSignal.timeout(10000),
         });
-        parsed = parseFlipkartHtml(await response.text());
+
+        // Check if Flipkart is blocking the request
+        if (response.status === 429) {
+          console.warn("[ProductFetch] Flipkart blocked the request with status 429");
+        } else if (response.status === 403) {
+          console.warn("[ProductFetch] Flipkart returned 403 Forbidden");
+        }
+
+        const html = await response.text();
+        parsed = parseFlipkartHtml(html);
       } catch (err) {
         console.warn("[ProductFetch] Flipkart direct fetch failed:", err);
       }

@@ -603,7 +603,9 @@ function autoSeed(): void {
   // Owner account: ADMIN_PASSWORD env var is authoritative on boot
   const adminEmail = (process.env.ADMIN_EMAIL || "admin@brandpromotion.in").toLowerCase();
   const envPassword = process.env.ADMIN_PASSWORD || "";
-  const existing = db.prepare("SELECT id, email, password_hash FROM users WHERE email = ?").get(adminEmail);
+  const existing = db.prepare("SELECT id, email, password_hash FROM users WHERE email = ?").get(adminEmail) as
+    | { id: number; email: string; password_hash: string }
+    | undefined;
   if (!existing) {
     const initialPassword = envPassword || "ChangeMe@123";
     const hash = bcrypt.hashSync(initialPassword, 12);

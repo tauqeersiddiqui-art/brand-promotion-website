@@ -60,6 +60,8 @@ jobs:
           cache: 'npm'
       - run: npm ci --no-audit
       - run: npm run build
+        env:
+          __NEXT_BUILD__: 'true'
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

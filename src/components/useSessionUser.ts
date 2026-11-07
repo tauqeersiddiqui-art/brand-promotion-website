@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export type SessionUser = {
   id: number;
@@ -10,12 +11,17 @@ export type SessionUser = {
   role: string;
 };
 
+// Shared across components so several forms on one page only cause one request.
+// Keyed by pathname: login/logout navigate client-side (router.push) without a
+// page reload, so a cached answer must not outlive the route it was fetched on.
 let cached: Promise<SessionUser | null> | null = null;
+let cachedFor: string | null = null;
 
-function loadSessionUser(): Promise<SessionUser | null> {
-  if (!cached) {
-    cached = fetch("/api/auth/me")
-      .then((r) => r.json())
+function loadSessionUser(pathname: string): Promise<SessionUser | null> {
+  if (!cached || cachedFor !== pathname) {
+    cachedFor = pathname;
+    cached = fetch("/api/auth/me", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => (d?.user ? (d.user as SessionUser) : null))
       .catch(() => null);
   }
@@ -23,12 +29,14 @@ function loadSessionUser(): Promise<SessionUser | null> {
 }
 
 export function useSessionUser(): { user: SessionUser | null; loading: boolean } {
+  const pathname = usePathname();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    loadSessionUser().then((u) => {
+    setLoading(true);
+    loadSessionUser(pathname || "").then((u) => {
       if (!alive) return;
       setUser(u);
       setLoading(false);
@@ -36,7 +44,7 @@ export function useSessionUser(): { user: SessionUser | null; loading: boolean }
     return () => {
       alive = false;
     };
-  }, []);
+  }, [pathname]);
 
   return { user, loading };
 }

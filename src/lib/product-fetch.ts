@@ -152,21 +152,30 @@ function titleFromUrlSlug(rawUrl: string): string {
   try {
     const u = new URL(rawUrl);
     const m = u.pathname.match(/\/([a-z0-9][a-z0-9-]+)\/(?:p|dp)\//i);
-    if (!m) return "";
-    const SMALL = new Set(["and", "or", "with", "for", "the", "of", "in", "to", "on", "a", "an"]);
-    return m[1]
-      .split("-")
-      .filter(Boolean)
-      .map((w, i) =>
-        i > 0 && SMALL.has(w.toLowerCase())
-          ? w.toLowerCase()
-          : w.charAt(0).toUpperCase() + w.slice(1)
-      )
-      .join(" ")
-      .slice(0, 200);
+    if (m) {
+      const SMALL = new Set(["and", "or", "with", "for", "the", "of", "in", "to", "on", "a", "an"]);
+      return m[1]
+        .split("-")
+        .filter(Boolean)
+        .map((w, i) =>
+          i > 0 && SMALL.has(w.toLowerCase())
+            ? w.toLowerCase()
+            : w.charAt(0).toUpperCase() + w.slice(1)
+        )
+        .join(" ")
+        .slice(0, 200);
+    }
+    // Bare /dp/ASIN URLs (e.g. amazon.in/dp/B0HJLB7WKR) have no slug, so fall
+    // back to the ASIN itself - at least the admin gets a usable placeholder
+    // instead of an empty title when the marketplace blocks the fetch.
+    const asinMatch = u.pathname.match(/\/dp\/([A-Z0-9]{10})(?:\/|$|\?)/i);
+    if (asinMatch) {
+      return `Product (ASIN: ${asinMatch[1]})`;
+    }
   } catch {
     return "";
   }
+  return "";
 }
 
 /** Parse title/price/image out of a Flipkart product page (live or archived). */
@@ -359,10 +368,30 @@ export async function fetchProductDetails(rawUrl: string): Promise<ProductFetchR
 
   try {
     if (platform === "Amazon") {
-      const response = await fetch(`https://www.amazon.in/dp/${productId}`, {
+      // Use the TLD from the URL the admin pasted (amazon.in, amazon.com, etc.)
+      // rather than always hitting .in - a .com link redirected to .in returns
+      // a region/consent wall instead of the product page.
+      const amazonTld = (parsedUrl.hostname.match(/amazon.([a-z.]+)$/i) || [])[1] || "in";
+      const response = await fetch(`https://www.amazon.${amazonTld}/dp/${productId}`, {
         headers: PAGE_HEADERS,
         signal: AbortSignal.timeout(12000),
       });
+      if (response.status === 429) {
+        return {
+          ok: false,
+          status: 429,
+          error:
+            "Amazon is blocking automated requests (rate limit). Please wait a few minutes and try again, or fill the deal fields manually.",
+        };
+      }
+      if (response.status === 403) {
+        return {
+          ok: false,
+          status: 403,
+          error:
+            "Access forbidden by Amazon (bot detection). Please fill the deal fields manually.",
+        };
+      }
       const html = await response.text();
 
       const titleMatch = html.match(/<span id="productTitle"[^>]*>\s*([^<]+?)\s*<\/span>/);

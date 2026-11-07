@@ -147,26 +147,39 @@ function firstNumber(html: string, patterns: RegExp[]): number {
  * Build a readable title from the product URL slug. Flipkart/Amazon block
  * automated server requests, but the slug is always available locally:
  * /motorola-amphisoundx-vibe-120-w.../p/itmXXX -> "Motorola Amphisoundx Vibe 120 W..."
+ * Also handles /dp/{ASIN} URLs by using the ASIN as a last resort fallback.
  */
 function titleFromUrlSlug(rawUrl: string): string {
   try {
     const u = new URL(rawUrl);
+    // Format: /{slug}-/p/ITM... or /{slug}/dp/{ASIN}
     const m = u.pathname.match(/\/([a-z0-9][a-z0-9-]+)\/(?:p|dp)\//i);
-    if (!m) return "";
-    const SMALL = new Set(["and", "or", "with", "for", "the", "of", "in", "to", "on", "a", "an"]);
-    return m[1]
-      .split("-")
-      .filter(Boolean)
-      .map((w, i) =>
-        i > 0 && SMALL.has(w.toLowerCase())
-          ? w.toLowerCase()
-          : w.charAt(0).toUpperCase() + w.slice(1)
-      )
-      .join(" ")
-      .slice(0, 200);
+    if (m) {
+      const SMALL = new Set(["and", "or", "with", "for", "the", "of", "in", "to", "on", "a", "an"]);
+      return m[1]
+        .split("-")
+        .filter(Boolean)
+        .map((w, i) =>
+          i > 0 && SMALL.has(w.toLowerCase())
+            ? w.toLowerCase()
+            : w.charAt(0).toUpperCase() + w.slice(1)
+        )
+        .join(" ")
+        .slice(0, 200);
+    }
+    // Fallback: /dp/{ASIN} format - use ASIN as title
+    // The ASIN alone isn't very useful, so we try to provide context
+    const asinMatch = u.pathname.match(/\/dp\/([A-Z0-9]{10})/i);
+    if (asinMatch) {
+      const asin = asinMatch[1];
+      // Amazon ASINs starting with B0 are typically products
+      // Provide a placeholder title that admins can recognize
+      return `Product (ASIN: ${asin})`;
+    }
   } catch {
     return "";
   }
+  return "";
 }
 
 /** Parse title/price/image out of a Flipkart product page (live or archived). */

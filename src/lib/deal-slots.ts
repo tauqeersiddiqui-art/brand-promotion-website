@@ -27,10 +27,14 @@ export function claimDealSlot(dealId: number): boolean {
 /** Give a slot back when an order is cancelled, rejected or deleted. */
 export function releaseDealSlot(dealId: number | null | undefined): void {
   if (!dealId) return;
+  // `claimed_slots > 0` makes a double release a no-op, and the clamp keeps a
+  // campaign from ending up with more stock than it has slots.
   db.prepare(
     `UPDATE deals
-        SET claimed_slots = MAX(0, claimed_slots - 1),
-            stock = stock + 1
-      WHERE id = ?`
+        SET claimed_slots = claimed_slots - 1,
+            stock = CASE WHEN total_slots > 0
+                         THEN MIN(stock + 1, total_slots)
+                         ELSE stock + 1 END
+      WHERE id = ? AND claimed_slots > 0`
   ).run(dealId);
 }

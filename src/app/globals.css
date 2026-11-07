@@ -13,7 +13,9 @@
   --ink: #0f172a;
   --ink-soft: #334155;
   --muted: #64748b;
-  --muted-soft: #94a3b8;
+  /* Placeholders only. Was #94a3b8 (2.6:1 on white) — below WCAG AA and hard
+     to read on phones in daylight. */
+  --muted-soft: #64748b;
 
   /* Brand: calm blue with green accents */
   --brand: #2563eb;

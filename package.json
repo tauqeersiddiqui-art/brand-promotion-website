@@ -13,8 +13,8 @@
     "lint": "next lint",
     "test": "node --import tsx --test \"tests/*.test.ts\"",
     "db:reset": "node scripts/reset-db.js",
-    "migrate:pg": "node scripts/migrate-sqlite-to-postgres.ts",
-    "verify:pg": "node scripts/verify-database-migration.ts",
+    "migrate:pg": "tsx scripts/migrate-sqlite-to-postgres.ts",
+    "verify:pg": "tsx scripts/verify-database-migration.ts",
     "health": "node scripts/health-check.js"
   },
   "dependencies": {

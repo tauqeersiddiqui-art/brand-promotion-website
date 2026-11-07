@@ -162,6 +162,29 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  -- These two tables were never created here, only in the developer's local
+  -- database. On a fresh volume the click tracker silently failed and any order
+  -- submitted with a click_id tripped the foreign key ("no such table").
+  CREATE TABLE IF NOT EXISTS click_tracking (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    click_id TEXT NOT NULL UNIQUE,
+    deal_id INTEGER NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    ip TEXT NOT NULL DEFAULT '',
+    user_agent TEXT NOT NULL DEFAULT '',
+    referrer TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS device_fingerprints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fingerprint TEXT NOT NULL UNIQUE,
+    first_seen_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen_at TEXT NOT NULL DEFAULT (datetime('now')),
+    order_count INTEGER NOT NULL DEFAULT 0,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_deals_active ON deals(active, featured);
   CREATE INDEX IF NOT EXISTS idx_deals_code ON deals(product_code);
   CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
@@ -253,6 +276,23 @@ if (!existing) {
   console.log(`[seed] Owner password reset from ADMIN_PASSWORD for: ${adminEmail}`);
 } else {
   console.log(`[seed] Owner account already exists: ${adminEmail}`);
+}
+
+// ---------- click-tracking retention ----------
+// click_tracking stores a raw IP, user agent and referrer per click, which is
+// personal data with no business need to live forever. Prune on boot.
+try {
+  const days = Math.max(1, parseInt(process.env.CLICK_RETENTION_DAYS || "180", 10) || 180);
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 19)
+    .replace("T", " ");
+  const pruned = db.prepare("DELETE FROM click_tracking WHERE created_at < ?").run(cutoff);
+  if (pruned.changes > 0) {
+    console.log(`[seed] pruned ${pruned.changes} click row(s) older than ${days} days`);
+  }
+} catch (err) {
+  console.warn("[seed] click retention prune skipped:", err.message);
 }
 
 // ---------- sample deals (Influencer / 100% Refund Deals) ----------

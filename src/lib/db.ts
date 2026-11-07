@@ -10,12 +10,15 @@
 
 import Database from "better-sqlite3";
 import path from "path";
-import { ensureStorageDirs } from "./storage";
+import { DATA_DIR, ensureStorageDirs } from "./storage";
 
 ensureStorageDirs();
 
+// Must use DATA_DIR (same resolution as scripts/seed.js and auto-backup.ts)
+// so the database the app reads is the one the seed script writes to, and so
+// it lands on the Railway persistent volume (/data) when DATA_DIR is set.
 export const dbPath = path.resolve(
-  process.env.DATABASE_PATH || path.join(process.cwd(), "data", "app.db")
+  process.env.DATABASE_PATH || path.join(DATA_DIR, "app.db")
 );
 
 type DbRow = Record<string, unknown>;

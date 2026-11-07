@@ -95,7 +95,7 @@ export async function POST(req: Request) {
   const description = sanitizeHtml(str(form.get("description"), 2000));
   const category = sanitizeText(str(form.get("category"), 40), 40) || "General";
   const platform = sanitizeText(str(form.get("platform"), 40), 40) || "Amazon";
-  const dealType = sanitizeText(str(form.get("deal_type"), 60), 60) || "100% Refund";
+  const dealType = sanitizeText(str(form.get("deal_type"), 60), 60) || "Flat Refund";
   let dealUrl = sanitizeText(str(form.get("deal_url"), 500), 500);
   if (dealUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(dealUrl)) dealUrl = `https://${dealUrl}`;
   const targetKeyword = sanitizeText(str(form.get("target_keyword"), 255), 255);

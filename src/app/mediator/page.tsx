@@ -48,7 +48,7 @@ const EMPTY = {
   description: "",
   category: "General",
   platform: "Amazon",
-  deal_type: "100% Refund",
+  deal_type: "Flat Refund",
   image_url: "",
   deal_url: "",
   target_keyword: "",
@@ -68,11 +68,7 @@ const EMPTY = {
 };
 
 const PLATFORMS = ["Amazon", "Flipkart", "Myntra", "Brand Store", "Meesho", "Nykaa"];
-const DEAL_TYPES = [
-  "100% Refund", "90% Refund", "80% Refund", "70% Refund", "60% Refund",
-  "50% Refund", "40% Refund", "30% Refund", "20% Refund", "10% Refund",
-  "Review Incentive", "Flat Refund", "Review Deal", "Rating Deal", "Only Order Deal",
-];
+const DEAL_TYPES = ["Review Incentive", "Flat Refund", "Review Deal", "Rating Deal", "Only Order Deal"];
 const CATEGORIES = ["Electronics", "Footwear", "Fashion", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Health & Wellness", "General"];
 
 export default function MediatorPage() {

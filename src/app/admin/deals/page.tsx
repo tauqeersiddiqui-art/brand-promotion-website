@@ -55,7 +55,7 @@ const EMPTY = {
   description: "",
   category: "Electronics",
   platform: "Amazon",
-  deal_type: "100% Refund",
+  deal_type: "Flat Refund",
   image_url: "",
   deal_url: "",
   target_keyword: "",
@@ -78,11 +78,7 @@ const EMPTY = {
 };
 
 const PLATFORMS = ["Amazon", "Flipkart", "Myntra", "Brand Store", "Meesho", "Nykaa"];
-const DEAL_TYPES = [
-  "100% Refund", "90% Refund", "80% Refund", "70% Refund", "60% Refund",
-  "50% Refund", "40% Refund", "30% Refund", "20% Refund", "10% Refund",
-  "Review Incentive", "Flat Refund", "Review Deal", "Rating Deal", "Only Order Deal"
-];
+const DEAL_TYPES = ["Flat Refund", "Review Incentive", "Review Deal", "Rating Deal", "Only Order Deal"];
 const CATEGORIES = ["Electronics", "Footwear", "Fashion", "Beauty & Care", "Home & Kitchen", "Fitness & Sports", "Health & Wellness", "General"];
 
 type BulkImportResult = {
@@ -153,7 +149,7 @@ export default function AdminDealsPage() {
       description: d.description || "",
       category: d.category || "General",
       platform: d.platform || "Amazon",
-      deal_type: d.deal_type || "100% Refund",
+      deal_type: d.deal_type || "Flat Refund",
       image_url: d.image_url || "",
       deal_url: d.deal_url || "",
       target_keyword: d.target_keyword || "",
@@ -544,7 +540,7 @@ export default function AdminDealsPage() {
               minLength={3}
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
-              placeholder="e.g. Noise Cancelling Bluetooth Earbuds — 100% UPI Refund"
+              placeholder="e.g. Noise Cancelling Bluetooth Earbuds — Flat UPI Refund"
             />
           </div>
 

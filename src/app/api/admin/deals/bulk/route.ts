@@ -179,7 +179,7 @@ export async function POST(req: Request) {
       description,
       category,
       platform,
-      "100% Refund",
+      "Flat Refund",
       imageUrl,
       product.url,
       targetKeyword,

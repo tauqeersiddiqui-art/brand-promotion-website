@@ -116,7 +116,7 @@ export async function POST(req: Request) {
   const email = sanitizeText(str(body.email, 254), 254).toLowerCase().trim();
   const phone = sanitizePhone(str(body.phone, 20));
   const platform = sanitizeText(str(body.platform, 40), 40) || "Amazon";
-  const dealType = sanitizeText(str(body.deal_type, 60), 60) || "100% Refund";
+  const dealType = sanitizeText(str(body.deal_type, 60), 60) || "Flat Refund";
   const mediatorName = sanitizeText(str(body.mediator_name, 80), 80) || "Direct";
   const orderDate = sanitizeText(str(body.order_date, 30), 30) || new Date().toISOString().split("T")[0];
   const orderScreenshotUrl = sanitizeText(str(body.order_screenshot_url, 500), 500);

@@ -39,7 +39,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
   const claimedSlots = deal.claimed_slots || 0;
   const remainingSlots = Math.max(0, totalSlots - claimedSlots);
   const slotPct = Math.min(100, Math.round((claimedSlots / totalSlots) * 100));
-  const is100Pct = deal.deal_type === "100% Refund" || (deal.refund_amount && deal.refund_amount >= deal.price_sale);
+  const isFullRefund = deal.refund_amount && deal.refund_amount >= deal.price_sale;
 
   return (
     <article className="deal-card">
@@ -49,8 +49,8 @@ export default function DealCard({ deal }: { deal: Deal }) {
         ) : (
           <div className="deal-placeholder">—</div>
         )}
-        {is100Pct ? (
-          <span className="deal-tag deal-tag-refund">100% refund</span>
+        {isFullRefund ? (
+          <span className="deal-tag deal-tag-refund">Full refund after review</span>
         ) : disc > 0 ? (
           <span className="deal-tag deal-tag-discount">{disc}% off</span>
         ) : null}
@@ -95,7 +95,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
           {disc > 0 && (
             <span className="price-was">₹{deal.price_original.toLocaleString("en-IN")}</span>
           )}
-          {is100Pct && (
+          {isFullRefund && (
             <span className="pill pill-delivered deal-free" style={{ marginLeft: "auto", fontSize: 11.5 }}>
               Free after review
             </span>

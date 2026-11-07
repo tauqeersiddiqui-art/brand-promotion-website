@@ -45,7 +45,7 @@ const SCHEMA_DDL = `
       description TEXT NOT NULL DEFAULT '',
       category TEXT NOT NULL DEFAULT 'General',
       platform TEXT NOT NULL DEFAULT 'Amazon',
-      deal_type TEXT NOT NULL DEFAULT '100% Refund',
+      deal_type TEXT NOT NULL DEFAULT 'Flat Refund',
       image_url TEXT NOT NULL DEFAULT '',
       deal_url TEXT NOT NULL DEFAULT '',
       target_keyword TEXT NOT NULL DEFAULT '',
@@ -87,7 +87,7 @@ const SCHEMA_DDL = `
       email TEXT NOT NULL,
       phone TEXT NOT NULL,
       platform TEXT NOT NULL DEFAULT 'Amazon',
-      deal_type TEXT NOT NULL DEFAULT '100% Refund',
+      deal_type TEXT NOT NULL DEFAULT 'Flat Refund',
       mediator_name TEXT NOT NULL DEFAULT 'Direct',
       order_date TEXT NOT NULL DEFAULT '',
       address TEXT NOT NULL DEFAULT '',
@@ -271,7 +271,7 @@ function createDb(): Database.Database {
     db.exec("ALTER TABLE deals ADD COLUMN platform TEXT NOT NULL DEFAULT 'Amazon'");
   }
   if (!dealCols.includes("deal_type")) {
-    db.exec("ALTER TABLE deals ADD COLUMN deal_type TEXT NOT NULL DEFAULT '100% Refund'");
+    db.exec("ALTER TABLE deals ADD COLUMN deal_type TEXT NOT NULL DEFAULT 'Flat Refund'");
   }
   if (!dealCols.includes("target_keyword")) {
     db.exec("ALTER TABLE deals ADD COLUMN target_keyword TEXT NOT NULL DEFAULT ''");
@@ -348,7 +348,7 @@ function createDb(): Database.Database {
     db.exec("ALTER TABLE orders ADD COLUMN platform TEXT NOT NULL DEFAULT 'Amazon'");
   }
   if (!orderCols.includes("deal_type")) {
-    db.exec("ALTER TABLE orders ADD COLUMN deal_type TEXT NOT NULL DEFAULT '100% Refund'");
+    db.exec("ALTER TABLE orders ADD COLUMN deal_type TEXT NOT NULL DEFAULT 'Flat Refund'");
   }
   if (!orderCols.includes("mediator_name")) {
     db.exec("ALTER TABLE orders ADD COLUMN mediator_name TEXT NOT NULL DEFAULT 'Direct'");
@@ -591,7 +591,7 @@ function autoSeed(): void {
   [
     ["site_name", "Brand Promotion"],
     ["tagline", "India's #1 Influencer Refund & Brand Promotion Platform"],
-    ["announcement", "🔥 100% Refund Campaign Live! Buy on Amazon/Flipkart, share review & get full UPI reimbursement."],
+    ["announcement", "🔥 Full Refund Campaign Live! Buy on Amazon/Flipkart, share review & get full UPI reimbursement."],
     ["whatsapp", "918527324446"],
     ["telegram", "brandreviewer"],
     ["support_email", "support@brandpromotion.in"],
@@ -631,7 +631,7 @@ function autoSeed(): void {
         description: "100% Natural brightening serum for all skin types. Flipkart review campaign with full refund.",
         category: "Beauty",
         platform: "Flipkart",
-        deal_type: "100% Refund",
+        deal_type: "Flat Refund",
         image_url: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80",
         deal_url: "https://www.flipkart.com",
         target_keyword: "Search 'Vitamin C Glow Serum' and select seller GlowPure Official",
@@ -651,7 +651,7 @@ function autoSeed(): void {
         description: "15000Pa cyclone suction, handheld vacuum for car and home.",
         category: "Electronics",
         platform: "Amazon",
-        deal_type: "100% Refund",
+        deal_type: "Flat Refund",
         image_url: "https://m.media-amazon.com/images/I/619zjmkEtCL._SL1056_.jpg",
         deal_url: "https://www.amazon.in/dp/B0HB47DL6L",
         target_keyword: "aluan 4in1 portable vacuum cleaner",

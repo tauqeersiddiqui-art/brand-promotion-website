@@ -68,7 +68,7 @@ export default async function DealPage({
   const claimedSlots = deal.claimed_slots || 0;
   const remainingSlots = Math.max(0, totalSlots - claimedSlots);
   const outOfSlots = remainingSlots <= 0;
-  const is100Pct = deal.deal_type === "100% Refund" || (deal.refund_amount && deal.refund_amount >= deal.price_sale);
+  const isFullRefund = deal.refund_amount && deal.refund_amount >= deal.price_sale;
 
   return (
     <div className="container" style={{ paddingTop: 32, paddingBottom: 60 }}>
@@ -95,8 +95,8 @@ export default async function DealPage({
               ) : (
                 <div className="deal-placeholder">—</div>
               )}
-              {is100Pct ? (
-                <span className="deal-tag deal-tag-refund">100% refund</span>
+              {isFullRefund ? (
+                <span className="deal-tag deal-tag-refund">Full refund after review</span>
               ) : disc > 0 ? (
                 <span className="deal-tag deal-tag-discount">{disc}% off</span>
               ) : null}
@@ -136,9 +136,9 @@ export default async function DealPage({
                   ₹{deal.price_original.toLocaleString("en-IN")}
                 </span>
               )}
-              {is100Pct && (
+              {isFullRefund && (
                 <span className="pill pill-delivered" style={{ fontSize: 12, marginLeft: "auto" }}>
-                  100% reimbursement after review
+                  Full reimbursement after review
                 </span>
               )}
             </div>

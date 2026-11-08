@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import GoogleButton from "@/components/GoogleButton";
-import { formatPhoneDisplay } from "@/lib/otp";
+import { formatPhoneDisplay } from "@/lib/phone";
 
 function getCsrfHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};

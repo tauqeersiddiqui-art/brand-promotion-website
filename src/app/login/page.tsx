@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import GoogleButton from "@/components/GoogleButton";
-import { formatPhoneDisplay } from "@/lib/otp";
+import { formatPhoneDisplay } from "@/lib/phone";
 
 const OAUTH_MESSAGES: Record<string, string> = {
   "google-not-configured": "Google sign-in is not set up on this server yet.",

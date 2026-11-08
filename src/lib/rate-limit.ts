@@ -179,6 +179,10 @@ export const RATE_LIMITS = {
   signup: { limit: 4, windowMs: 60 * 60 * 1000, keyPrefix: "signup-ip" },
   passwordReset: { limit: 3, windowMs: 60 * 60 * 1000, keyPrefix: "pwd-reset" },
 
+  // OTP (phone login/signup)
+  sendOtp: { limit: 3, windowMs: 60 * 60 * 1000, keyPrefix: "send-otp" },
+  loginOtp: { limit: 5, windowMs: 10 * 60 * 1000, keyPrefix: "login-otp" },
+
   // Orders & Claims (per account)
   orderSubmit: { limit: 10, windowMs: 60 * 60 * 1000, keyPrefix: "order" },
   orderIp: { limit: 20, windowMs: 60 * 60 * 1000, keyPrefix: "order-ip" },

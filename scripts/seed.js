@@ -31,6 +31,18 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS otp_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone TEXT NOT NULL,
+    code TEXT NOT NULL,
+    purpose TEXT NOT NULL DEFAULT 'login',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    consumed INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_otp_phone ON otp_codes(phone, purpose, created_at DESC);
+
   CREATE TABLE IF NOT EXISTS deals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_code TEXT NOT NULL DEFAULT '',

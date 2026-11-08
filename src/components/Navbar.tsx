@@ -65,7 +65,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
       <header className="nav">
       <div className="container nav-inner">
         <Link href="/" className="brand">
-          <span className="logo">BP</span>
+          <img src="/logo.svg" alt="Brand Promotion logo" className="logo" />
           <span>{siteName}</span>
         </Link>
 

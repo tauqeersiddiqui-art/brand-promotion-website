@@ -80,7 +80,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
         <div className="nav-cta">
           {loaded && me ? (
             <>
-              <Link href="/account" className="btn btn-outline btn-sm">
+              <Link href="/account" className="btn btn-outline btn-sm nav-user-btn">
                 {me.name.split(" ")[0]}
               </Link>
               <button onClick={logout} className="btn btn-sm btn-ghost">
@@ -154,7 +154,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
                 <>
                   <Link
                     href="/account"
-                    className="btn btn-outline btn-sm"
+                    className="btn btn-outline btn-sm nav-user-btn"
                     style={{ flex: 1 }}
                     onClick={() => setMobileMenuOpen(false)}
                   >

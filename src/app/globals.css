@@ -758,7 +758,8 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width
 @media (max-width: 780px) {
   .nav-inner { gap: 10px; }
   .nav-links { display: none; }
-  .nav-cta .btn, .nav-loading { display: none; }
+  .nav-cta .btn:not(.nav-user-btn), .nav-loading { display: none; }
+  .nav-cta .nav-user-btn { display: inline-flex; }
   .mobile-toggle-btn { display: inline-flex; }
   .brand { font-size: 16px; gap: 8px; min-width: 0; }
   .brand > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

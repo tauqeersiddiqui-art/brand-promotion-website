@@ -16,6 +16,7 @@ type Store = {
   search: (q: string) => string;
   category: string;
   blurb: string;
+  logoDomain: string;
 };
 
 const MARKETPLACES: Store[] = [
@@ -25,6 +26,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.amazon.in/s?k=${encodeURIComponent(q)}`,
     category: "Everything store",
     blurb: "Electronics, home, fashion and daily essentials with fast Prime delivery.",
+    logoDomain: "amazon.in",
   },
   {
     name: "Flipkart",
@@ -32,6 +34,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.flipkart.com/search?q=${encodeURIComponent(q)}`,
     category: "Everything store",
     blurb: "Big Billion Days pricing, electronics, mobiles and household products.",
+    logoDomain: "flipkart.com",
   },
   {
     name: "Myntra",
@@ -39,6 +42,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.myntra.com/${encodeURIComponent(q)}?rawQuery=${encodeURIComponent(q)}`,
     category: "Fashion",
     blurb: "Clothing, footwear and accessories from top Indian and global labels.",
+    logoDomain: "myntra.com",
   },
   {
     name: "Ajio",
@@ -46,6 +50,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.ajio.com/search/?text=${encodeURIComponent(q)}`,
     category: "Fashion",
     blurb: "Trend-led fashion, sneakers and ethnic wear at outlet-style prices.",
+    logoDomain: "ajio.com",
   },
   {
     name: "Meesho",
@@ -53,6 +58,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.meesho.com/search?q=${encodeURIComponent(q)}`,
     category: "Value shopping",
     blurb: "Budget-friendly fashion, home decor and kitchen products.",
+    logoDomain: "meesho.com",
   },
   {
     name: "Snapdeal",
@@ -60,6 +66,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.snapdeal.com/search?keyword=${encodeURIComponent(q)}`,
     category: "Value shopping",
     blurb: "Affordable everyday products with frequent bank offers.",
+    logoDomain: "snapdeal.com",
   },
   {
     name: "Tata CLiQ",
@@ -67,6 +74,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.tatacliq.com/search/?searchCategory=all&text=${encodeURIComponent(q)}`,
     category: "Premium retail",
     blurb: "Curated fashion, beauty and electronics from trusted brands.",
+    logoDomain: "tatacliq.com",
   },
   {
     name: "Nykaa",
@@ -74,6 +82,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.nykaa.com/search/result/?q=${encodeURIComponent(q)}`,
     category: "Beauty",
     blurb: "Makeup, skincare, haircare and wellness with authentic brand stock.",
+    logoDomain: "nykaa.com",
   },
   {
     name: "Croma",
@@ -81,6 +90,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.croma.com/searchB?q=${encodeURIComponent(q)}`,
     category: "Electronics",
     blurb: "Appliances, laptops, TVs and gadgets with installation support.",
+    logoDomain: "croma.com",
   },
   {
     name: "Reliance Digital",
@@ -88,6 +98,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.reliancedigital.in/search?q=${encodeURIComponent(q)}`,
     category: "Electronics",
     blurb: "Consumer electronics, mobiles and large appliances.",
+    logoDomain: "reliancedigital.in",
   },
   {
     name: "Decathlon",
@@ -95,6 +106,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.decathlon.in/search?query=${encodeURIComponent(q)}`,
     category: "Sports & fitness",
     blurb: "Sportswear, gym gear, cycling and outdoor equipment.",
+    logoDomain: "decathlon.in",
   },
   {
     name: "Lenskart",
@@ -102,6 +114,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.lenskart.com/search?q=${encodeURIComponent(q)}`,
     category: "Eyewear",
     blurb: "Eyeglasses, sunglasses and contact lenses with home try-on.",
+    logoDomain: "lenskart.com",
   },
   {
     name: "FirstCry",
@@ -109,6 +122,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.firstcry.com/search?q=${encodeURIComponent(q)}`,
     category: "Baby & kids",
     blurb: "Baby care, toys, clothing and maternity products.",
+    logoDomain: "firstcry.com",
   },
   {
     name: "Pepperfry",
@@ -116,6 +130,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.pepperfry.com/site_product/search?q=${encodeURIComponent(q)}`,
     category: "Home & furniture",
     blurb: "Furniture, mattresses and home decor with delivery and assembly.",
+    logoDomain: "pepperfry.com",
   },
   {
     name: "Shopsy",
@@ -123,6 +138,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.shopsy.in/search?q=${encodeURIComponent(q)}`,
     category: "Value shopping",
     blurb: "Flipkart's budget marketplace for resellers and low-price finds.",
+    logoDomain: "shopsy.in",
   },
   {
     name: "BigBasket",
@@ -130,6 +146,7 @@ const MARKETPLACES: Store[] = [
     search: (q) => `https://www.bigbasket.com/ps/?q=${encodeURIComponent(q)}`,
     category: "Groceries",
     blurb: "Groceries, fresh produce and household staples delivered.",
+    logoDomain: "bigbasket.com",
   },
 ];
 
@@ -140,6 +157,7 @@ const BRANDS: Store[] = [
     search: (q) => `https://mamaearth.in/search?q=${encodeURIComponent(q)}`,
     category: "Personal care",
     blurb: "Toxin-free skincare, haircare and baby care products.",
+    logoDomain: "mamaearth.in",
   },
   {
     name: "boAt",
@@ -147,6 +165,7 @@ const BRANDS: Store[] = [
     search: (q) => `https://www.boat-lifestyle.com/search?q=${encodeURIComponent(q)}`,
     category: "Audio & wearables",
     blurb: "Earbuds, headphones, smartwatches and speakers.",
+    logoDomain: "boat-lifestyle.com",
   },
   {
     name: "Wakefit",
@@ -154,6 +173,7 @@ const BRANDS: Store[] = [
     search: (q) => `https://www.wakefit.co/search?q=${encodeURIComponent(q)}`,
     category: "Home",
     blurb: "Sleep-focused mattresses, pillows and furniture.",
+    logoDomain: "wakefit.co",
   },
   {
     name: "Bewakoof",
@@ -161,6 +181,7 @@ const BRANDS: Store[] = [
     search: (q) => `https://www.bewakoof.com/search?search_query=${encodeURIComponent(q)}`,
     category: "Fashion",
     blurb: "Graphic tees, pop-culture merch and casual wear.",
+    logoDomain: "bewakoof.com",
   },
   {
     name: "The Souled Store",
@@ -168,6 +189,7 @@ const BRANDS: Store[] = [
     search: (q) => `https://www.thesouledstore.com/search?q=${encodeURIComponent(q)}`,
     category: "Fashion",
     blurb: "Licensed pop-culture apparel and accessories.",
+    logoDomain: "thesouledstore.com",
   },
   {
     name: "Noise",
@@ -175,6 +197,7 @@ const BRANDS: Store[] = [
     search: (q) => `https://www.gonoise.com/search?q=${encodeURIComponent(q)}`,
     category: "Audio & wearables",
     blurb: "Smartwatches, earbuds and connected lifestyle devices.",
+    logoDomain: "gonoise.com",
   },
 ];
 
@@ -198,15 +221,33 @@ function countFor(counts: Record<string, number>, name: string): number {
 }
 
 function StoreCard({ store, count }: { store: Store; count: number }) {
+  const logoUrl = `https://logo.clearbit.com/${store.logoDomain}`;
   return (
     <article className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <h3 style={{ margin: 0, fontSize: 18 }}>{store.name}</h3>
-        {count > 0 && (
-          <span className="badge badge-outline" style={{ whiteSpace: "nowrap" }}>
-            {count} featured deal{count === 1 ? "" : "s"}
-          </span>
-        )}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <img
+          src={logoUrl}
+          alt={`${store.name} logo`}
+          loading="lazy"
+          style={{
+            width: 44,
+            height: 44,
+            objectFit: "contain",
+            flexShrink: 0,
+            borderRadius: 6,
+          }}
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
+        />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, gap: 8, minWidth: 0 }}>
+          <h3 style={{ margin: 0, fontSize: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{store.name}</h3>
+          {count > 0 && (
+            <span className="badge badge-outline" style={{ whiteSpace: "nowrap" }}>
+              {count} featured deal{count === 1 ? "" : "s"}
+            </span>
+          )}
+        </div>
       </div>
       <span className="muted" style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         {store.category}

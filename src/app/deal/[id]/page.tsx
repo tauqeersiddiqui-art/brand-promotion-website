@@ -363,15 +363,24 @@ export default async function DealPage({
 
             <div className="mt" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {deal.deal_url && (
-                <a
-                  className="btn"
-                  href={`/go/${deal.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  style={{ flex: 1 }}
-                >
-                  Open listing on {deal.platform || "store"} →
-                </a>
+                outOfSlots ? (
+                  <span
+                    className="btn"
+                    style={{ flex: 1, cursor: "not-allowed", opacity: 0.45, background: "var(--muted)" }}
+                  >
+                    🚫 Campaign fully booked — no slots left
+                  </span>
+                ) : (
+                  <a
+                    className="btn"
+                    href={`/go/${deal.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    style={{ flex: 1 }}
+                  >
+                    Open listing on {deal.platform || "store"} →
+                  </a>
+                )
               )}
               {deal.coupon_code && (
                 <div className="btn btn-outline" style={{ cursor: "default" }}>
@@ -383,26 +392,44 @@ export default async function DealPage({
             {(deal.order_form_url || deal.refund_form_url) && (
               <div className="mt" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {deal.order_form_url && (
-                  <a
-                    className="btn btn-secondary"
-                    href={deal.order_form_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ flex: 1 }}
-                  >
-                    Open order form →
-                  </a>
+                  outOfSlots ? (
+                    <span
+                      className="btn btn-secondary"
+                      style={{ cursor: "not-allowed", opacity: 0.45 }}
+                    >
+                      🚫 Slots full — order form closed
+                    </span>
+                  ) : (
+                    <a
+                      className="btn btn-secondary"
+                      href={deal.order_form_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ flex: 1 }}
+                    >
+                      Open order form →
+                    </a>
+                  )
                 )}
                 {deal.refund_form_url && (
-                  <a
-                    className="btn btn-secondary"
-                    href={deal.refund_form_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ flex: 1 }}
-                  >
-                    Open refund / claim form →
-                  </a>
+                  outOfSlots ? (
+                    <span
+                      className="btn btn-secondary"
+                      style={{ cursor: "not-allowed", opacity: 0.45 }}
+                    >
+                      🚫 Slots full — refund form closed
+                    </span>
+                  ) : (
+                    <a
+                      className="btn btn-secondary"
+                      href={deal.refund_form_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ flex: 1 }}
+                    >
+                      Open refund / claim form →
+                    </a>
+                  )
                 )}
               </div>
             )}

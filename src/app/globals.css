@@ -627,6 +627,15 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width
 .step-card h3 { font-size: 16px; margin: 0 0 6px; }
 .step-card p { color: var(--muted); font-size: 14px; margin: 0; line-height: 1.6; }
 
+/* Compact how-it-works cards on mobile so the 4 steps don't eat the screen */
+@media (max-width: 640px) {
+  .steps-grid { gap: 10px; }
+  .step-card { padding: 14px 16px; gap: 10px; }
+  .step-badge { width: 32px; height: 32px; font-size: 13px; }
+  .step-card h3 { font-size: 14px; margin: 0 0 4px; }
+  .step-card p { font-size: 12.5px; line-height: 1.5; }
+}
+
 /* ---------- trust banner ---------- */
 .trust-banner {
   background-image: linear-gradient(120deg, #f5f0ff 0%, #fdeffc 55%, #eafaf3 100%);

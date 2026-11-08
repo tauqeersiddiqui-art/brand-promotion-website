@@ -231,6 +231,35 @@ export default async function DealPage({
               )}
             </div>
 
+            {Number(deal.refund_amount) > 0 && (
+              <div
+                style={{
+                  background: "var(--brand-soft)",
+                  border: "1px solid #c7d2fe",
+                  borderRadius: "var(--radius-lg)",
+                  padding: "12px 16px",
+                  marginBottom: 18,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 6,
+                  alignItems: "center",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#1e1b4b",
+                }}
+              >
+                <span>You pay</span>
+                <strong>₹{deal.price_sale.toLocaleString("en-IN")}</strong>
+                <span>→</span>
+                <span>get back</span>
+                <strong style={{ color: "var(--brand)" }}>₹{Number(deal.refund_amount).toLocaleString("en-IN")}</strong>
+                <span>→</span>
+                <span style={{ color: "var(--brand)" }}>
+                  net ₹{Math.max(0, deal.price_sale - Number(deal.refund_amount)).toLocaleString("en-IN")} after review
+                </span>
+              </div>
+            )}
+
             <div
               style={{
                 background: "var(--bg-soft)",

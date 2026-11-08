@@ -98,6 +98,7 @@ export async function POST(req: Request) {
     10_000_000,
     0
   );
+  const lessAmount = num(form.get("less_amount"), 0, 10_000_000, 0);
   const featured = form.get("featured") === "true" || form.get("featured") === "on";
   const active = form.get("active") !== "false";
 
@@ -123,8 +124,8 @@ export async function POST(req: Request) {
         price_original, price_sale, refund_amount, review_amount, rating_amount,
         only_order_amount, order_form_url, refund_form_url, total_slots, claimed_slots,
         stock, featured, active, submitted_by, approval_status, approved_by, approved_at,
-        mediator_commission_amount
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        mediator_commission_amount, less_amount
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       productCode,
@@ -155,7 +156,8 @@ export async function POST(req: Request) {
       "approved",
       user.id,
       new Date().toISOString(),
-      mediatorCommission
+      mediatorCommission,
+      lessAmount
     );
 
   const newId = Number(info.lastInsertRowid);

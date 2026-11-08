@@ -33,6 +33,14 @@ export function ensureStorageDirs(): void {
   for (const dir of [DATA_DIR, UPLOAD_DIR]) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   }
+  // Warn loudly when production is using the ephemeral default dir.
+  // On Railway/Render without a volume, DATABASE_PATH + uploads are wiped
+  // on every redeploy — this is the #1 data-loss cause for this app.
+  if (process.env.NODE_ENV === "production" && !process.env.DATA_DIR) {
+    console.warn(
+      "⚠️  [storage] DATA_DIR is not set in production. The SQLite database and uploaded screenshots are stored on ephemeral disk and WILL BE LOST on redeploy. Mount a persistent volume and set DATA_DIR=/data (or configure R2 for uploads)."
+    );
+  }
 }
 
 // URL patterns for different storage backends

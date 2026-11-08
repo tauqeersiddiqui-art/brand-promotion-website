@@ -44,6 +44,7 @@ type Deal = {
   approved_by: number | null;
   approved_at: string;
   mediator_commission_amount: number;
+  less_amount: number;
 };
 
 async function validateRequest(req: Request): Promise<NextResponse | null> {
@@ -149,6 +150,9 @@ export async function PATCH(
   const mediatorCommission = has("mediator_commission_amount")
     ? num(form.get("mediator_commission_amount"), 0, 10_000_000, existing.mediator_commission_amount)
     : existing.mediator_commission_amount;
+  const lessAmount = has("less_amount")
+    ? num(form.get("less_amount"), 0, 10_000_000, (existing as any).less_amount || 0)
+    : (existing as any).less_amount || 0;
   const featured = has("featured")
     ? form.get("featured") === "true" || form.get("featured") === "on"
     : existing.featured === 1;
@@ -181,7 +185,7 @@ export async function PATCH(
       price_original = ?, price_sale = ?, refund_amount = ?, review_amount = ?,
       rating_amount = ?, only_order_amount = ?, order_form_url = ?, refund_form_url = ?,
       total_slots = ?, claimed_slots = ?,
-      stock = ?, featured = ?, active = ?, mediator_commission_amount = ?,
+      stock = ?, featured = ?, active = ?, mediator_commission_amount = ?, less_amount = ?,
       updated_at = datetime('now')
      WHERE id = ?`
   ).run(
@@ -210,6 +214,7 @@ export async function PATCH(
     featured ? 1 : 0,
     active ? 1 : 0,
     mediatorCommission,
+    lessAmount,
     id
   );
   writeAutoBackupSafe("deal updated");

@@ -7,6 +7,7 @@ import { bad } from "@/lib/api-helpers";
 import { sanitizeText } from "@/lib/sanitize";
 import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
+import { notifyRefundRequest } from "@/lib/notify";
 
 /** Submit a refund request for an order (owner must match logged-in user or email). */
 export async function POST(req: Request) {
@@ -105,6 +106,8 @@ export async function POST(req: Request) {
   } catch {
     return bad("We could not save your refund request. Please try again.", 500);
   }
+
+  notifyRefundRequest({ refundCode, orderId, reason, details });
 
   return NextResponse.json({ ok: true, refund_code: refundCode });
 }

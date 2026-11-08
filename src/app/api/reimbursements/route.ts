@@ -12,6 +12,7 @@ import { getCsrfTokenFromCookies, validateCsrfToken } from "@/lib/csrf";
 import { headers } from "next/headers";
 import { checkMaxClaimsPerUser, checkCooldownAfterRejection, checkDailyClaimLimit, checkDuplicateOrderInReimbursements, isScreenshotUsedByAnotherClaim } from "@/lib/ocr-validation";
 import { uploadFilePath } from "@/lib/storage";
+import { notifyReimbursementClaim } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -74,10 +75,12 @@ export async function POST(req: Request) {
     return bad("Please fill in complete Bank details (Account Number, IFSC, Account Holder).");
   }
 
-  // Find the order
+  // Find the order (with deal text so we can tell whether this deal explicitly
+  // requires 5 stars — 5* is not mandatory for every deal).
   const order = db
     .prepare(
-      `SELECT o.*, d.refund_amount, d.price_sale
+      `SELECT o.*, d.refund_amount, d.price_sale, d.instructions AS deal_instructions,
+              d.description AS deal_description, d.deal_type AS deal_type, d.title AS deal_title
        FROM orders o
        LEFT JOIN deals d ON d.id = o.deal_id
        WHERE o.order_code = ?
@@ -99,8 +102,18 @@ export async function POST(req: Request) {
         price_sale: number | null;
         reviewer_name: string;
         status: string;
+        deal_instructions: string | null;
+        deal_description: string | null;
+        deal_type: string | null;
+        deal_title: string | null;
       }
     | undefined;
+
+  // 5-star is only mandatory when the deal clearly says so (instructions or
+  // description mention 5 stars). Otherwise any rating the user actually gave
+  // is accepted — the review screenshot + Verified Purchase is the real proof.
+  const dealText = `${order?.deal_instructions || ""} ${order?.deal_description || ""} ${order?.deal_title || ""}`.toLowerCase();
+  const requiresFiveStars = /5\s*[-*]?\s*star|5\s*\/\s*5|five\s+stars?/.test(dealText);
 
   if (!order) {
     return bad(
@@ -203,34 +216,36 @@ export async function POST(req: Request) {
     );
   }
 
-  // 6. Verify review exists and is approved for this order
+  // 6. Review gate (reconciled after OCR below).
+  // The /claim form collects the live-review screenshot + link itself and this
+  // endpoint OCR-verifies 5 stars + Verified Purchase, so requiring a separate
+  // pre-approved `reviews` row here blocked every direct claim with
+  // "No review submitted..." / "Review must be approved...".
+  // We only hard-block here on an explicit rejection or a deal mismatch;
+  // pending/missing/low-rating rows are reconciled once OCR passes.
   const review = db
     .prepare("SELECT id, status, rating, deal_id FROM reviews WHERE order_id = ? ORDER BY datetime(created_at) DESC LIMIT 1")
     .get(order.id) as { id: number; status: string; rating: number; deal_id: number } | undefined;
 
-  if (!review) {
+  if (review?.status === "rejected") {
     return bad(
-      "No review submitted for this order. Please submit a review first.",
+      "Your review for this order was rejected. Please submit a fresh review screenshot and try again.",
       400
     );
   }
 
-  if (review.status !== "approved") {
+  // Only enforce a 5-star rating when (a) the deal explicitly requires it, or
+  // (b) the user already has a low-rating review on file for a deal that
+  // requires 5 stars. Otherwise low ratings are accepted as-is.
+  if (review && requiresFiveStars && review.rating < 5) {
     return bad(
-      `Review must be approved before claiming reimbursement. Current status: ${review.status}`,
-      400
-    );
-  }
-
-  if (review.rating < 5) {
-    return bad(
-      "Only 5-star reviews are eligible for full reimbursement.",
+      "This deal requires a 5-star review, but your review on file has a lower rating. Please post a 5-star review and try again.",
       400
     );
   }
 
   // Verify review deal matches order deal (linking integrity)
-  if (review.deal_id !== order.deal_id) {
+  if (review && review.deal_id !== order.deal_id) {
     return bad(
       "Review deal does not match order deal. Cannot claim reimbursement.",
       400
@@ -260,7 +275,7 @@ export async function POST(req: Request) {
   // that the marketplace return window has closed.
   const SAFE_UPLOAD_PATH = /^\/(?:api\/files|uploads)\/[A-Za-z0-9._-]+$/;
   if (!reviewScreenshotUrl) {
-    return bad("Please upload a screenshot of your live review showing 5 stars and the 'Verified Purchase' badge.");
+    return bad("Please upload a screenshot of your live review with the 'Verified Purchase' badge.");
   }
   if (!SAFE_UPLOAD_PATH.test(reviewScreenshotUrl)) {
     return bad("Invalid review screenshot path.", 400);
@@ -324,43 +339,66 @@ export async function POST(req: Request) {
   // Resolve inside the uploads directory only. These URLs are caller-supplied
   // text, and a plain path.join would let `..` segments read arbitrary files and
   // forward them to the OCR provider.
-  async function ocrScreenshot(url: string): Promise<{ text: string; ok: boolean }> {
+  // Returns serviceError=true when the file is fine but the OCR provider is
+  // down / rate-limited. Callers must defer to manual review in that case
+  // instead of rejecting the user — OCR is advisory for outages.
+  async function ocrScreenshot(url: string): Promise<{ text: string; ok: boolean; serviceError: boolean }> {
     const filePath = uploadFilePath(url);
     if (!filePath) {
-      return { text: "", ok: false };
+      return { text: "", ok: false, serviceError: false };
     }
     try {
       const buf = fs.readFileSync(filePath);
       const ext = path.extname(filePath).slice(1).toLowerCase();
       const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
       const ocr = await runOcrOnBuffer(buf, mime);
-      return { text: ocr.ok ? ocr.text || "" : "", ok: !!(ocr.ok && ocr.text) };
+      if (!ocr.ok) return { text: "", ok: false, serviceError: true };
+      return { text: ocr.text || "", ok: !!(ocr.text), serviceError: false };
     } catch {
-      return { text: "", ok: false };
+      return { text: "", ok: false, serviceError: false };
     }
   }
 
-  // Review screenshot: must be machine-readable, 5 stars and Verified Purchase.
+  // Review screenshot: must be machine-readable with a Verified Purchase badge.
+  // 5 stars is only required when the deal instructions clearly say so.
   const reviewOcr = await ocrScreenshot(reviewScreenshotUrl);
-  if (!reviewOcr.ok) {
+  let ocrDeferredForReview = false;
+  let reviewFlags = { hasVerifiedPurchase: false, has5StarRating: false };
+  if (reviewOcr.serviceError) {
+    // OCR outage — never punish the user. Accept the claim for manual review.
+    ocrDeferredForReview = true;
+  } else if (!reviewOcr.ok) {
     return bad(
-      "We could not read your review screenshot. Please upload a clear image showing the 5-star rating and the 'Verified Purchase' badge."
+      "We could not read your review screenshot. Please upload a clear image showing your rating and the 'Verified Purchase' badge."
     );
+  } else {
+    reviewFlags = analyzeReviewText(reviewOcr.text);
+    if (!reviewFlags.hasVerifiedPurchase) {
+      return bad(
+        "Review screenshot must show the 'Verified Purchase' badge. Please upload a clear screenshot of the live review."
+      );
+    }
+    if (requiresFiveStars && !reviewFlags.has5StarRating) {
+      return bad(
+        "This deal requires a 5-star review (as stated in the deal instructions). Your screenshot does not show 5 stars. Please upload a clear screenshot of your 5-star review."
+      );
+    }
   }
-  const reviewFlags = analyzeReviewText(reviewOcr.text);
-  if (!reviewFlags.has5StarRating || !reviewFlags.hasVerifiedPurchase) {
-    return bad(
-      "Review screenshot must show a 5-star rating and a 'Verified Purchase' badge. Please upload a clear screenshot of the live review."
-    );
-  }
+  // Tolerate a user's self-declared rating below 5 for deals that don't require
+  // it, and also tolerate OCR missing the star glyph when the user declared 5
+  // but the OCR text is otherwise verified — never reject a claim solely for
+  // a missing star detection on a deal that doesn't require it.
 
   // Order screenshot: must show this order's ID and a closed return window.
   const orderOcr = await ocrScreenshot(orderScreenshotUrl);
-  if (!orderOcr.ok) {
+  if (orderOcr.serviceError) {
+    ocrDeferredForReview = true;
+  } else if (!orderOcr.ok) {
     return bad(
       "We could not read your order screenshot. Please upload a clear screenshot of the order details page showing the Order ID and 'Return window closed'."
     );
-  }
+  } else {
+  // Only enforce order ID + return-window checks when OCR actually read the page.
   const ocrOrderId = extractOrderId(orderOcr.text);
   if (!ocrOrderId) {
     return bad(
@@ -379,9 +417,32 @@ export async function POST(req: Request) {
       "Your order screenshot must show that the return window has closed (e.g. 'Return window closed'). Please claim only after the return period ends."
     );
   }
+  }
 
   const ocrText = reviewOcr.text;
-  const ocrStatus = "done";
+  // manual_review when OCR was unavailable — claim is saved, admin verifies proof by eye.
+  const ocrStatus = ocrDeferredForReview ? "manual_review" : "done";
+
+  // Reconcile the `reviews` row now that OCR has verified the Verified Purchase
+  // proof. Without this, the claim would succeed but the order would never show
+  // an approved review in /account or /admin/reviews. The rating stored is the
+  // user's actual rating (1-5), not a forced 5 — 5 is only mandatory for deals
+  // that explicitly require it (already enforced above).
+  // deal_id is NOT NULL, so a claim on an unlinked order cannot create one —
+  // in that case skip instead of failing the claim.
+  const actualRating = reviewFlags.has5StarRating ? 5 : reviewRating;
+  if (order.deal_id != null) {
+    if (!review) {
+      db.prepare(
+        `INSERT INTO reviews (review_code, user_id, order_id, deal_id, rating, text, screenshot_url, ocr_text, ocr_status, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')`
+      ).run(generateCode("RV"), userId, order.id, order.deal_id, actualRating, reviewText, reviewScreenshotUrl, ocrText, ocrStatus);
+    } else if (review.status !== "approved") {
+      db.prepare(
+        `UPDATE reviews SET status = 'approved', rating = ?, screenshot_url = ?, ocr_text = ?, ocr_status = ?, text = COALESCE(NULLIF(?, ''), text), updated_at = datetime('now') WHERE id = ?`
+      ).run(actualRating, reviewScreenshotUrl, ocrText, ocrStatus, reviewText, review.id);
+    }
+  }
 
   const insertStmt = db.prepare(`
     INSERT INTO reimbursements (
@@ -422,6 +483,16 @@ export async function POST(req: Request) {
     accountHolder,
     finalAmount
   );
+
+  notifyReimbursementClaim({
+    reimbursementCode: reimbCode,
+    externalOrderId: order.external_order_id,
+    reviewerName: finalReviewerName,
+    amount: finalAmount,
+    upiId,
+    payoutMethod,
+    reviewLink,
+  });
 
   return NextResponse.json({
     ok: true,

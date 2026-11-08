@@ -102,6 +102,35 @@ export default function DealCard({ deal }: { deal: Deal }) {
           )}
         </div>
 
+        {deal.refund_amount && deal.refund_amount > 0 && (
+          <div
+            style={{
+              background: "var(--brand-soft)",
+              border: "1px solid #c7d2fe",
+              borderRadius: "var(--radius)",
+              padding: "8px 12px",
+              marginTop: 8,
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: "#1e1b4b",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 4,
+              alignItems: "center",
+            }}
+          >
+            <span>You pay</span>
+            <strong>₹{deal.price_sale.toLocaleString("en-IN")}</strong>
+            <span>→</span>
+            <span>get back</span>
+            <strong style={{ color: "var(--brand)" }}>₹{deal.refund_amount.toLocaleString("en-IN")}</strong>
+            <span>→</span>
+            <span style={{ color: "var(--brand)" }}>
+              net ₹{Math.max(0, deal.price_sale - deal.refund_amount).toLocaleString("en-IN")} after review
+            </span>
+          </div>
+        )}
+
         <div className="deal-actions">
           <Link href={`/deal/${deal.id}`} className="btn">
             {remainingSlots > 0 ? "View deal" : "View details"}

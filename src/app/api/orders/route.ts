@@ -24,6 +24,7 @@ import {
 } from "@/lib/fraud";
 import { isStoredUploadUrl, uploadFilePath } from "@/lib/storage";
 import { claimDealSlot } from "@/lib/deal-slots";
+import { notifyNewOrder } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -487,6 +488,19 @@ export async function POST(req: Request) {
       // Ignore
     }
   }
+
+  // Admin notification (email + WhatsApp) — fire-and-forget, never blocks the user.
+  notifyNewOrder({
+    orderCode,
+    externalOrderId,
+    name: fullName || reviewerName,
+    email,
+    phone,
+    total,
+    platform: targetPlatform,
+    dealTitle: (deal as { title?: string } | undefined)?.title || targetProductCode,
+    productCode: targetProductCode,
+  });
 
   return NextResponse.json({
     ok: true,

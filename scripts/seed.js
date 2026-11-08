@@ -58,6 +58,7 @@ db.exec(`
     approved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     approved_at TEXT NOT NULL DEFAULT '',
     mediator_commission_amount REAL NOT NULL DEFAULT 0,
+    less_amount REAL NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );

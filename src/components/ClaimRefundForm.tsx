@@ -35,6 +35,8 @@ export default function ClaimRefundForm() {
   const [amount, setAmount] = useState<string | number>("");
   const [reviewLink, setReviewLink] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
+  // Actual rating the user gave — 5* is only mandatory when the deal says so.
+  const [reviewRating, setReviewRating] = useState(5);
   const [reviewFile, setReviewFile] = useState<File | null>(null);
   const [reviewFileUrl, setReviewFileUrl] = useState("");
   const [orderFile, setOrderFile] = useState<File | null>(null);
@@ -187,7 +189,7 @@ export default function ClaimRefundForm() {
         review_link: reviewLink.trim(),
         // The route reads `review_text`; `review_notes` was silently dropped.
         review_text: reviewNotes.trim(),
-        review_rating: 5,
+        review_rating: reviewRating,
       };
 
       const res = await fetch("/api/reimbursements", {
@@ -444,8 +446,24 @@ export default function ClaimRefundForm() {
 
         <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
           <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            2. Live review &amp; rating screenshot * (5 stars &amp; "Verified Purchase" badge)
+            2. Live review &amp; rating screenshot * ("Verified Purchase" badge)
           </label>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 13 }}>Your rating:</span>
+            <div style={{ display: "flex", gap: 4, fontSize: 22, cursor: "pointer" }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <span
+                  key={n}
+                  onClick={() => setReviewRating(n)}
+                  style={{ color: n <= reviewRating ? "var(--warn)" : "var(--border)" }}
+                  aria-label={`${n} star`}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <span style={{ fontSize: 13 }}>{reviewRating}/5</span>
+          </div>
           <input
             key={`review-${fileResetKey}`}
             className="input"
@@ -456,7 +474,8 @@ export default function ClaimRefundForm() {
           />
           <span className="muted" style={{ fontSize: 12 }}>
             Screenshot of the published review with its star rating. It must clearly show the
-            5-star rating and the "Verified Purchase" badge; unreadable screenshots are rejected.
+            "Verified Purchase" badge; unreadable screenshots are rejected. 5 stars are only
+            required if your deal instructions say so — otherwise your actual rating is accepted.
           </span>
         </div>
 

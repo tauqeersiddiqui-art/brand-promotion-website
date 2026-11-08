@@ -19,18 +19,6 @@ export default function HomePage() {
     )
     .all() as unknown as Deal[];
 
-  const latest = (
-    db
-      .prepare(
-        `SELECT id, title, description, category, image_url, coupon_code,
-                price_original, price_sale, stock, featured, product_code,
-                platform, deal_type, total_slots, claimed_slots, refund_amount
-         FROM deals WHERE active = 1 AND approval_status = 'approved'
-         ORDER BY datetime(created_at) DESC LIMIT 12`
-      )
-      .all() as unknown as Deal[]
-  ).filter((d) => !featured.some((f) => f.id === d.id));
-
   const categories = (
     db
       .prepare(
@@ -57,7 +45,9 @@ export default function HomePage() {
     disbursed: totalDisbursed > 0 ? Math.round(totalDisbursed) : 0,
   };
 
-  const showLatest = latest.slice(0, 1);
+  // Deterministic per-day rotation index so the same deal shows all day and
+  // adding a new campaign doesn't instantly bump the card away.
+  const dayIndex = Math.floor(Date.now() / 86400000);
 
   return (
     <>
@@ -114,10 +104,20 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Latest Deal - show only ONE */}
-      {showLatest.length > 0 && (
+      {/* One featured deal at a time, rotated deterministically per day.
+         Using a day-bucket index keeps the card stable all day instead of
+         swapping every time a new campaign is created. */}
+      {featured.length > 0 && (
         <section className="container section" style={{ paddingBottom: 24 }}>
-          <DealCard deal={showLatest[0]} />
+          <div className="section-head" style={{ textAlign: "center", justifyContent: "center" }}>
+            <h2>Deal of the day</h2>
+            <p className="muted" style={{ margin: "6px auto 0", maxWidth: 560, textAlign: "center" }}>
+              Hand-picked brand deal with open reviewer slots. New deal every day.
+            </p>
+          </div>
+          <div style={{ maxWidth: 560, margin: "0 auto" }}>
+            <DealCard deal={featured[dayIndex % featured.length]} />
+          </div>
         </section>
       )}
 
@@ -133,13 +133,13 @@ export default function HomePage() {
           {[
             {
               num: "01",
-              title: "Pick a campaign",
+              title: "Pick a deal",
               desc: "Choose a live deal with open slots and search the target keyword on Amazon or Flipkart.",
             },
             {
               num: "02",
               title: "Order & submit proof",
-              desc: "Buy at retail price and upload your order confirmation plus price breakup screenshots.",
+              desc: "Buy at retail price and upload your order confirmation screenshot.",
             },
             {
               num: "03",

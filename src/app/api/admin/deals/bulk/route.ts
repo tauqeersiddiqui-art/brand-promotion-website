@@ -108,8 +108,8 @@ export async function POST(req: Request) {
       image_url, deal_url, target_keyword, instructions, coupon_code,
       price_original, price_sale, refund_amount, review_amount, rating_amount,
       only_order_amount, order_form_url, refund_form_url, total_slots, claimed_slots,
-      stock, featured, active, submitted_by, approval_status, mediator_commission_amount
-    ) VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, '', '', ?, ?, ?, 0, 0, 0, '', '', 50, 0, 50, 0, 0, ?, 'pending', 0)`
+      stock, featured, active, submitted_by, approval_status, mediator_commission_amount, less_amount
+    ) VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, '', '', ?, ?, ?, 0, 0, 0, '', '', 50, 0, 50, 0, 0, ?, 'pending', 0, 0)`
   );
 
   const created: CreatedDeal[] = [];

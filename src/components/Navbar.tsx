@@ -158,7 +158,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
                     style={{ flex: 1 }}
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    My account
+                    {me.name.split(" ")[0]}
                   </Link>
                   <button onClick={logout} className="btn btn-outline btn-sm" style={{ flex: 1 }}>
                     Logout

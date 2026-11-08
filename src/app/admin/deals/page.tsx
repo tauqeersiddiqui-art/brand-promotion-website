@@ -46,6 +46,7 @@ type Deal = {
   approval_status: "pending" | "approved" | "rejected";
   rejection_reason: string;
   mediator_commission_amount: number;
+  less_amount: number;
 };
 
 const EMPTY = {
@@ -64,6 +65,7 @@ const EMPTY = {
   price_original: "",
   price_sale: "",
   refund_amount: "",
+  less_amount: "",
   review_amount: "",
   rating_amount: "",
   only_order_amount: "",
@@ -169,6 +171,7 @@ export default function AdminDealsPage() {
       featured: d.featured === 1,
       active: d.active === 1,
       mediator_commission_amount: String(d.mediator_commission_amount || ""),
+      less_amount: String(d.less_amount || ""),
     });
     setFile(null);
     setMsg(null);
@@ -291,6 +294,7 @@ export default function AdminDealsPage() {
       fd.set("price_original", form.price_original || "0");
       fd.set("price_sale", form.price_sale);
       fd.set("refund_amount", form.refund_amount || form.price_sale);
+      fd.set("less_amount", form.less_amount || "0");
       fd.set("review_amount", form.review_amount || "0");
       fd.set("rating_amount", form.rating_amount || "0");
       fd.set("only_order_amount", form.only_order_amount || "0");
@@ -640,6 +644,26 @@ export default function AdminDealsPage() {
             />
             <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
               Enter the amount to refund after reviewer completes requirements.
+            </p>
+          </div>
+
+          <div>
+            <label className="form-label">
+              Less Amount (₹) — your profit margin
+            </label>
+            <input
+              className="input"
+              type="number"
+              min={0}
+              step="0.01"
+              value={form.less_amount}
+              onChange={(e) => set("less_amount", e.target.value)}
+              placeholder="e.g. 200"
+            />
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              Your spread between the purchase price and the refund. This is your
+              profit — it is <strong>not</strong> shown to reviewers. Example:
+              buy at ₹700, sell at ₹1,000, refund ₹700 → less amount ₹200.
             </p>
           </div>
 

@@ -121,7 +121,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Two Column Section for Recent Submissions */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 24, marginTop: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 32 }}>
         {/* Recent Order Proofs */}
         <div>
           <div className="section-head" style={{ marginBottom: 12 }}>
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <div className="table-wrap">
-              <table className="tbl" style={{ fontSize: 13 }}>
+              <table className="tbl tbl-compact" style={{ fontSize: 12.5 }}>
                 <thead>
                   <tr>
                     <th>Order & Platform</th>
@@ -150,11 +150,13 @@ export default function AdminDashboard() {
                     <tr key={o.id}>
                       <td>
                         <strong>{o.external_order_id || o.order_code}</strong>
-                        <div className="muted" style={{ fontSize: 11 }}>
-                          {o.platform || "Amazon"} · {o.deal_title}
+                        <div className="muted" style={{ fontSize: 10, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>
+                          {o.platform || "Amazon"} · {o.deal_title?.slice(0, 18)}{o.deal_title?.length > 18 ? "…" : ""}
                         </div>
                       </td>
-                      <td>{o.reviewer_name || o.full_name}</td>
+                      <td style={{ maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {o.reviewer_name || o.full_name}
+                      </td>
                       <td>
                         <strong style={{ color: "var(--accent)" }}>
                           ₹{o.total.toLocaleString("en-IN")}
@@ -187,11 +189,11 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <div className="table-wrap">
-              <table className="tbl" style={{ fontSize: 13 }}>
+              <table className="tbl tbl-compact" style={{ fontSize: 12.5 }}>
                 <thead>
                   <tr>
                     <th>Claim Code</th>
-                    <th>Reviewer & UPI</th>
+                    <th>Reviewer</th>
                     <th>Amount</th>
                     <th>Status</th>
                   </tr>
@@ -201,16 +203,14 @@ export default function AdminDashboard() {
                     <tr key={r.id}>
                       <td>
                         <strong>{r.reimbursement_code}</strong>
-                        <div className="muted" style={{ fontSize: 11 }}>
-                          {r.external_order_id || "Order"}
+                        <div className="muted" style={{ fontSize: 10, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>
+                          {r.external_order_id?.slice(0, 16) || "Order"}
                         </div>
                       </td>
                       <td>
-                        <div>{r.reviewer_name || "Reviewer"}</div>
+                        <div style={{ fontSize: 12 }}>{r.reviewer_name || "Reviewer"}</div>
                         {r.upi_id && (
-                          <div className="muted" style={{ fontSize: 11 }}>
-                            {r.upi_id}
-                          </div>
+                          <div className="muted" style={{ fontSize: 10 }}>{r.upi_id}</div>
                         )}
                       </td>
                       <td>

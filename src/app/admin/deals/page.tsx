@@ -909,6 +909,7 @@ export default function AdminDealsPage() {
                 <th>Orders</th>
                 <th>Submitted by</th>
                 <th>Active</th>
+                <th style={{ width: 120 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -973,6 +974,25 @@ export default function AdminDealsPage() {
                       >
                         {d.active === 1 ? "Active" : "Hidden"}
                       </button>
+                    </td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => startEdit(d)}
+                          title="Edit campaign (change slots, price, etc.)"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="btn btn-sm btn-ghost"
+                          style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
+                          onClick={() => remove(d)}
+                          title="Delete this campaign deal"
+                        >
+                          🗑 Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

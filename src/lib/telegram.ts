@@ -32,7 +32,12 @@ export function telegramConfigured(): boolean {
 }
 
 function siteBase(): string {
-  return (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
+  // Handles Railway: RAILWAY_PUBLIC_DOMAIN -> https://brand-promotion-website-production.up.railway.app
+  const configured = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
+  if (configured) return configured.replace(/\/+$/, "");
+  const railway = (process.env.RAILWAY_PUBLIC_DOMAIN || "").trim();
+  if (railway) return `https://${railway.replace(/\/+$/, "")}`;
+  return "http://localhost:3000";
 }
 
 function inr(n: number): string {

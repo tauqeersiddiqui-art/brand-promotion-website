@@ -5,10 +5,22 @@
 
 const REQUIRED_ENV = [
   "AUTH_SECRET",
-  "NEXT_PUBLIC_BASE_URL",
 ] as const;
 
+// NEXT_PUBLIC_BASE_URL is required UNLESS running on Railway, where
+// RAILWAY_PUBLIC_DOMAIN (e.g. brand-promotion-website-production.up.railway.app)
+// provides the public origin automatically. This lets a Render -> Railway
+// migration work without keeping a stale Render URL in env vars.
+function hasBaseUrl(): boolean {
+  return Boolean(
+    (process.env.NEXT_PUBLIC_BASE_URL || "").trim() ||
+      (process.env.RAILWAY_PUBLIC_DOMAIN || "").trim()
+  );
+}
+
 const OPTIONAL_ENV = [
+  "NEXT_PUBLIC_BASE_URL",
+  "RAILWAY_PUBLIC_DOMAIN",
   "OCR_SPACE_API_KEY",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
@@ -23,7 +35,9 @@ const OPTIONAL_ENV = [
 ] as const;
 
 type RequiredEnv = typeof REQUIRED_ENV[number];
-type OptionalEnv = typeof OPTIONAL_ENV[number];
+type OptionalEnv =
+  | (typeof OPTIONAL_ENV)[number]
+  | "NEXT_PUBLIC_BASE_URL";
 
 // Skip strict validation during build - these vars are needed at runtime, not build time
 const isBuildTime = process.env.__NEXT_BUILD__ === "true";
@@ -45,6 +59,14 @@ function checkEnv():
 
   for (const key of OPTIONAL_ENV) {
     config[key] = process.env[key] || "";
+  }
+
+  if (!hasBaseUrl()) {
+    missing.push("NEXT_PUBLIC_BASE_URL (or RAILWAY_PUBLIC_DOMAIN on Railway)");
+  } else {
+    // Allow NEXT_PUBLIC_BASE_URL to be read via config even when it comes
+    // from Railway's automatic domain.
+    config["NEXT_PUBLIC_BASE_URL"] = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
   }
 
   if (missing.length > 0) {

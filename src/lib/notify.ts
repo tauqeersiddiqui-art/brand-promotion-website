@@ -152,7 +152,11 @@ async function sendWhatsApp(header: string, bodyLines: string[], templateName?: 
 }
 
 function siteBase(): string {
-  return (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/+$/, "");
+  const configured = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
+  if (configured) return configured.replace(/\/+$/, "");
+  const railway = (process.env.RAILWAY_PUBLIC_DOMAIN || "").trim();
+  if (railway) return `https://${railway.replace(/\/+$/, "")}`;
+  return "";
 }
 
 // --- Public helpers: call with `void` so routes never wait on them. ---

@@ -12,6 +12,8 @@
  * 5. Restart the server — "Continue with Google" buttons activate automatically.
  */
 
+import { siteUrl } from "./site-url";
+
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
@@ -23,12 +25,15 @@ export function googleConfigured(): boolean {
 /**
  * Public origin for building OAuth redirect URIs and user-facing redirects.
  *
- * Behind hosting proxies (e.g. Render), the request URL points at an internal
+ * Behind hosting proxies (e.g. Railway), the request URL points at an internal
  * host like https://localhost:10000, which would produce redirect_uri values
- * Google rejects. NEXT_PUBLIC_BASE_URL is the canonical public address; fall
- * back to the request origin for local development.
+ * Google rejects. NEXT_PUBLIC_BASE_URL is the canonical public address; on
+ * Railway, RAILWAY_PUBLIC_DOMAIN (e.g. brand-promotion-website-production.up.railway.app)
+ * is used automatically via siteUrl(); fall back to the request origin locally.
  */
 export function canonicalOrigin(fallbackOrigin: string): string {
+  const u = siteUrl();
+  if (u && !/^https?:\/\/(localhost|127\.0\.0\.1)/i.test(u)) return u.replace(/\/+$/, "");
   const configured = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
   if (configured) return configured.replace(/\/+$/, "");
   return fallbackOrigin;

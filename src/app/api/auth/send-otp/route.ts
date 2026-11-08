@@ -49,6 +49,17 @@ export async function POST(req: Request) {
     });
   }
 
+  // Fallback: if no delivery method worked, return code for debugging
+  if (!result.delivery || result.delivery === "none") {
+    return NextResponse.json({
+      ok: true,
+      message: "OTP generated. Check console logs or debug mode.",
+      delivery: "none",
+      debug: true,
+      code: result.code,
+    });
+  }
+
   return NextResponse.json({
     ok: true,
     message: result.delivery === "telegram" ? "OTP sent via Telegram." : "OTP sent successfully.",

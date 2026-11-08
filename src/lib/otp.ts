@@ -149,10 +149,23 @@ async function sendOtpMessage(phone: string, code: string): Promise<OtpDelivery>
         signal: AbortSignal.timeout(10000),
       });
       if (resp.ok) {
-        console.log(`[OTP] Sent via MSG91 to ${cleanPhone}`);
-        return "sms";
+        const body = await resp.text().catch(() => "");
+        console.log(`[OTP] MSG91 response for ${cleanPhone}:`, body);
+        // MSG91 OTP endpoint returns {"type":"success"} on success
+        try {
+          const json = JSON.parse(body);
+          if (json.type === "success") {
+            console.log(`[OTP] Sent via MSG91 to ${cleanPhone}`);
+            return "sms";
+          }
+          console.warn("[OTP] MSG91 unexpected response:", body);
+        } catch {
+          console.warn("[OTP] MSG91 non-JSON response:", body);
+        }
+      } else {
+        const errBody = await resp.text().catch(() => "");
+        console.error("[OTP] MSG91 failed:", resp.status, errBody);
       }
-      console.warn("[OTP] MSG91 failed:", resp.status);
     } catch (e) {
       console.error("[OTP] MSG91 error:", e);
     }

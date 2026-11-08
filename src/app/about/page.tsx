@@ -12,13 +12,13 @@ export default function AboutPage() {
   return (
     <div className="container" style={{ paddingTop: 40, paddingBottom: 60, maxWidth: 820 }}>
       <nav style={{ marginBottom: 24, fontSize: 14 }}>
-        <Link href="/">Home</Link> {" > "} <span style={{ color: "var(--muted)" }}>About Us</span>
+        <Link href="/">Home</Link> {" > "} <span style={{ color: "var(--ink-soft)" }}>About Us</span>
       </nav>
 
       <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", marginBottom: 16 }}>
         About {s.site_name}
       </h1>
-      <p style={{ fontSize: 18, color: "var(--muted)", marginBottom: 36, maxWidth: 640 }}>
+      <p style={{ fontSize: 18, color: "var(--ink-soft)", marginBottom: 36, maxWidth: 640 }}>
         We connect verified reviewers with brands for honest product reviews and 100% refunds on
         purchases from Amazon, Flipkart, Myntra, and direct brand stores.
       </p>
@@ -62,7 +62,7 @@ export default function AboutPage() {
               <span style={{ color: "var(--accent)", fontSize: 20, lineHeight: 1.4 }}>✓</span>
               <div>
                 <strong style={{ fontSize: 15 }}>{title}</strong>
-                <p style={{ margin: "4px 0 0", color: "var(--muted)", fontSize: 14 }}>{desc}</p>
+                <p style={{ margin: "4px 0 0", color: "var(--ink-soft)", fontSize: 14 }}>{desc}</p>
               </div>
             </div>
           ))}

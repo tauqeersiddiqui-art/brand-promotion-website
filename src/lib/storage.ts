@@ -1,5 +1,6 @@
-import fs from "fs";
-import path from "path";
+import * as fs from "fs";
+import * as path from "path";
+import crypto from "crypto";
 
 /**
  * Central storage layout.
@@ -126,8 +127,8 @@ async function loadS3Module() {
 
   try {
     // Dynamic import - will fail gracefully if packages not installed
-    const s3 = require('@aws-sdk/client-s3');
-    const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+    const s3 = await import('@aws-sdk/client-s3');
+    const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
     s3Module = { client: s3.S3Client, getSignedUrl, loaded: true };
   } catch (e) {
     console.warn("[storage] S3 SDK not available, falling back to local storage:", e);
@@ -187,7 +188,7 @@ export async function uploadToS3(
   }
 
   const ext = match.ext;
-  const key = `${Date.now().toString(36)}-${require('crypto').randomBytes(8).toString("hex")}.${ext}`;
+  const key = `${Date.now().toString(36)}-${crypto.randomBytes(8).toString("hex")}.${ext}`;
   const bucketName = process.env.R2_BUCKET_NAME || process.env.AWS_BUCKET_NAME || "uploads";
 
   try {

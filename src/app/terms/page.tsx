@@ -42,7 +42,7 @@ export default function TermsPage() {
             <h3 style={{ fontSize: 18, margin: "0 0 8px", color: "var(--accent)" }}>
               2. Reviewer Slot Reservation & Ordering Rules
             </h3>
-            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
+            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--ink-soft)" }}>
               <li>
                 <strong>Slot Availability:</strong> Each campaign has a limited quota of reviewer slots. You must only order products for which slots are active and available on our platform.
               </li>
@@ -59,7 +59,7 @@ export default function TermsPage() {
             <h3 style={{ fontSize: 18, margin: "0 0 8px", color: "var(--accent)" }}>
               3. Order Proof Submission
             </h3>
-            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
+            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--ink-soft)" }}>
               <li>
                 Reviewers must submit both the <strong>Desktop/App Order Confirmation Screenshot</strong> and <strong>Price Breakup Screenshot</strong> within 2 hours of placing the order.
               </li>
@@ -76,7 +76,7 @@ export default function TermsPage() {
             <h3 style={{ fontSize: 18, margin: "0 0 8px", color: "var(--accent)" }}>
               4. Review Requirements & Verification
             </h3>
-            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
+            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--ink-soft)" }}>
               <li>
                 Reviews must be posted after the order is confirmed.
               </li>
@@ -96,7 +96,7 @@ export default function TermsPage() {
             <h3 style={{ fontSize: 18, margin: "0 0 8px", color: "var(--accent)" }}>
               5. UPI Reimbursement & Payout Disbursement
             </h3>
-            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
+            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--ink-soft)" }}>
               <li>
                 Refunds are disbursed directly via UPI (or IMPS Bank Transfer) within <strong>24 to 48 hours</strong> of review proof approval.
               </li>

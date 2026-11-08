@@ -1,8 +1,8 @@
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
 import { db } from "./db";
 import { DATA_DIR, UPLOAD_DIR } from "./storage";
+import * as fs from "fs";
+import * as path from "path";
+import * as crypto from "crypto";
 import {
   BACKUP_TABLES,
   buildFullBackup,

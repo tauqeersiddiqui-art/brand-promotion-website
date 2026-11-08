@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { db, generateCode } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { str, isEmail, isPhone, int } from "@/lib/validation";
+import * as fs from "fs";
+import * as path from "path";
 import { applyRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { bad } from "@/lib/api-helpers";
 import { extractOrderId, extractAmount, normalizeOrderId, runOcrOnBuffer } from "@/lib/ocr";

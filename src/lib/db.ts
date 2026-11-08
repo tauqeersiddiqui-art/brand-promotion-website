@@ -9,7 +9,7 @@
 
 import Database from "better-sqlite3";
 import crypto from "crypto";
-import path from "path";
+import * as path from "path";
 import { DATA_DIR, ensureStorageDirs } from "./storage";
 
 ensureStorageDirs();

@@ -36,7 +36,7 @@ export default function PrivacyPage() {
             <p className="muted" style={{ margin: "0 0 10px" }}>
               To facilitate 100% review refunds and brand promotion campaigns, {settings.site_name} collects the following necessary information:
             </p>
-            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
+            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--ink-soft)" }}>
               <li>
                 <strong>Reviewer Identification:</strong> Your name, email address, and WhatsApp contact number.
               </li>
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
             <h3 style={{ fontSize: 18, margin: "0 0 8px", color: "var(--accent)" }}>
               2. How We Use Your Information
             </h3>
-            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--muted)" }}>
+            <ul style={{ margin: 0, paddingLeft: 22, color: "var(--ink-soft)" }}>
               <li>To cross-check and verify your purchase with brand campaign managers and mediators.</li>
               <li>To process automated Optical Character Recognition (OCR) verification of order and review screenshots.</li>
               <li>To issue UPI refunds directly to your bank account and provide transparent UTR tracking references.</li>

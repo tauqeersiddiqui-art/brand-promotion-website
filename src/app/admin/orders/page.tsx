@@ -319,7 +319,7 @@ export default function AdminOrdersPage() {
                               ✓ OCR Match
                             </span>
                           ) : (
-                            <span className="badge" style={{ position: "static", background: "rgba(255,255,255,0.06)", color: "var(--muted)", fontSize: 10, padding: "2px 6px" }}>
+                            <span className="badge" style={{ position: "static", background: "rgba(255,255,255,0.06)", color: "var(--ink-soft)", fontSize: 10, padding: "2px 6px" }}>
                               Manual check
                             </span>
                           )}

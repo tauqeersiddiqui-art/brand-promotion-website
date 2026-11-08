@@ -210,7 +210,7 @@ export default async function DealPage({
             </h1>
 
             {deal.product_code && (
-              <div style={{ color: "var(--muted)", fontSize: 13, marginBottom: 10 }}>
+              <div style={{ color: "var(--ink-soft)", fontSize: 13, marginBottom: 10 }}>
                 Campaign code: <code style={{ color: "var(--brand)" }}>{deal.product_code}</code>
               </div>
             )}
@@ -366,7 +366,7 @@ export default async function DealPage({
                 outOfSlots ? (
                   <span
                     className="btn"
-                    style={{ flex: 1, cursor: "not-allowed", opacity: 0.45, background: "var(--muted)" }}
+                    style={{ flex: 1, cursor: "not-allowed", opacity: 0.45, background: "var(--ink-soft)" }}
                   >
                     🚫 Campaign fully booked — no slots left
                   </span>

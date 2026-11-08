@@ -1,7 +1,7 @@
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
 import { UPLOAD_DIR, ensureStorageDirs, isS3Configured, uploadToS3, isR2Url, r2KeyFromUrl, deleteFromS3 } from "./storage";
+import * as fs from "fs";
+import * as path from "path";
+import crypto from "crypto";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 

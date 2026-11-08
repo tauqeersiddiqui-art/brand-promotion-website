@@ -45,13 +45,13 @@ export default function HelpClient({ settings }: { settings: SiteSettings }) {
   return (
     <div className="container" style={{ paddingTop: 40, paddingBottom: 60, maxWidth: 860 }}>
       <nav style={{ marginBottom: 24, fontSize: 14 }}>
-        <Link href="/">Home</Link> {" > "} <span style={{ color: "var(--muted)" }}>Need Help?</span>
+        <Link href="/">Home</Link> {" > "} <span style={{ color: "var(--ink-soft)" }}>Need Help?</span>
       </nav>
 
       <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", marginBottom: 8 }}>
         Need Help?
       </h1>
-      <p style={{ fontSize: 17, color: "var(--muted)", marginBottom: 40, maxWidth: 600 }}>
+      <p style={{ fontSize: 17, color: "var(--ink-soft)", marginBottom: 40, maxWidth: 600 }}>
         Find answers to common questions or contact our support team directly.
       </p>
 

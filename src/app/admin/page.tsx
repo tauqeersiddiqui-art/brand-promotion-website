@@ -80,7 +80,7 @@ export default function AdminDashboard() {
     { label: "Reimbursement claims", value: stats.reimbursements, color: "var(--ink)" },
     { label: "Pending refund payouts", value: stats.pendingReimbursements, color: "var(--accent)" },
     { label: "Total refund disbursed", value: `₹${stats.totalDisbursed.toLocaleString("en-IN")}`, color: "var(--accent)" },
-    { label: "Promotional order volume", value: `₹${stats.totalOrderValue.toLocaleString("en-IN")}`, color: "var(--muted)" },
+    { label: "Promotional order volume", value: `₹${stats.totalOrderValue.toLocaleString("en-IN")}`, color: "var(--ink-soft)" },
   ];
 
   return (

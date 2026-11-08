@@ -80,13 +80,13 @@ export default function CancelPage() {
   return (
     <div className="container" style={{ paddingTop: 40, paddingBottom: 60, maxWidth: 700 }}>
       <nav style={{ marginBottom: 24, fontSize: 14 }}>
-        <Link href="/">Home</Link> {" > "} <span style={{ color: "var(--muted)" }}>Cancel Order</span>
+        <Link href="/">Home</Link> {" > "} <span style={{ color: "var(--ink-soft)" }}>Cancel Order</span>
       </nav>
 
       <h1 style={{ fontSize: "clamp(28px, 5vw, 40px)", marginBottom: 12 }}>
         Cancel Your Order
       </h1>
-      <p style={{ color: "var(--muted)", marginBottom: 32, fontSize: 16 }}>
+      <p style={{ color: "var(--ink-soft)", marginBottom: 32, fontSize: 16 }}>
         Enter your order code and email to view your order details and request cancellation.
       </p>
 
@@ -128,23 +128,23 @@ export default function CancelPage() {
           <h2 style={{ marginBottom: 20, fontSize: 20 }}>Order Details</h2>
           <div style={{ display: "grid", gap: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-              <span style={{ color: "var(--muted)" }}>Order Code</span>
+              <span style={{ color: "var(--ink-soft)" }}>Order Code</span>
               <strong>{orderData.order_code}</strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-              <span style={{ color: "var(--muted)" }}>Deal</span>
+              <span style={{ color: "var(--ink-soft)" }}>Deal</span>
               <span>{orderData.deal_title}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-              <span style={{ color: "var(--muted)" }}>Platform</span>
+              <span style={{ color: "var(--ink-soft)" }}>Platform</span>
               <span>{orderData.platform}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-              <span style={{ color: "var(--muted)" }}>Total Amount</span>
+              <span style={{ color: "var(--ink-soft)" }}>Total Amount</span>
               <strong>₹{orderData.total?.toLocaleString("en-IN") || "N/A"}</strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}>
-              <span style={{ color: "var(--muted)" }}>Status</span>
+              <span style={{ color: "var(--ink-soft)" }}>Status</span>
               <span className={`badge ${orderData.status === 'confirmed' ? 'badge-warning' : 'badge-success'}`}>
                 {orderData.status || 'N/A'}
               </span>
@@ -153,7 +153,7 @@ export default function CancelPage() {
 
           {orderData.cancellable && (
             <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid var(--border)" }}>
-              <p style={{ color: "var(--muted)", marginBottom: 16, fontSize: 14 }}>
+              <p style={{ color: "var(--ink-soft)", marginBottom: 16, fontSize: 14 }}>
                 You can cancel this order at any time before it's processed.
               </p>
               <button className="btn" onClick={handleCancel} style={{ background: "var(--danger)" }}>
@@ -165,7 +165,7 @@ export default function CancelPage() {
       )}
 
       {!orderData && !error && (
-        <div style={{ textAlign: "center", padding: "40px 0", color: "var(--muted)" }}>
+        <div style={{ textAlign: "center", padding: "40px 0", color: "var(--ink-soft)" }}>
           <p>Your order details will appear here after searching.</p>
         </div>
       )}

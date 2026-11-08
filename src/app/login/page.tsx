@@ -243,7 +243,7 @@ function LoginForm() {
                   padding: 0,
                   fontSize: 16,
                   lineHeight: 1,
-                  color: "var(--muted)",
+                  color: "var(--ink-soft)",
                 }}
                 title={showPassword ? "Hide password" : "Show password"}
               >

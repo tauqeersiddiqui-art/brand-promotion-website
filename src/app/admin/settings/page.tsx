@@ -232,7 +232,7 @@ export default function AdminSettingsPage() {
                       padding: 0,
                       fontSize: 16,
                       lineHeight: 1,
-                      color: "var(--muted)",
+                      color: "var(--ink-soft)",
                     }}
                     title={showCurrentPassword ? "Hide password" : "Show password"}
                   >
@@ -268,7 +268,7 @@ export default function AdminSettingsPage() {
                       padding: 0,
                       fontSize: 16,
                       lineHeight: 1,
-                      color: "var(--muted)",
+                      color: "var(--ink-soft)",
                     }}
                     title={showEmergencyKey ? "Hide key" : "Show key"}
                   >
@@ -303,7 +303,7 @@ export default function AdminSettingsPage() {
                     padding: 0,
                     fontSize: 16,
                     lineHeight: 1,
-                    color: "var(--muted)",
+                    color: "var(--ink-soft)",
                   }}
                   title={showNewPassword ? "Hide password" : "Show password"}
                 >

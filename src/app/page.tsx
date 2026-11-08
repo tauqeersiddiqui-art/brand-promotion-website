@@ -248,7 +248,7 @@ export default function HomePage() {
           </div>
           <div style={{ background: "var(--card)", padding: 20, borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
             <h4 style={{ margin: "0 0 10px", fontSize: 15, color: "var(--ink)" }}>Campaign guidelines:</h4>
-            <ul style={{ margin: 0, paddingLeft: 18, color: "var(--muted)", fontSize: 13.5, display: "flex", flexDirection: "column", gap: 7 }}>
+            <ul style={{ margin: 0, paddingLeft: 18, color: "var(--ink-soft)", fontSize: 13.5, display: "flex", flexDirection: "column", gap: 7 }}>
               <li>Do not cancel or return the product after reimbursement.</li>
               <li>Order ID and amount must match your invoice screenshots.</li>
               <li>Post genuine 5-star reviews with at least 1–2 product photos.</li>

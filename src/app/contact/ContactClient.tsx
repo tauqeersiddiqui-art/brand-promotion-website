@@ -77,7 +77,7 @@ export default function ContactClient({
           </div>
 
           <div className="card" style={{ padding: 22 }}>
-            <div style={{ fontSize: 24, marginBottom: 8, fontWeight: 800, color: "var(--muted)" }} aria-hidden="true">—</div>
+            <div style={{ fontSize: 24, marginBottom: 8, fontWeight: 800, color: "var(--ink-soft)" }} aria-hidden="true">—</div>
             <h3 style={{ margin: "0 0 6px", fontSize: 17 }}>Telegram VIP deal channel</h3>
             <p className="muted" style={{ margin: "0 0 12px", fontSize: 13.5 }}>
               Join our exclusive Telegram community to get instant alerts on new 100% refund drops and slot refills.
@@ -97,7 +97,7 @@ export default function ContactClient({
           </div>
 
           <div className="card" style={{ padding: 22 }}>
-            <div style={{ fontSize: 24, marginBottom: 8, fontWeight: 800, color: "var(--muted)" }} aria-hidden="true">—</div>
+            <div style={{ fontSize: 24, marginBottom: 8, fontWeight: 800, color: "var(--ink-soft)" }} aria-hidden="true">—</div>
             <h3 style={{ margin: "0 0 6px", fontSize: 17 }}>Email support</h3>
             <p className="muted" style={{ margin: "0 0 10px", fontSize: 13.5 }}>
               For brand partnerships, mediator inquiries, or dispute escalation:

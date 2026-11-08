@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
 import { db } from "@/lib/db";
 import { DATA_DIR, UPLOAD_DIR, isS3Configured } from "@/lib/storage";
+import * as fs from "fs";
 
 export const dynamic = "force-dynamic";
 

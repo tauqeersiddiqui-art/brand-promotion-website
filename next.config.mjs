@@ -6,6 +6,9 @@
  * devDependencies are stripped from the Docker image.
  */
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 const isProd = typeof process.env.NODE_ENV === "string" && process.env.NODE_ENV === "production";
 
 /**
@@ -67,6 +70,57 @@ const nextConfig = {
   serverExternalPackages: ["better-sqlite3", "sharp"],
   poweredByHeader: false,
   reactStrictMode: true,
+
+  // Fix for better-sqlite3 native modules and Node.js built-ins in Next.js 15
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Server-side: mark Node.js built-ins as external so they're resolved from Node
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+        module: false,
+        net: false,
+        tls: false,
+        dns: false,
+        http: false,
+        https: false,
+        stream: false,
+        buffer: false,
+        util: false,
+        os: false,
+        child_process: false,
+        zlib: false,
+      };
+    } else {
+      // Client-side: exclude Node.js built-ins from the bundle entirely
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+        module: false,
+        net: false,
+        tls: false,
+        dns: false,
+        http: false,
+        https: false,
+        stream: false,
+        buffer: false,
+        util: false,
+        os: false,
+        child_process: false,
+        zlib: false,
+      };
+    }
+    // Exclude better-sqlite3 entirely from client-side bundling
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "better-sqlite3": false,
+    };
+    return config;
+  },
 
   async headers() {
     const csp = getCsp();

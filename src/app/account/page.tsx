@@ -195,13 +195,9 @@ export default function AccountPage() {
                           <span className={`pill pill-${o.status}`}>{o.status}</span>
                         </td>
                         <td>
-                            <Link
-                              href={`/#claim-refund`}
-                              className="btn btn-ghost btn-sm"
-                              style={{ fontSize: 12, padding: "5px 10px" }}
-                            >
-                              Claim ₹{o.total}
-                            </Link>
+                          <span className="muted" style={{ fontSize: 12 }}>
+                            —
+                          </span>
                         </td>
                         <td>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

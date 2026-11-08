@@ -241,12 +241,13 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
               <div className="timeline-item">
                 <div className="timeline-dot">3</div>
                 <div className="timeline-content">
-                  <strong>3. Submit Review Refund Claim</strong>
+                  <strong>3. Submit refund form</strong>
                   <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-                    Once delivered, post a 5-star review on {result.order.platform} and claim your 100% refund.
+                    Post your review on {result.order.platform}, then submit the order, review and seller
+                    feedback screenshots below to receive your 100% refund.
                   </p>
                     <Link href="/#claim-refund" className="btn btn-sm btn-ghost" style={{ marginTop: 8 }}>
-                      Submit review proof now →
+                      Submit refund form →
                     </Link>
                 </div>
               </div>

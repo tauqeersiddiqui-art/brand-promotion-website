@@ -17,10 +17,17 @@ function getCsrfHeader(): Record<string, string> {
   return token ? { "x-csrf-token": token } : {};
 }
 
-export default function ClaimRefundForm() {
+type ClaimRefundFormProps = {
+  /** Pre-fill the Order ID when the form is opened from a specific order row. */
+  initialOrderId?: string;
+  /** Called after a claim is submitted successfully (e.g. to close a modal). */
+  onSuccess?: () => void;
+};
+
+export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefundFormProps) {
   const { user, loading: authLoading } = useSessionUser();
   const pathname = usePathname();
-  const [externalOrderId, setExternalOrderId] = useState("");
+  const [externalOrderId, setExternalOrderId] = useState(initialOrderId || "");
   const [reviewerName, setReviewerName] = useState("");
   const [mediatorName, setMediatorName] = useState("");
   const [payoutMethod, setPayoutMethod] = useState("upi");
@@ -207,6 +214,7 @@ export default function ClaimRefundForm() {
           upi_id: d.upi_id,
           status: d.status,
         });
+        onSuccess?.();
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");

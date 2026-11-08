@@ -15,16 +15,6 @@ function getCsrfHeader(): Record<string, string> {
   return token ? { "x-csrf-token": token } : {};
 }
 
-type Refund = {
-  refund_code: string;
-  reason: string;
-  status: string;
-  admin_note: string;
-  created_at: string;
-};
-
-type ReviewInfo = { review_code: string; status: string; rating: number } | null;
-
 type Order = {
   id: number;
   order_code: string;
@@ -39,8 +29,8 @@ type Order = {
   total: number;
   status: string;
   created_at: string;
-  refunds: Refund[];
-  review: ReviewInfo;
+  refunds?: { id: number; refund_code: string; reason: string; status: string }[];
+  review?: { review_code: string; status: string; rating: number };
 };
 
 type Reimbursement = {
@@ -59,33 +49,13 @@ type Reimbursement = {
   created_at: string;
 };
 
-const REASONS = [
-  "Item not received",
-  "Wrong item delivered",
-  "Damaged / defective product",
-  "Quality not as described",
-  "Duplicate order",
-  "Cancelled on platform",
-  "Other",
-];
-
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState<"orders" | "reimbursements" | "new_claim">("orders");
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [loadError, setLoadError] = useState("");
   const [reimbursements, setReimbursements] = useState<Reimbursement[]>([]);
   const [refundFor, setRefundFor] = useState<Order | null>(null);
-  const [reason, setReason] = useState(REASONS[0]);
-  const [details, setDetails] = useState("");
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-
-  // review modal state
-  const [reviewFor, setReviewFor] = useState<Order | null>(null);
-  const [rating, setRating] = useState(5);
-  const [reviewText, setReviewText] = useState("");
-  const [shot, setShot] = useState<File | null>(null);
-  const [reviewBusy, setReviewBusy] = useState(false);
 
   const load = useCallback(async () => {
     const r = await fetch("/api/orders/me");
@@ -114,72 +84,6 @@ export default function AccountPage() {
   useEffect(() => {
     load();
   }, [load]);
-
-  async function submitReview(e: React.FormEvent) {
-    e.preventDefault();
-    if (!reviewFor) return;
-    setReviewBusy(true);
-    setMsg(null);
-    try {
-      const fd = new FormData();
-      fd.set("order_id", String(reviewFor.id));
-      fd.set("rating", String(rating));
-      fd.set("text", reviewText);
-      if (shot) fd.set("screenshot", shot);
-
-      const r = await fetch("/api/reviews", { method: "POST", headers: getCsrfHeader(), body: fd });
-      const d = await r.json();
-      if (!r.ok) {
-        setMsg({ type: "err", text: d.error || "Review submission failed." });
-      } else {
-        setMsg({
-          type: "ok",
-          text:
-            d.note ||
-            `Review ${d.review_code} submitted! Our team will verify and process your review refund.`,
-        });
-        setReviewFor(null);
-        setReviewText("");
-        setShot(null);
-        setRating(5);
-        load();
-      }
-    } catch {
-      setMsg({ type: "err", text: "Network error. Please try again." });
-    } finally {
-      setReviewBusy(false);
-    }
-  }
-
-  async function submitRefund(e: React.FormEvent) {
-    e.preventDefault();
-    if (!refundFor) return;
-    setBusy(true);
-    setMsg(null);
-    try {
-      const r = await fetch("/api/refunds", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...getCsrfHeader() },
-        body: JSON.stringify({ order_id: refundFor.id, reason, details }),
-      });
-      const d = await r.json();
-      if (!r.ok) {
-        setMsg({ type: "err", text: d.error || "Refund request failed." });
-      } else {
-        setMsg({
-          type: "ok",
-          text: `Refund request ${d.refund_code} submitted!`,
-        });
-        setRefundFor(null);
-        setDetails("");
-        load();
-      }
-    } catch {
-      setMsg({ type: "err", text: "Network error. Please try again." });
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div className="container" style={{ paddingTop: 36, paddingBottom: 60 }}>
@@ -308,37 +212,12 @@ export default function AccountPage() {
                             >
                               🔍 Track
                             </Link>
-                            {reviewEligible && (
-                              <button
-                                className="btn btn-sm"
-                                style={{ fontSize: 12, padding: "5px 10px" }}
-                                onClick={() => {
-                                  setReviewFor(o);
-                                  setReviewText("");
-                                  setShot(null);
-                                  setRating(5);
-                                  setMsg(null);
-                                }}
-                              >
-                                Submit review
-                              </button>
-                            )}
-                              {o.review && (
-                                <span
-                                  className={`pill pill-${o.review.status}`}
-                                  title={`Your ${o.review.rating}-star review is ${o.review.status}`}
-                                >
-                                  {o.review.status}
-                                </span>
-                              )}
-                            {o.status === "confirmed" && !activeRefund && (
+                            {!reviewEligible && o.status === "confirmed" && !activeRefund && (
                               <button
                                 className="btn btn-ghost btn-sm"
                                 style={{ fontSize: 12, padding: "5px 10px" }}
                                 onClick={() => {
                                   setRefundFor(o);
-                                  setReason(REASONS[0]);
-                                  setDetails("");
                                   setMsg(null);
                                 }}
                               >
@@ -431,79 +310,6 @@ export default function AccountPage() {
         </div>
       )}
 
-      {/* Review Modal */}
-      {reviewFor && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(5,6,12,0.7)",
-            display: "grid",
-            placeItems: "center",
-            zIndex: 100,
-            padding: 20,
-          }}
-          onClick={() => setReviewFor(null)}
-        >
-          <div
-            className="card"
-            style={{ maxWidth: 500, width: "100%" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ marginTop: 0 }}>Review {reviewFor.deal_title}</h3>
-            <p className="muted" style={{ fontSize: 14 }}>
-              Order {reviewFor.external_order_id || reviewFor.order_code}. Upload your review screenshot for verification.
-            </p>
-            <form onSubmit={submitReview}>
-              <label className="form-label">Rating *</label>
-              <div style={{ display: "flex", gap: 6, fontSize: 26, cursor: "pointer" }}>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <span
-                    key={n}
-                    onClick={() => setRating(n)}
-                    style={{ color: n <= rating ? "var(--warn)" : "var(--border)" }}
-                    aria-label={`${n} star`}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-              <div style={{ height: 12 }} />
-              <label className="form-label">Your review text *</label>
-              <textarea
-                className="input"
-                required
-                minLength={5}
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                placeholder="Product quality, delivery speed, packaging…"
-              />
-              <div style={{ height: 12 }} />
-              <label className="form-label">Live Review Screenshot (PNG/JPG — OCR auto-scanned)</label>
-              <input
-                className="input"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setShot(e.target.files?.[0] ?? null)}
-              />
-              <div style={{ height: 16 }} />
-              <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn" disabled={reviewBusy} style={{ flex: 1 }}>
-                  {reviewBusy ? "Submitting…" : "Submit Review Proof"}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setReviewFor(null)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* Refund Modal */}
       {refundFor && (
         <div
@@ -520,46 +326,27 @@ export default function AccountPage() {
         >
           <div
             className="card"
-            style={{ maxWidth: 480, width: "100%" }}
+            style={{ maxWidth: 640, width: "100%", maxHeight: "90vh", overflowY: "auto" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginTop: 0 }}>Refund for {refundFor.external_order_id || refundFor.order_code}</h3>
-            <p className="muted" style={{ fontSize: 14 }}>
-              {refundFor.deal_title} — ₹{refundFor.total.toLocaleString("en-IN")}
-            </p>
-            <form onSubmit={submitRefund}>
-              <label className="form-label">Reason *</label>
-              <select
-                className="input"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h3 style={{ margin: 0 }}>Submit refund form</h3>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setRefundFor(null)}
+                style={{ padding: "2px 8px" }}
               >
-                {REASONS.map((r) => (
-                  <option key={r}>{r}</option>
-                ))}
-              </select>
-              <div style={{ height: 12 }} />
-              <label className="form-label">Details (optional)</label>
-              <textarea
-                className="input"
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                placeholder="Tell us what happened…"
-              />
-              <div style={{ height: 16 }} />
-              <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn" disabled={busy} style={{ flex: 1 }}>
-                  {busy ? "Submitting…" : "Submit refund request"}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setRefundFor(null)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+                ✕
+              </button>
+            </div>
+            <p className="muted" style={{ margin: "0 0 16px", fontSize: 13.5 }}>
+              {refundFor.deal_title} — Order {refundFor.external_order_id || refundFor.order_code} · ₹{refundFor.total.toLocaleString("en-IN")}. Post your review on Amazon/Flipkart, then submit the order, review and seller feedback screenshots below.
+            </p>
+            <ClaimRefundForm
+              initialOrderId={refundFor.external_order_id || refundFor.order_code}
+              onSuccess={() => setRefundFor(null)}
+            />
           </div>
         </div>
       )}

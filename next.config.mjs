@@ -1,4 +1,10 @@
-import type { NextConfig } from "next";
+/**
+ * Next.js Configuration
+ *
+ * CSP and security headers for Brand Promotion.
+ * Plain JavaScript (no TypeScript) so it works at runtime even when
+ * devDependencies are stripped from the Docker image.
+ */
 
 const isProd = typeof process.env.NODE_ENV === "string" && process.env.NODE_ENV === "production";
 
@@ -41,7 +47,7 @@ function getCsp() {
   // sandboxed frame.
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.adtrafficquality.google", // AdSense loader and ad frames
+    "script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.adtrafficquality.google",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
@@ -55,7 +61,8 @@ function getCsp() {
   ].join("; ");
 }
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // Native modules: keep them out of the bundler.
   serverExternalPackages: ["better-sqlite3", "sharp"],
   poweredByHeader: false,

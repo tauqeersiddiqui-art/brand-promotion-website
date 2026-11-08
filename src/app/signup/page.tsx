@@ -39,6 +39,8 @@ export default function SignupPage() {
   const [postOtpPassword, setPostOtpPassword] = useState("");
   const [showPostOtpPassword, setShowPostOtpPassword] = useState(false);
   const [hasCredentialFields, setHasCredentialFields] = useState(false);
+  const [debugCode, setDebugCode] = useState<string | null>(null);
+  const [otpMessage, setOtpMessage] = useState("");
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -75,6 +77,13 @@ export default function SignupPage() {
       }
       setOtpSent(true);
       setOtpCountdown(60);
+      // Show appropriate message based on delivery method
+      const deliveryMethod = d.delivery === "telegram" ? "Telegram" : "SMS";
+      setOtpMessage(`OTP sent! Check your ${deliveryMethod}.`);
+      // Debug mode: capture OTP code if returned by API
+      if (d.debug && d.code) {
+        setDebugCode(d.code);
+      }
     } catch {
       setError("Network error sending OTP.");
     } finally {
@@ -244,7 +253,7 @@ export default function SignupPage() {
                   onChange={(e) => setRawPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                   placeholder="9876543210" style={{ fontFamily: "monospace", letterSpacing: 2, fontSize: 18 }} />
                 <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-                  Enter your 10-digit Indian mobile number. We'll send a 6-digit OTP via SMS.
+                  Enter your 10-digit Indian mobile number. We'll send a 6-digit OTP (Telegram or SMS).
                 </p>
                 <div style={{ height: 18 }} />
                 <button className="btn btn-block" disabled={busy || rawPhone.replace(/\D/g, "").length !== 10} onClick={sendOtp}>
@@ -257,6 +266,12 @@ export default function SignupPage() {
                   OTP sent to <strong>{formatPhoneDisplay(rawPhone)}</strong>
                   {otpCountdown > 0 && <span style={{ marginLeft: 8, color: "var(--brand)" }}>Resend in {otpCountdown}s</span>}
                 </p>
+                {/* Dev-only OTP display */}
+                {debugCode && (
+                  <div className="alert alert-warning" style={{ background: "rgba(255, 153, 0, 0.1)", border: "1px solid rgba(255, 153, 0, 0.3)", marginBottom: 8 }}>
+                    <strong>Debug OTP:</strong> {debugCode}
+                  </div>
+                )}
                 <label className="form-label">Enter 6-Digit OTP</label>
                 <input className="input" type="text" inputMode="numeric" maxLength={6} pattern="[0-9]{6}" value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}

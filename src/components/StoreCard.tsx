@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 export type Store = {
   name: string;
   url: string;
-  search: (q: string) => string;
+  searchUrl: string;
   category: string;
   blurb: string;
   logoDomain: string;
@@ -57,7 +57,7 @@ export default function StoreCard({ store, count }: { store: Store; count: numbe
         </a>
         <a
           className="btn btn-outline btn-sm"
-          href={store.search("deals")}
+          href={store.searchUrl}
           target="_blank"
           rel="noopener noreferrer"
         >

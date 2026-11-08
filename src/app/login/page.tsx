@@ -43,6 +43,7 @@ function LoginForm() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [otpMessage, setOtpMessage] = useState("");
+  const [debugCode, setDebugCode] = useState<string | null>(null);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -81,7 +82,13 @@ function LoginForm() {
       }
       setOtpSent(true);
       setOtpCountdown(60);
-      setOtpMessage("OTP sent! Check your messages.");
+      // Show appropriate message based on delivery method
+      const deliveryMethod = d.delivery === "telegram" ? "Telegram" : "SMS";
+      setOtpMessage(`OTP sent! Check your ${deliveryMethod}.`);
+      // Debug mode: capture OTP code if returned by API
+      if (d.debug && d.code) {
+        setDebugCode(d.code);
+      }
     } catch {
       setError("Network error sending OTP.");
     } finally {
@@ -261,7 +268,7 @@ function LoginForm() {
               <>
                 <label className="form-label">Mobile Number</label>
                 <input
-                  className="input"
+                  className="input phone-example"
                   type="tel"
                   inputMode="numeric"
                   maxLength={10}
@@ -292,6 +299,12 @@ function LoginForm() {
                   )}
                 </p>
                 {otpMessage && <p className="muted" style={{ fontSize: 12, color: "var(--brand)", marginBottom: 8 }}>{otpMessage}</p>}
+                {/* Dev-only OTP display */}
+                {debugCode && (
+                  <div className="alert alert-warning" style={{ background: "rgba(255, 153, 0, 0.1)", border: "1px solid rgba(255, 153, 0, 0.3)", marginBottom: 8 }}>
+                    <strong>Debug OTP:</strong> {debugCode}
+                  </div>
+                )}
                 <label className="form-label">Enter 6-Digit OTP</label>
                 <input
                   className="input"

@@ -37,5 +37,21 @@ export async function POST(req: Request) {
   const result = await storeAndSendOtp(phoneCheck.phone!, purpose);
   if (!result.ok) return bad(result.error || "Failed to send OTP.");
 
-  return NextResponse.json({ ok: true, message: "OTP sent successfully." });
+  // Debug mode: return OTP code to client for testing (set NEXT_PUBLIC_LOG_OTP=true)
+  const debugMode = process.env.NEXT_PUBLIC_LOG_OTP === "true";
+  if (debugMode && result.code) {
+    return NextResponse.json({
+      ok: true,
+      message: `OTP delivered via ${result.delivery || "console"}.`,
+      delivery: result.delivery,
+      debug: true,
+      code: result.code,
+    });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    message: result.delivery === "telegram" ? "OTP sent via Telegram." : "OTP sent successfully.",
+    delivery: result.delivery,
+  });
 }

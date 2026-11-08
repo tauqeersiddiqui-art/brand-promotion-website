@@ -905,13 +905,10 @@ export default function AdminDealsPage() {
                 <th>Campaign & Code</th>
                 <th>Platform</th>
                 <th>Price & Refund</th>
-                <th>Commission</th>
                 <th>Slots Status</th>
                 <th>Orders</th>
                 <th>Submitted by</th>
-                <th>Approval</th>
                 <th>Active</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -954,10 +951,6 @@ export default function AdminDealsPage() {
                       </div>
                     </td>
                     <td>
-                      <strong>₹{Number(d.mediator_commission_amount || 0).toLocaleString("en-IN")}</strong>
-                      <div className="muted" style={{ fontSize: 11 }}>fixed</div>
-                    </td>
-                    <td>
                       <div style={{ fontSize: 12 }}>
                         <span style={{ color: rem <= 5 ? "var(--danger)" : "var(--accent)", fontWeight: 600 }}>
                           {rem} slots left
@@ -972,24 +965,6 @@ export default function AdminDealsPage() {
                       {d.submitted_by_name || <span className="muted">Admin</span>}
                     </td>
                     <td>
-                      <span
-                        className={`pill ${
-                          d.approval_status === "approved"
-                            ? "pill-delivered"
-                            : d.approval_status === "rejected"
-                              ? "pill-cancelled"
-                              : "pill-pending"
-                        }`}
-                      >
-                        {d.approval_status || "approved"}
-                      </span>
-                      {d.rejection_reason && (
-                        <div className="muted" style={{ fontSize: 11, marginTop: 4, maxWidth: 180 }}>
-                          {d.rejection_reason}
-                        </div>
-                      )}
-                    </td>
-                    <td>
                       <button
                         className={`pill pill-${d.active === 1 ? "delivered" : "cancelled"}`}
                         onClick={() => toggleActive(d)}
@@ -997,33 +972,6 @@ export default function AdminDealsPage() {
                         title="Click to toggle active state"
                       >
                         {d.active === 1 ? "Active" : "Hidden"}
-                      </button>
-                    </td>
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      {d.approval_status !== "approved" && (
-                        <button className="btn btn-sm" onClick={() => approveDeal(d)}>
-                          Approve
-                        </button>
-                      )}{" "}
-                      {d.approval_status !== "rejected" && (
-                        <button className="btn btn-secondary btn-sm" onClick={() => rejectDeal(d)}>
-                          Reject
-                        </button>
-                      )}{" "}
-                      <button className="btn btn-ghost btn-sm" onClick={() => startEdit(d)}>
-                        Edit
-                      </button>{" "}
-                      {d.approval_status === "approved" && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => postTelegram(d)}
-                          title="Post this campaign to the Telegram channel"
-                        >
-                          Post TG
-                        </button>
-                      )}{" "}
-                      <button className="btn btn-danger btn-sm" onClick={() => remove(d)}>
-                        Delete
                       </button>
                     </td>
                   </tr>

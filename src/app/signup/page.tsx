@@ -21,6 +21,7 @@ export default function SignupPage() {
   const params = useSearchParams();
   const next = params.get("next") || params.get("redirect") || "";
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -92,16 +93,39 @@ export default function SignupPage() {
             placeholder="98765 43210"
           />
           <div style={{ height: 12 }} />
-          <label className="form-label">Password * (min 8 chars, letters + numbers)</label>
-          <input
-            className="input"
-            type="password"
-            required
-            minLength={8}
-            value={form.password}
-            onChange={(e) => set("password", e.target.value)}
-            placeholder="••••••••"
-          />
+          <div style={{ position: "relative" }}>
+            <label className="form-label">Password * (min 8 chars, letters + numbers)</label>
+            <input
+              className="input"
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={8}
+              value={form.password}
+              onChange={(e) => set("password", e.target.value)}
+              placeholder="••••••••"
+              style={{ paddingRight: 44 }}
+            />
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPassword((v) => !v)}
+              style={{
+                position: "absolute",
+                right: 10,
+                bottom: 28,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                fontSize: 16,
+                lineHeight: 1,
+                color: "var(--muted)",
+              }}
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
           <div style={{ height: 18 }} />
           <button className="btn btn-block" disabled={busy}>
             {busy ? "Creating account…" : "Create account"}

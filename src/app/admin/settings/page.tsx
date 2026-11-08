@@ -35,8 +35,11 @@ export default function AdminSettingsPage() {
   // Password reset state
   const [resetMode, setResetMode] = useState<"none" | "current" | "emergency">("none");
   const [currentPassword, setCurrentPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [emergencyKey, setEmergencyKey] = useState("");
+  const [showEmergencyKey, setShowEmergencyKey] = useState(false);
   const [resetMsg, setResetMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
 
@@ -206,38 +209,107 @@ export default function AdminSettingsPage() {
             {resetMode === "current" && (
               <div style={{ marginBottom: 12 }}>
                 <label className="form-label" style={{ marginBottom: 4 }}>Current Password</label>
-                <input
-                  type="password"
-                  className="input"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter current password"
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    className="input"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    style={{ paddingRight: 44 }}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowCurrentPassword((v) => !v)}
+                    style={{
+                      position: "absolute",
+                      right: 10,
+                      bottom: 8,
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      fontSize: 16,
+                      lineHeight: 1,
+                      color: "var(--muted)",
+                    }}
+                    title={showCurrentPassword ? "Hide password" : "Show password"}
+                  >
+                    {showCurrentPassword ? "👁️" : "👁️‍🗨️"}
+                  </button>
+                </div>
               </div>
             )}
 
             {resetMode === "emergency" && (
               <div style={{ marginBottom: 12 }}>
                 <label className="form-label" style={{ marginBottom: 4 }}>Emergency Reset Key</label>
-                <input
-                  type="password"
-                  className="input"
-                  value={emergencyKey}
-                  onChange={(e) => setEmergencyKey(e.target.value)}
-                  placeholder="Enter RESET_PASSWORD_KEY from Railsway env"
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showEmergencyKey ? "text" : "password"}
+                    className="input"
+                    value={emergencyKey}
+                    onChange={(e) => setEmergencyKey(e.target.value)}
+                    placeholder="Enter RESET_PASSWORD_KEY from Railsway env"
+                    style={{ paddingRight: 44 }}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowEmergencyKey((v) => !v)}
+                    style={{
+                      position: "absolute",
+                      right: 10,
+                      bottom: 8,
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      fontSize: 16,
+                      lineHeight: 1,
+                      color: "var(--muted)",
+                    }}
+                    title={showEmergencyKey ? "Hide key" : "Show key"}
+                  >
+                    {showEmergencyKey ? "👁️" : "👁️‍🗨️"}
+                  </button>
+                </div>
               </div>
             )}
 
             <div style={{ marginBottom: 12 }}>
               <label className="form-label" style={{ marginBottom: 4 }}>New Password (min 8 characters)</label>
-              <input
-                type="password"
-                className="input"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  className="input"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  style={{ paddingRight: 44 }}
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowNewPassword((v) => !v)}
+                  style={{
+                    position: "absolute",
+                    right: 10,
+                    bottom: 8,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: 16,
+                    lineHeight: 1,
+                    color: "var(--muted)",
+                  }}
+                  title={showNewPassword ? "Hide password" : "Show password"}
+                >
+                  {showNewPassword ? "👁️" : "👁️‍🗨️"}
+                </button>
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>

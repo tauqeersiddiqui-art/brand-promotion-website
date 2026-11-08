@@ -19,6 +19,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -67,15 +68,38 @@ export default function AdminLoginPage() {
             placeholder="admin@brandpromotion.in"
           />
           <div style={{ height: 12 }} />
-          <label className="form-label">Password</label>
-          <input
-            className="input"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-          />
+          <div style={{ position: "relative" }}>
+            <label className="form-label">Password</label>
+            <input
+              className="input"
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              style={{ paddingRight: 44 }}
+            />
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPassword((v) => !v)}
+              style={{
+                position: "absolute",
+                right: 10,
+                bottom: 28,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                fontSize: 16,
+                lineHeight: 1,
+                color: "var(--muted)",
+              }}
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
           <div style={{ height: 18 }} />
           <button className="btn btn-block" disabled={busy}>
             {busy ? "Signing in…" : "Login to dashboard"}

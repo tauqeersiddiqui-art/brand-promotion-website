@@ -201,13 +201,15 @@ export default function AccountPage() {
                         </td>
                         <td>
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            <Link
+                            <a
                               href={`/track?q=${encodeURIComponent(o.external_order_id || o.order_code)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className="btn btn-secondary btn-sm"
                               style={{ fontSize: 12, padding: "5px 10px" }}
                             >
                               🔍 Track
-                            </Link>
+                            </a>
                             {!reviewEligible && o.status === "confirmed" && !activeRefund && (
                               <button
                                 className="btn btn-ghost btn-sm"

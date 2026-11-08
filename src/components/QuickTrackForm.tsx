@@ -246,7 +246,7 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
                     Post your review on {result.order.platform}, then submit the order, review and seller
                     feedback screenshots below to receive your 100% refund.
                   </p>
-                    <Link href="/#claim-refund" className="btn btn-sm btn-ghost" style={{ marginTop: 8 }}>
+                    <Link href="/claim" className="btn btn-sm btn-ghost" style={{ marginTop: 8 }}>
                       Submit refund form →
                     </Link>
                 </div>

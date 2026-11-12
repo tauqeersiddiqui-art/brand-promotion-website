@@ -17,7 +17,6 @@ function getCsrfHeader(): Record<string, string> {
 const FIELDS: { key: keyof SiteSettings; label: string; hint?: string; textarea?: boolean; rows?: number }[] = [
   { key: "site_name", label: "Site Name", hint: "Brand platform brand name" },
   { key: "tagline", label: "Tagline", hint: "Shown under the site name and in Google results" },
-  { key: "announcement", label: "Announcement Banner", hint: "Leave empty to hide the top banner", textarea: true, rows: 2 },
   { key: "whatsapp", label: "WhatsApp Support Number", hint: "With country code, digits only — e.g. 919876543210" },
   { key: "telegram", label: "Telegram Channel / VIP Username", hint: "Without @ — e.g. brandpromotion" },
   { key: "support_email", label: "Support Email", hint: "Deal support email" },

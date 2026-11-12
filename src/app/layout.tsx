@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ADSENSE_CLIENT } from "@/lib/adsense";
-import { getSettings, type SiteSettings } from "@/lib/settings";
+import { getSettings, ANNOUNCEMENT, type SiteSettings } from "@/lib/settings";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FloatingChat from "@/components/FloatingChat";
@@ -62,7 +62,7 @@ async function safeSettings(): Promise<SiteSettings> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const s = await safeSettings();
-  const announcement = s.announcement.trim();
+  const announcement = ANNOUNCEMENT.trim();
   const adsenseClient = ADSENSE_CLIENT;
 
   return (

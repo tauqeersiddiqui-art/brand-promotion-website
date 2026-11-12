@@ -12,10 +12,14 @@ export type SiteSettings = {
   rules_instructions: string;
 };
 
+// Single source of truth for the top banner. Edit this line and redeploy —
+// it always wins over any stale value persisted in the database.
+export const ANNOUNCEMENT = "🔥 New deals added daily! Find verified discounts on Amazon, Flipkart, and brand stores.";
+
 const DEFAULTS: SiteSettings = {
   site_name: "Brand Deals Hub",
   tagline: "India's #1 Verified Deal Discovery Platform",
-  announcement: "🔥 New deals added daily! Find verified discounts on Amazon, Flipkart, and brand stores.",
+  announcement: ANNOUNCEMENT,
   whatsapp: "918527324446",
   telegram: "branddeals",
   support_email: "support@branddeals.in",
@@ -39,7 +43,9 @@ export function getSettings(): SiteSettings {
       value: string;
     }[];
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-    const value = { ...DEFAULTS, ...map } as SiteSettings;
+    // The announcement is code-driven (see ANNOUNCEMENT above) so a deploy
+    // always reflects the latest header line; never trust a persisted value.
+    const value = { ...DEFAULTS, ...map, announcement: ANNOUNCEMENT } as SiteSettings;
     cached = { value, at: now };
     return value;
   } catch {
@@ -52,6 +58,7 @@ export function updateSettings(partial: Partial<SiteSettings>) {
     "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
   );
   for (const [key, value] of Object.entries(partial)) {
+    if (key === "announcement") continue; // code-driven, not persisted
     if (key in DEFAULTS && typeof value === "string") {
       stmt.run(key, value.slice(0, 5000));
     }
@@ -61,9 +68,6 @@ export function updateSettings(partial: Partial<SiteSettings>) {
 
 export function whatsappLink(num: string, text?: string): string {
   let clean = num.replace(/[^0-9]/g, "");
-  // wa.me requires a country code. Older saves of "918527324446" were reduced
-  // to the bare 10-digit local number by the generic phone sanitizer, which
-  // turned into a US number. Restore the Indian country code on read.
   if (clean.length === 10) clean = `91${clean}`;
   if (clean.length === 11 && clean.startsWith("0")) clean = `91${clean.slice(1)}`;
   const t = text ? `?text=${encodeURIComponent(text)}` : "";

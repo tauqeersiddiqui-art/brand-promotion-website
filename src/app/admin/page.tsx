@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { siteUrl } from "@/lib/site-url";
 
 type Stats = {
   deals: number;
@@ -84,7 +83,7 @@ export default function AdminDashboard() {
     { label: "Promotional order volume", value: `₹${stats.totalOrderValue.toLocaleString("en-IN")}`, color: "var(--ink-soft)" },
   ];
 
-  const baseUrl = siteUrl();
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const shareLinks = [
     { label: "Submit feedback", url: `${baseUrl}/claim`, desc: "Order proof submission form" },
     { label: "Track savings", url: `${baseUrl}/track`, desc: "Track order verification and payouts" },

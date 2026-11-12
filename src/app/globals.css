@@ -6,9 +6,9 @@
   --ink-soft: #1A1A1A;
   --muted-ink: #1A1A1A;
   --muted: #64748B;        /* kept for subtle muted states */
+  --muted-soft: #94A3B8;
   --surface-warm: #F5F5F0;
   --accent-amber: #FF9900;             /* Amazon.in signature orange */
-  --accent-lavender: #E6D5F5;
   --accent-maroon: #5C1A1A;
   --action-primary: #0F6CBD;
   --border-subtle: #E5E5E5;
@@ -23,8 +23,8 @@
   --ring: rgba(15, 108, 189, 0.2);
 
   /* Typography scale */
-  --hero-display-font: "Open Ai Sans", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --section-display-font: "Open Ai Sans", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --hero-display-font: "Open Sans", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --section-display-font: "Open Sans", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --body-font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --body-small-font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --label-font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
@@ -41,8 +41,8 @@
   --accent: var(--accent-amber);        /* orange for highlights */
   --brand: var(--accent-amber);         /* orange for brand accents */
   --brand-soft: rgba(255, 153, 0, 0.14);
-  --gradient-brand: var(--amber-accent-fill);
-  --gradient-brand-hover: var(--amber-accent-fill);
+  --gradient-brand: linear-gradient(135deg, #FF9900 0%, #FFB84D 100%);
+  --gradient-brand-hover: linear-gradient(135deg, #E68500 0%, #FF9900 100%);
   --accent-soft: rgba(255, 153, 0, 0.15);
   --danger: #dc2626;                    /* preserved for error states */
   --danger-soft: #fef2f2;
@@ -170,14 +170,6 @@ code { background: var(--bg-soft); border: 1px solid var(--border); border-radiu
 /* Primary action button */
 .btn-primary { background-image: var(--amber-accent-fill); background-color: var(--accent-amber); color: #ffffff; }
 .btn-primary:hover { background-color: #E67E00; }
-
-.btn-danger {
-  background: var(--danger);
-  border-color: transparent;
-  color: #ffffff;
-  box-shadow: 0 6px 16px -8px rgba(220, 38, 38, 0.6);
-}
-.btn-danger:hover { background: #b91c1c; box-shadow: 0 10px 24px -8px rgba(220, 38, 38, 0.65); }
 
 .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 7px; }
 .btn-block { width: 100%; }
@@ -426,7 +418,8 @@ label.form-label {
 .deal-media img { width: 100%; height: 100%; object-fit: contain; padding: 12px; display: block; }
 .deal-placeholder {
   position: absolute; inset: 0; display: grid; place-items: center;
-  background: var(--amber-accent-fill);
+  background-color: var(--accent-soft);
+  background-image: var(--amber-accent-fill);
   color: var(--ink); font-size: 32px;
 }
 .deal-tag {
@@ -736,18 +729,18 @@ table.tbl.tbl-compact { min-width: 0; font-size: 12.5px; }
   margin-top: 64px;
   padding: 52px 0 40px;
   font-size: 14px;
-  color: #c3c6e4;
+  color: #e6e8f0;
   background:
-    radial-gradient(700px 300px at 12% 0%, rgba(124, 58, 237, 0.30), transparent 65%),
-    radial-gradient(600px 280px at 90% 100%, rgba(192, 38, 211, 0.22), transparent 65%),
-    linear-gradient(160deg, #171235 0%, #251352 55%, #3b0764 100%);
+    radial-gradient(700px 300px at 12% 0%, rgba(255, 153, 0, 0.18), transparent 65%),
+    radial-gradient(600px 280px at 90% 100%, rgba(255, 153, 0, 0.10), transparent 65%),
+    linear-gradient(160deg, #1a1a1a 0%, #242424 55%, #0d0d0d 100%);
 
   --ink: #ffffff;
-  --muted: #b9bce0;
-  --muted-soft: #9a9dc7;
+  --muted: #b0b4c8;
+  --muted-soft: #8a8da8;
   --border: rgba(255, 255, 255, 0.14);
-  --brand: #c4b5fd;
-  --brand-soft: rgba(255, 255, 255, 0.10);
+  --brand: var(--accent-amber);
+  --brand-soft: rgba(255, 153, 0, 0.14);
   --card: rgba(255, 255, 255, 0.06);
 }
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; }

@@ -13,8 +13,6 @@
     "lint": "next lint",
     "test": "node --import tsx --test \"tests/*.test.ts\"",
     "db:reset": "node scripts/reset-db.js",
-    "migrate:pg": "tsx scripts/migrate-sqlite-to-postgres.ts",
-    "verify:pg": "tsx scripts/verify-database-migration.ts",
     "health": "node scripts/health-check.js",
     "backfill:hashes": "node scripts/backfill-image-hashes.js"
   },
@@ -26,7 +24,6 @@
     "ioredis": "^6.0.0",
     "jose": "^5.9.6",
     "next": "^15.5.29",
-    "pg": "^8.23.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.35.5",
@@ -36,12 +33,10 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22",
-    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.29",
-    "tsx": "^4.23.15",
     "typescript": "5.8.2"
   }
 }

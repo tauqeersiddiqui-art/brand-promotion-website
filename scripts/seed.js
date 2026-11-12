@@ -250,14 +250,14 @@ const settingStmt = db.prepare(
 );
 [
   ["site_name", "Brand Promotion"],
-  ["tagline", "India's #1 Influencer Refund & Brand Deals Platform"],
-  ["announcement", "🔥 100% Refund Campaign Live! Buy on Amazon/Flipkart, share review & get full UPI reimbursement."],
+  ["tagline", "India's #1 Verified Deal Discovery Platform"],
+  ["announcement", "🔥 New deals added daily! Find verified discounts on Amazon, Flipkart, and brand stores."],
   ["whatsapp", "918527324446"],
-  ["telegram", "brandreviewer"],
-  ["support_email", "support@brandpromotion.in"],
-  ["instagram", "brandpromotion.in"],
-  ["mediators", "Direct,Amit Mediator,Rahul Agency,Pooja Deals,VIP Campaigns,Social Reach"],
-  ["rules_instructions", "1. Check available slots before ordering.\n2. Search product with specified keyword on Amazon/Flipkart.\n3. Upload the order confirmation screenshot (must show the Order ID).\n4. After delivery, post a genuine 5-star review with photos.\n5. Once the return window closes, claim refund with your review screenshot and an order-page screenshot showing the Order ID and 'Return window closed'."],
+  ["telegram", "branddeals"],
+  ["support_email", "support@branddeals.in"],
+  ["instagram", "branddeals.in"],
+  ["mediators", "Support Team,Deal Curators,VIP Shoppers"],
+  ["rules_instructions", "1. Browse verified deals on our platform.\n2. Click 'Shop on' to visit the store directly.\n3. Apply the deal code at checkout.\n4. Contact store support for order issues."],
 ].forEach(([k, v]) => settingStmt.run(k, v));
 
 // ---------- owner account ----------

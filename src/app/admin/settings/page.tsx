@@ -20,10 +20,10 @@ const FIELDS: { key: keyof SiteSettings; label: string; hint?: string; textarea?
   { key: "announcement", label: "Announcement Banner", hint: "Leave empty to hide the top banner", textarea: true, rows: 2 },
   { key: "whatsapp", label: "WhatsApp Support Number", hint: "With country code, digits only — e.g. 919876543210" },
   { key: "telegram", label: "Telegram Channel / VIP Username", hint: "Without @ — e.g. brandpromotion" },
-  { key: "support_email", label: "Support Email", hint: "Reviewer helpdesk email" },
+  { key: "support_email", label: "Support Email", hint: "Deal support email" },
   { key: "instagram", label: "Instagram Handle (optional)", hint: "Without @" },
-  { key: "mediators", label: "Registered Mediators / Agencies", hint: "Comma-separated mediator names (e.g. Direct, Amit Mediator, Rahul Agency, VIP Campaigns)", textarea: true, rows: 2 },
-  { key: "rules_instructions", label: "Global Campaign & Reimbursement Instructions", hint: "Markdown/bulleted rules displayed on deal cards, submit forms, and terms page", textarea: true, rows: 5 },
+  { key: "mediators", label: "Registered Mediators / Agencies", hint: "Comma-separated mediator names (e.g. Support Team, Deal Curators, VIP Shoppers)", textarea: true, rows: 2 },
+  { key: "rules_instructions", label: "Global Deal Instructions", hint: "Rules displayed on deal cards — tell shoppers how to find and shop deals", textarea: true, rows: 5 },
 ];
 
 export default function AdminSettingsPage() {
@@ -140,7 +140,7 @@ export default function AdminSettingsPage() {
         <div>
           <h1>⚙️ Brand Platform Settings</h1>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-            Configure site metadata, WhatsApp/Telegram integration, agency mediators list, and reimbursement instructions.
+            Configure site metadata, WhatsApp/Telegram integration, agency mediators list, and deal instructions.
           </p>
         </div>
       </div>

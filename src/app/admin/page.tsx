@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { siteUrl } from "@/lib/site-url";
 
 type Stats = {
   deals: number;
@@ -81,6 +82,13 @@ export default function AdminDashboard() {
     { label: "Pending refund payouts", value: stats.pendingReimbursements, color: "var(--accent)" },
     { label: "Total refund disbursed", value: `₹${stats.totalDisbursed.toLocaleString("en-IN")}`, color: "var(--accent)" },
     { label: "Promotional order volume", value: `₹${stats.totalOrderValue.toLocaleString("en-IN")}`, color: "var(--ink-soft)" },
+  ];
+
+  const baseUrl = siteUrl();
+  const shareLinks = [
+    { label: "Submit feedback", url: `${baseUrl}/claim`, desc: "Order proof submission form" },
+    { label: "Track savings", url: `${baseUrl}/track`, desc: "Track order verification and payouts" },
+    { label: "Home", url: baseUrl, desc: "Main website" },
   ];
 
   return (
@@ -229,6 +237,52 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Shareable Links Section */}
+      <div style={{ marginTop: 40 }}>
+        <div className="section-head" style={{ marginBottom: 16 }}>
+          <h3>Shareable Forms</h3>
+          <p className="muted" style={{ fontSize: 13 }}>
+            Copy and share these links with specific users. Forms are not publicly visible.
+          </p>
+        </div>
+        <div className="card" style={{ padding: 20 }}>
+          <div style={{ display: "grid", gap: 16 }}>
+            {shareLinks.map((link) => (
+              <div key={link.label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <strong style={{ fontSize: 14 }}>{link.label}</strong>
+                  <span className="muted" style={{ fontSize: 12 }}>- {link.desc}</span>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    readOnly
+                    value={link.url}
+                    style={{
+                      flex: 1,
+                      padding: "8px 10px",
+                      fontSize: 12,
+                      fontFamily: "monospace",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--border)",
+                      background: "var(--bg)",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => navigator.clipboard.writeText(link.url)}
+                    title="Copy to clipboard"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

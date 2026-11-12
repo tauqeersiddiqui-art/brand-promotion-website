@@ -23,12 +23,10 @@ export default function Footer({ settings: s }: { settings: SiteSettings }) {
         </div>
 
         <div>
-          <h4>Reviewer Hub</h4>
+          <h4>Deal Center</h4>
           <Link href="/browse">Live brand deals</Link>
           <Link href="/stores">Shop all stores</Link>
-          <Link href="/#submit-order">Submit order proof</Link>
-          <Link href="/#claim-refund">Claim refund</Link>
-          <Link href="/track">Track payout status</Link>
+          <Link href="/track">Track status</Link>
           <Link href="/account">My dashboard</Link>
         </div>
 

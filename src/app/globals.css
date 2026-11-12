@@ -259,7 +259,7 @@ label.form-label {
   border-radius: 999px;
 }
 .badge-brand { background: var(--brand-soft); color: #5b21b6; }
-.badge-refund { background: var(--accent-soft); color: #065f46; }
+.badge-deal { background: var(--accent-soft); color: #065f46; }
 .badge-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
 
 .pill {

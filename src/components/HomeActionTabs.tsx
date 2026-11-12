@@ -31,9 +31,9 @@ export default function HomeActionTabs() {
       <span id="track" style={{ display: "block", position: "relative", top: -90 }} />
       <div className="action-panel">
         <div style={{ textAlign: "center", marginBottom: 22 }}>
-          <h2 style={{ margin: "0 0 6px" }}>Reviewer actions</h2>
+          <h2 style={{ margin: "0 0 6px" }}>Deal actions</h2>
           <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-            Submit your order proof, request your refund, or track a payout status.
+            Submit your order proof, share feedback, or track savings status.
           </p>
         </div>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
@@ -56,7 +56,7 @@ export default function HomeActionTabs() {
               window.history.replaceState(null, "", "#claim-refund");
             }}
           >
-            2. Request refund
+            2. Submit feedback
           </button>
           <button
             type="button"
@@ -66,7 +66,7 @@ export default function HomeActionTabs() {
               window.history.replaceState(null, "", "#track");
             }}
           >
-            3. Track status
+            3. Track savings
           </button>
         </div>
 

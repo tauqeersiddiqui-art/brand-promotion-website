@@ -67,7 +67,7 @@ export default function TermsPage() {
                 All purchases are completed on the store's own website. You'll be redirected to their checkout process.
               </li>
               <li>
-                Order confirmations, returns, and refunds are handled exclusively by the store's customer support.
+                Order confirmations, returns, and savings verification are handled exclusively by the store's customer support.
               </li>
             </ul>
           </section>

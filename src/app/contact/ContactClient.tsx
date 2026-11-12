@@ -20,14 +20,32 @@ export default function ContactClient({
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    // Simulate brief sending or save inquiry
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setBusy(false);
-    setSubmitted(true);
+    setError("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": (document.cookie.split("; ").find((c) => c.startsWith("bp_csrf_js="))?.split("=")[1] || ""),
+        },
+        body: JSON.stringify({ name, email, phone, subject, orderId, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to submit ticket.");
+      } else {
+        setSubmitted(true);
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

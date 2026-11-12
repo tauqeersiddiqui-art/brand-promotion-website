@@ -127,7 +127,7 @@ export default async function DealPage({
     ...(deal.image_url ? { image: [deal.image_url] } : {}),
     category: deal.category,
     ...(deal.product_code ? { sku: deal.product_code, mpn: deal.product_code } : {}),
-    brand: { "@type": "Brand", name: deal.platform || "Brand Promotion" },
+    brand: { "@type": "Brand", name: deal.platform || "Brand Deals Hub" },
     offers: {
       "@type": "Offer",
       price: Number(deal.price_sale),
@@ -327,17 +327,17 @@ export default async function DealPage({
                 <div style={{ display: "grid", gap: 8 }}>
                   {Number(deal.review_amount) > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                      <span>Review offer (₹{Number(deal.review_amount).toLocaleString("en-IN")} credited)</span>
+                      <span>Review deal (₹{Number(deal.review_amount).toLocaleString("en-IN")} credited)</span>
                     </div>
                   )}
                   {Number(deal.rating_amount) > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                      <span>Rating offer (₹{Number(deal.rating_amount).toLocaleString("en-IN")})</span>
+                      <span>Rating deal (₹{Number(deal.rating_amount).toLocaleString("en-IN")})</span>
                     </div>
                   )}
                   {Number(deal.only_order_amount) > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                      <span>Order offer (₹{Number(deal.only_order_amount).toLocaleString("en-IN")})</span>
+                      <span>Order deal (₹{Number(deal.only_order_amount).toLocaleString("en-IN")})</span>
                     </div>
                   )}
                 </div>
@@ -405,7 +405,7 @@ export default async function DealPage({
                     rel="noopener noreferrer"
                     style={{ flex: 1 }}
                   >
-                    Open claim page →
+                    Open feedback page →
                   </a>
                 )}
               </div>
@@ -441,7 +441,7 @@ export default async function DealPage({
       <section className="mt" style={{ paddingBottom: 20 }}>
         <div className="section-head">
           <h2>
-            Customer reviews{avgRating > 0 && <span className="muted" style={{ fontSize: 16, marginLeft: 10 }}>{reviews.length} verified</span>}
+            Customer feedback{avgRating > 0 && <span className="muted" style={{ fontSize: 16, marginLeft: 10 }}>{reviews.length} verified</span>}
           </h2>
         </div>
         {reviews.length === 0 ? (
@@ -456,7 +456,7 @@ export default async function DealPage({
                       <span style={{ letterSpacing: "-0.05em" }}>{"★".repeat(r.rating)}</span>
                       <span style={{ color: "var(--border)" }}>{"★".repeat(5 - r.rating)}</span>
                       <strong style={{ marginLeft: 8, fontSize: 14 }}>{r.user_name}</strong>
-                      <span className="pill pill-delivered" style={{ marginLeft: 10, fontSize: 11 }}>Verified buyer</span>
+                      <span className="pill pill-delivered" style={{ marginLeft: 10, fontSize: 11 }}>Verified shopper</span>
                     </div>
                   </div>
                   <span className="muted" style={{ fontSize: 12.5 }}>

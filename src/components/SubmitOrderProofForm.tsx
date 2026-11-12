@@ -241,7 +241,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
           </div>
         ) : (
           <div className="alert alert-info" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
-            ℹ️ Your order proof has been received. Ready for refund claims.
+            ℹ️ Your order proof has been received. Ready for feedback submission.
           </div>
         )}
 
@@ -330,7 +330,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
             <option value="Flipkart">Flipkart</option>
             <option value="Myntra">Myntra</option>
             <option value="Brand Store">Brand Store</option>
-            <option value="Other">Other</option>
+            <option value="Other Marketplace">Other Marketplace</option>
           </select>
         </div>
 
@@ -364,7 +364,7 @@ export default function SubmitOrderProofForm({ initialDealId }: { initialDealId?
         )}
 
         <div>
-          <label className="form-label">Reviewer Profile Name *</label>
+          <label className="form-label">Your Profile Name *</label>
           <input
             className="input"
             required

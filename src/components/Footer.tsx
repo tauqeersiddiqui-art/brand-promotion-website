@@ -10,14 +10,14 @@ export default function Footer({ settings: s }: { settings: SiteSettings }) {
             <span className="logo">BP</span> {s.site_name}
           </div>
           <p style={{ margin: 0, maxWidth: 320, color: "var(--muted)", fontSize: 13.5 }}>
-            {s.tagline}. Genuine brand campaigns with direct UPI refund for verified reviewers.
+            {s.tagline}. Genuine brand campaigns with direct store shopping and instant savings.
           </p>
           <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <span className="badge badge-refund">
-              Direct UPI Payouts
+            <span className="badge badge-deal">
+              Instant Savings
             </span>
             <span className="badge badge-outline">
-              Verified Reviews
+              Verified Deals
             </span>
           </div>
         </div>
@@ -64,8 +64,8 @@ export default function Footer({ settings: s }: { settings: SiteSettings }) {
       </div>
 
       <div className="container" style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid var(--border)", fontSize: 13, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <span>© {new Date().getFullYear()} {s.site_name}. Brand campaigns &amp; reviewer refund platform.</span>
-        <span>For verified reviewers</span>
+        <span>© {new Date().getFullYear()} {s.site_name}. Brand campaigns &amp; instant deal savings platform.</span>
+        <span>For deal shoppers</span>
       </div>
     </footer>
   );

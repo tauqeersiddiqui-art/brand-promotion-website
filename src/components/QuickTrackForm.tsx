@@ -102,7 +102,7 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
   return (
     <div className="card">
       <div style={{ marginBottom: 18 }}>
-        <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Track order &amp; payout status</h3>
+        <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Track savings status</h3>
         <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
           Enter your <strong>Amazon/Flipkart Order ID</strong> (e.g. 404-1234567-1234567), <strong>Tracking Code</strong> (BP-...), or registered <strong>Phone Number</strong>.
         </p>
@@ -172,7 +172,7 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
               <div className="timeline-content">
                 <strong>1. Order Proof Submitted</strong>
                 <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-                  Order proof uploaded for {result.order.platform}. Reviewer: {result.order.reviewer_name}.
+                  Order proof uploaded for {result.order.platform}. Participant: {result.order.reviewer_name}.
                   {result.order.ocr_order_match === 1 && " (OCR Match Verified)"}
                 </p>
               </div>
@@ -202,11 +202,11 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
                   </div>
                   <div className="timeline-content">
                     <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
-                      <strong>3. Review Refund Claim ({rem.reimbursement_code})</strong>
+                      <strong>3. Savings Credit ({rem.reimbursement_code})</strong>
                       <span className={`pill pill-${rem.status}`}>{rem.status}</span>
                     </div>
                     <p className="muted" style={{ margin: "6px 0 0", fontSize: 13 }}>
-                      Claim for ₹{rem.amount.toLocaleString("en-IN")} via UPI ({rem.upi_id}).
+                      Savings: ₹{rem.amount.toLocaleString("en-IN")} via UPI ({rem.upi_id}).
                     </p>
 
                     {rem.status === "paid" && (
@@ -220,11 +220,11 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
                         }}
                       >
                         <div style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13.5 }}>
-                          🎉 Refund Disbursed Successfully!
+                          🎉 Savings Credited Successfully!
                         </div>
                         {rem.utr_number && (
                           <div style={{ fontSize: 13, marginTop: 4 }}>
-                            Bank UTR Ref: <code style={{ background: "var(--bg)", padding: "2px 6px", borderRadius: 4 }}>{rem.utr_number}</code>
+                            UTR Ref: <code style={{ background: "var(--bg)", padding: "2px 6px", borderRadius: 4 }}>{rem.utr_number}</code>
                           </div>
                         )}
                         {rem.admin_note && (
@@ -241,13 +241,13 @@ export default function QuickTrackForm({ initialQuery }: { initialQuery?: string
               <div className="timeline-item">
                 <div className="timeline-dot">3</div>
                 <div className="timeline-content">
-                  <strong>3. Submit refund form</strong>
+                  <strong>3. Submit feedback</strong>
                   <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-                    Post your review on {result.order.platform}, then submit the order, review and seller
-                    feedback screenshots below to receive your 100% refund.
+                    Share your feedback on {result.order.platform}, then submit the order details
+                    below to receive your savings.
                   </p>
                     <Link href="/claim" className="btn btn-sm btn-ghost" style={{ marginTop: 8 }}>
-                      Submit refund form →
+                      Submit feedback →
                     </Link>
                 </div>
               </div>

@@ -223,8 +223,8 @@ export default function StoresPage() {
           <h1 style={{ margin: "12px 0 10px" }}>Open India&apos;s leading online stores</h1>
           <p className="muted" style={{ maxWidth: 720, margin: "0 auto", fontSize: 15 }}>
             Choose a marketplace or brand below and shop on that store&apos;s own website. Your order,
-            payment, delivery, return and refund are handled entirely by that store. This page is only
-            a helpful directory of links — there is no order or refund form to fill here.
+            payment, delivery, return verification and savings confirmation are handled entirely by that store. This page is only
+            a helpful directory of links — there is no order or savings form to fill here.
           </p>
         </div>
 
@@ -312,7 +312,7 @@ export default function StoresPage() {
           <ul className="muted" style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, display: "flex", flexDirection: "column", gap: 6 }}>
             <li>All purchases happen on the store&apos;s website under that store&apos;s terms and conditions.</li>
             <li>We never ask for payment, card details, OTPs or order proofs for purchases made on other stores.</li>
-            <li>For order status, delivery, replacement or refund, contact the store where you bought the product.</li>
+            <li>For order status, delivery, replacements and savings verification, contact the store where you bought the product.</li>
             <li>Some store links may be promotional or affiliate links; the price you pay is unchanged.</li>
           </ul>
         </div>

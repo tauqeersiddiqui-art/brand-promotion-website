@@ -47,15 +47,15 @@ async function safeSettings(): Promise<SiteSettings> {
     return getSettings();
   } catch {
     return {
-      site_name: "Brand Promotion",
-      tagline: "India's smartest deals & brand promotion platform",
+      site_name: "Brand Deals Hub",
+      tagline: "India's #1 Verified Deal Discovery Platform",
       announcement: "",
       whatsapp: "918527324446",
-      telegram: "brandreviewer",
-      support_email: "support@brandpromotion.in",
-      instagram: "",
-      mediators: "Direct,Amit Mediator,Rahul Agency,Pooja Deals,VIP Campaigns,Social Reach",
-      rules_instructions: "1. Search keyword on Amazon/Flipkart.\n2. Submit order screenshot with Order ID.\n3. Post 5-star review upon delivery.\n4. After the return window closes, claim with review + order screenshots.",
+      telegram: "branddeals",
+      support_email: "support@branddeals.in",
+      instagram: "branddeals.in",
+      mediators: "Support Team,Deal Curators,VIP Shoppers",
+      rules_instructions: "1. Browse verified deals on our platform.\n2. Click 'Shop on' to visit the store directly.\n3. Apply the deal code at checkout.\n4. Contact store support for order issues.",
     };
   }
 }

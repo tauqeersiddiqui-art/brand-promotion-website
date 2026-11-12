@@ -50,7 +50,7 @@ type Reimbursement = {
 };
 
 export default function AccountPage() {
-  const [activeTab, setActiveTab] = useState<"orders" | "reimbursements" | "new_claim">("orders");
+  const [activeTab, setActiveTab] = useState<"orders" | "savings" | "new_feedback">("orders");
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [loadError, setLoadError] = useState("");
   const [reimbursements, setReimbursements] = useState<Reimbursement[]>([]);
@@ -122,16 +122,16 @@ export default function AccountPage() {
         </button>
         <button
           type="button"
-          className={`tab-btn ${activeTab === "reimbursements" ? "active" : ""}`}
-          onClick={() => setActiveTab("reimbursements")}
+          className={`tab-btn ${activeTab === "savings" ? "active" : ""}`}
+          onClick={() => setActiveTab("savings")}
           style={{ width: "auto" }}
         >
           Savings &amp; payouts ({reimbursements.length})
         </button>
         <button
           type="button"
-          className={`tab-btn ${activeTab === "new_claim" ? "active" : ""}`}
-          onClick={() => setActiveTab("new_claim")}
+          className={`tab-btn ${activeTab === "new_feedback" ? "active" : ""}`}
+          onClick={() => setActiveTab("new_feedback")}
           style={{ width: "auto" }}
         >
           Submit feedback
@@ -159,11 +159,11 @@ export default function AccountPage() {
                 <thead>
                   <tr>
                     <th>Order & Platform</th>
-                    <th>Campaign Deal</th>
-                    <th>Reviewer Name</th>
+                    <th>Deal</th>
+                    <th>Your Name</th>
                     <th>Amount</th>
                     <th>Status</th>
-                    <th>Reimbursement Action</th>
+                    <th>Action</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -234,7 +234,7 @@ export default function AccountPage() {
         </>
       )}
 
-      {activeTab === "reimbursements" && (
+      {activeTab === "savings" && (
         <div>
           {reimbursements.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 48 }}>
@@ -256,10 +256,10 @@ export default function AccountPage() {
               <table className="tbl">
                 <thead>
                   <tr>
-                    <th>Claim Ref</th>
+                    <th>Feedback Ref</th>
                     <th>Order ID</th>
                     <th>Payout Method</th>
-                    <th>Amount</th>
+                    <th>Savings Amount</th>
                     <th>Status</th>
                     <th>UTR / Bank Ref</th>
                     <th>Date</th>
@@ -302,7 +302,7 @@ export default function AccountPage() {
         </div>
       )}
 
-      {activeTab === "new_claim" && (
+      {activeTab === "new_feedback" && (
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
           <ClaimRefundForm />
         </div>

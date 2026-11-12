@@ -228,20 +228,20 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
       <div className="card" style={{ textAlign: "center", padding: "36px 20px" }}>
         <div className="muted" style={{ fontSize: 44, marginBottom: 10, display: "block" }}>—</div>
         <h2 style={{ margin: "0 0 8px", fontSize: 24, color: "var(--accent)" }}>
-          Refund request submitted!
+          Feedback submitted!
         </h2>
         <p className="muted" style={{ maxWidth: 500, margin: "0 auto 16px" }}>
-          Claim Ref: <strong style={{ color: "var(--brand)" }}>{success.reimbursement_code}</strong>.
-          Refund amount: <strong>₹{success.amount.toLocaleString("en-IN")}</strong>.
+          Feedback Ref: <strong style={{ color: "var(--brand)" }}>{success.reimbursement_code}</strong>.
+          Savings amount: <strong>₹{success.amount.toLocaleString("en-IN")}</strong>.
         </p>
 
         <div className="alert alert-success" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
-          ⚡ Refunds are verified and disbursed directly to <strong>{success.upi_id || "your account"}</strong> within 24-48 hours. You will receive a UTR reference upon completion.
+          ⚡ Savings are credited and disbursed directly to <strong>{success.upi_id || "your account"}</strong> within 24-48 hours. You will receive a UTR reference upon completion.
         </div>
 
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 20 }}>
           <Link href={`/track?q=${encodeURIComponent(externalOrderId || success.reimbursement_code)}`} className="btn">
-            🔍 Track Refund Status
+            🔍 Track Savings Status
           </Link>
           <button
             type="button"
@@ -259,7 +259,7 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
               setFileResetKey((k) => k + 1);
             }}
           >
-            Request Another Refund
+            Submit Another Feedback
           </button>
         </div>
       </div>
@@ -277,8 +277,8 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
   if (!user) {
     return (
       <LoginRequired
-        title="Log in to request your refund"
-        description="Refund requests are linked to the account that submitted the order proof so payouts go to the right person. Log in or create a free account to continue."
+        title="Log in to submit feedback"
+        description="Feedback submissions are linked to the account that submitted the order proof so savings go to the right person. Log in or create a free account to continue."
         next={pathname && pathname !== "/" ? pathname : "/claim"}
       />
     );
@@ -287,11 +287,10 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
   return (
     <form onSubmit={handleSubmit} className="card">
       <div style={{ marginBottom: 18 }}>
-        <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Request refund</h3>
+        <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Submit feedback</h3>
         <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
-          Once your product is delivered, your 5-star review is live on Amazon/Flipkart and the
-          return window has closed, submit the order, review and seller feedback screenshots for
-          100% UPI refund.
+          Once your product is delivered and you've shared your feedback on Amazon/Flipkart,
+          submit the order and feedback screenshots to receive your savings.
         </p>
       </div>
 
@@ -314,7 +313,7 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
         </div>
 
         <div>
-          <label className="form-label">Reviewer Profile Name (Optional)</label>
+          <label className="form-label">Your Profile Name (Optional)</label>
           <input
             className="input"
             value={reviewerName}
@@ -334,7 +333,7 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
         </div>
 
         <div>
-          <label className="form-label">Refund Amount (₹) (Optional)</label>
+          <label className="form-label">Savings Amount (₹) (Optional)</label>
           <input
             className="input"
             type="number"
@@ -368,7 +367,7 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
               placeholder="e.g. yourname@okhdfcbank or 9876543210@paytm"
             />
             <span className="muted" style={{ fontSize: 12 }}>
-              Double-check your UPI ID carefully for smooth refund disbursement.
+              Double-check your UPI ID carefully for smooth savings credit.
             </span>
           </div>
         ) : (
@@ -423,13 +422,13 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
         )}
 
         <div className="full">
-          <label className="form-label">Live Review URL / Link (Optional)</label>
+          <label className="form-label">Live Feedback URL / Link (Optional)</label>
           <input
             className="input"
             type="url"
             value={reviewLink}
             onChange={(e) => setReviewLink(e.target.value)}
-            placeholder="https://www.amazon.in/gp/customer-reviews/..."
+            placeholder="https://www.amazon.in/gp/profile/... or store review link"
           />
         </div>
 
@@ -448,13 +447,13 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
           <span className="muted" style={{ fontSize: 12 }}>
             Open the order in the Amazon/Flipkart app and screenshot the order details page. It
             must show the order&apos;s Order ID and that the return window has closed (e.g.
-            "Return window closed"). Refund claims can only be filed after the return period ends.
+            "Return window closed"). Feedback can only be submitted after the return period ends.
           </span>
         </div>
 
         <div className="full" style={{ background: "var(--bg-soft)", padding: 14, borderRadius: 12, border: "1px solid var(--border)" }}>
           <label className="form-label" style={{ color: "var(--accent)", fontSize: 13.5 }}>
-            2. Live review &amp; rating screenshot * ("Verified Purchase" badge)
+            2. Live feedback &amp; rating screenshot * ("Verified Purchase" badge)
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <span style={{ fontSize: 13 }}>Your rating:</span>
@@ -481,7 +480,7 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
             onChange={(e) => handleReviewScreenshotChange(e.target.files?.[0] ?? null)}
           />
           <span className="muted" style={{ fontSize: 12 }}>
-            Screenshot of the published review with its star rating. It must clearly show the
+            Screenshot of the published feedback with its star rating. It must clearly show the
             "Verified Purchase" badge; unreadable screenshots are rejected. 5 stars are only
             required if your deal instructions say so — otherwise your actual rating is accepted.
           </span>
@@ -511,14 +510,14 @@ export default function ClaimRefundForm({ initialOrderId, onSuccess }: ClaimRefu
             className="input"
             value={reviewNotes}
             onChange={(e) => setReviewNotes(e.target.value)}
-            placeholder="Any feedback or notes about the review…"
+            placeholder="Any feedback or notes about your experience…"
             style={{ minHeight: 60 }}
           />
         </div>
 
         <div className="full">
           <button className="btn btn-block" disabled={busy}>
-            {busy ? "Submitting Refund Request…" : "💸 Submit Refund Request →"}
+            {busy ? "Submitting Feedback…" : "💸 Submit Feedback →"}
           </button>
         </div>
       </div>

@@ -48,6 +48,7 @@ export default function CancelPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-csrf-token": (document.cookie.split("; ").find((c) => c.startsWith("bp_csrf_js="))?.split("=")[1] || ""),
         },
         body: JSON.stringify({
           order_id: orderData.id,

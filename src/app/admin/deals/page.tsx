@@ -47,6 +47,9 @@ type Deal = {
   rejection_reason: string;
   mediator_commission_amount: number;
   less_amount: number;
+  seller_name: string;
+  seller_contact: string;
+  seller_telegram: string;
 };
 
 const EMPTY = {
@@ -77,6 +80,9 @@ const EMPTY = {
   featured: false,
   active: true,
   mediator_commission_amount: "",
+  seller_name: "",
+  seller_contact: "",
+  seller_telegram: "",
 };
 
 const PLATFORMS = ["Amazon", "Flipkart", "Myntra", "Brand Store", "Meesho", "Nykaa"];
@@ -172,6 +178,9 @@ export default function AdminDealsPage() {
       active: d.active === 1,
       mediator_commission_amount: String(d.mediator_commission_amount || ""),
       less_amount: String(d.less_amount || ""),
+      seller_name: d.seller_name || "",
+      seller_contact: d.seller_contact || "",
+      seller_telegram: d.seller_telegram || "",
     });
     setFile(null);
     setMsg(null);
@@ -306,6 +315,9 @@ export default function AdminDealsPage() {
       fd.set("featured", form.featured ? "true" : "false");
       fd.set("active", form.active ? "true" : "false");
       fd.set("mediator_commission_amount", form.mediator_commission_amount || "0");
+      fd.set("seller_name", form.seller_name || "");
+      fd.set("seller_contact", form.seller_contact || "");
+      fd.set("seller_telegram", form.seller_telegram || "");
       if (form.image_url) fd.set("image_url", form.image_url);
       if (file) fd.set("image", file);
 
@@ -680,6 +692,43 @@ export default function AdminDealsPage() {
             />
             <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
               Fixed amount paid to the mediator for this campaign. Not a percentage.
+            </p>
+          </div>
+
+          {/* Seller Contact Details — used for bulk export & WhatsApp/Telegram links */}
+          <div className="full" style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginTop: 8 }}>
+            <h4 style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ink)" }}>Seller Contact (for claim export & outreach)</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+              <div>
+                <label className="form-label">Seller Name</label>
+                <input
+                  className="input"
+                  value={form.seller_name}
+                  onChange={(e) => set("seller_name", e.target.value)}
+                  placeholder="e.g. Amazon Seller Central — BrandX"
+                />
+              </div>
+              <div>
+                <label className="form-label">Seller Contact (Email / WhatsApp)</label>
+                <input
+                  className="input"
+                  value={form.seller_contact}
+                  onChange={(e) => set("seller_contact", e.target.value)}
+                  placeholder="seller@brandx.com or +919876543210"
+                />
+              </div>
+              <div>
+                <label className="form-label">Seller Telegram @username</label>
+                <input
+                  className="input"
+                  value={form.seller_telegram}
+                  onChange={(e) => set("seller_telegram", e.target.value)}
+                  placeholder="brandx_seller (without @)"
+                />
+              </div>
+            </div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+              These are included in the "Export to Seller" CSV and power the WhatsApp/Telegram quick-links on the Reimbursements page.
             </p>
           </div>
 

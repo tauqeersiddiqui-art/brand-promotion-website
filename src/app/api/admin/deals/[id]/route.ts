@@ -153,6 +153,15 @@ export async function PATCH(
   const lessAmount = has("less_amount")
     ? num(form.get("less_amount"), 0, 10_000_000, (existing as any).less_amount || 0)
     : (existing as any).less_amount || 0;
+  const sellerName = has("seller_name")
+    ? sanitizeText(str(form.get("seller_name"), 140), 140)
+    : (existing as any).seller_name || "";
+  const sellerContact = has("seller_contact")
+    ? sanitizeText(str(form.get("seller_contact"), 200), 200)
+    : (existing as any).seller_contact || "";
+  const sellerTelegram = has("seller_telegram")
+    ? sanitizeText(str(form.get("seller_telegram"), 100), 100).replace(/^@/, "")
+    : (existing as any).seller_telegram || "";
   const featured = has("featured")
     ? form.get("featured") === "true" || form.get("featured") === "on"
     : existing.featured === 1;
@@ -186,6 +195,7 @@ export async function PATCH(
       rating_amount = ?, only_order_amount = ?, order_form_url = ?, refund_form_url = ?,
       total_slots = ?, claimed_slots = ?,
       stock = ?, featured = ?, active = ?, mediator_commission_amount = ?, less_amount = ?,
+      seller_name = ?, seller_contact = ?, seller_telegram = ?,
       updated_at = datetime('now')
      WHERE id = ?`
   ).run(
@@ -215,6 +225,9 @@ export async function PATCH(
     active ? 1 : 0,
     mediatorCommission,
     lessAmount,
+    sellerName,
+    sellerContact,
+    sellerTelegram,
     id
   );
   writeAutoBackupSafe("deal updated");

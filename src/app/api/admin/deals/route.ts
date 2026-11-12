@@ -101,6 +101,9 @@ export async function POST(req: Request) {
   const lessAmount = num(form.get("less_amount"), 0, 10_000_000, 0);
   const featured = form.get("featured") === "true" || form.get("featured") === "on";
   const active = form.get("active") !== "false";
+  const sellerName = sanitizeText(str(form.get("seller_name"), 140), 140);
+  const sellerContact = sanitizeText(str(form.get("seller_contact"), 200), 200);
+  const sellerTelegram = sanitizeText(str(form.get("seller_telegram"), 100), 100).replace(/^@/, "");
 
   if (title.length < 3) return bad("Title must be at least 3 characters.");
   if (priceSale <= 0) return bad("Sale price must be greater than 0.");
@@ -124,8 +127,8 @@ export async function POST(req: Request) {
         price_original, price_sale, refund_amount, review_amount, rating_amount,
         only_order_amount, order_form_url, refund_form_url, total_slots, claimed_slots,
         stock, featured, active, submitted_by, approval_status, approved_by, approved_at,
-        mediator_commission_amount, less_amount
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        mediator_commission_amount, less_amount, seller_name, seller_contact, seller_telegram
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       productCode,
@@ -157,7 +160,10 @@ export async function POST(req: Request) {
       user.id,
       new Date().toISOString(),
       mediatorCommission,
-      lessAmount
+      lessAmount,
+      sellerName,
+      sellerContact,
+      sellerTelegram
     );
 
   const newId = Number(info.lastInsertRowid);

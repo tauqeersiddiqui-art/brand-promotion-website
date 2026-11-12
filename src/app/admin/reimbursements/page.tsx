@@ -50,6 +50,10 @@ type Reimbursement = {
   order_proof_url: string;
   price_screenshot_url: string;
   deal_title: string;
+  // Seller contact from deal
+  seller_name: string;
+  seller_contact: string;
+  seller_telegram: string;
 };
 
 const STATUSES = ["pending", "under_review", "approved", "paid", "rejected"] as const;
@@ -64,6 +68,9 @@ export default function AdminReimbursementsPage() {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [copiedUpi, setCopiedUpi] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   // Edit / Payout Modal
   const [activeItem, setActiveItem] = useState<Reimbursement | null>(null);
@@ -105,6 +112,73 @@ export default function AdminReimbursementsPage() {
     setEditNote(r.admin_note || "");
     setEditAmount(r.amount);
     setMsg(null);
+  }
+
+  // Selection handlers
+  function toggleSelect(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === reimbursements?.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(reimbursements?.map((r) => r.id) || []));
+    }
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  // Export to Seller - calls the new API endpoint
+  async function handleExportToSeller() {
+    if (selectedIds.size === 0) return;
+    setMsg({ type: "ok", text: "Preparing seller export..." });
+    try {
+      const res = await fetch("/api/admin/reimbursements/export-to-seller", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getCsrfHeader() },
+        body: JSON.stringify({ reimbursementIds: Array.from(selectedIds), status: "approved" }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.headers.get("Content-Disposition")?.split('filename="')[1]?.replace('"', "") || `seller-export-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setMsg({ type: "ok", text: "Seller export downloaded successfully!" });
+        clearSelection();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setMsg({ type: "err", text: d.error || "Export failed." });
+      }
+    } catch {
+      setMsg({ type: "err", text: "Network error during export." });
+    }
+  }
+
+  // WhatsApp link for seller contact
+  function getWhatsAppLink(contact: string): string {
+    const phone = contact.replace(/[^0-9]/g, "");
+    if (!phone) return "";
+    return `https://wa.me/${phone}?text=${encodeURIComponent("Hello! Regarding your approved claims for our brand promotion campaign. Please find the details attached.")}`;
+  }
+
+  // Telegram link for seller
+  function getTelegramLink(telegram: string): string {
+    const username = telegram.replace(/^@/, "");
+    if (!username) return "";
+    return `https://t.me/${username}`;
   }
 
   async function handleQuickStatus(id: number, newStatus: string) {
@@ -187,7 +261,7 @@ export default function AdminReimbursementsPage() {
       )}
 
       {/* Toolbar */}
-      <div className="toolbar" style={{ gap: 12 }}>
+      <div className="toolbar" style={{ gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         <input
           className="input"
           style={{ flex: "1 1 240px", maxWidth: "none" }}
@@ -216,6 +290,30 @@ export default function AdminReimbursementsPage() {
           ))}
         </select>
 
+        {/* Bulk selection toolbar - shows when items selected */}
+        {selectedIds.size > 0 && (
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <span className="muted" style={{ fontSize: 13 }}>
+              {selectedIds.size} selected
+            </span>
+            {status === "approved" && (
+              <button
+                className="btn btn-sm"
+                onClick={handleExportToSeller}
+                disabled={busyId !== null}
+              >
+                📤 Export to Seller
+              </button>
+            )}
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={clearSelection}
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
         <span className="muted" style={{ fontSize: 13 }}>
           {total} reimbursement claim{total === 1 ? "" : "s"}
         </span>
@@ -235,9 +333,18 @@ export default function AdminReimbursementsPage() {
           <table className="tbl">
             <thead>
               <tr>
+                <th style={{ width: 40, textAlign: "center" }}>
+                  <input
+                    type="checkbox"
+                    checked={reimbursements && reimbursements.length > 0 && selectedIds.size === reimbursements.length}
+                    onChange={toggleSelectAll}
+                    title="Select all on this page"
+                  />
+                </th>
                 <th>Claim & Order</th>
                 <th>Reviewer & Contact</th>
                 <th>Campaign Deal</th>
+                <th>Seller Contact</th>
                 <th>Proof & Review</th>
                 <th>Payout UPI / Bank</th>
                 <th>Amount</th>
@@ -248,6 +355,14 @@ export default function AdminReimbursementsPage() {
             <tbody>
               {reimbursements.map((r) => (
                 <tr key={r.id}>
+                  <td style={{ textAlign: "center", verticalAlign: "middle" }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(r.id)}
+                      onChange={() => toggleSelect(r.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </td>
                   <td>
                     <strong>{r.reimbursement_code}</strong>
                     <div style={{ fontSize: 12, marginTop: 2 }}>
@@ -278,6 +393,50 @@ export default function AdminReimbursementsPage() {
                       <div className="muted" style={{ fontSize: 11 }}>
                         {r.platform} · #{r.product_code || "Deal"}
                       </div>
+                    </div>
+                  </td>
+
+                  {/* Seller Contact Column */}
+                  <td>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {r.seller_name && (
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{r.seller_name}</div>
+                      )}
+                      {r.seller_contact && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+                          <span className="muted">📱</span>
+                          <span>{r.seller_contact}</span>
+                          <a
+                            href={getWhatsAppLink(r.seller_contact)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Open WhatsApp"
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: "2px 6px", fontSize: 10 }}
+                          >
+                            WhatsApp
+                          </a>
+                        </div>
+                      )}
+                      {r.seller_telegram && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+                          <span className="muted">💬</span>
+                          <span>@{r.seller_telegram}</span>
+                          <a
+                            href={getTelegramLink(r.seller_telegram)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Open Telegram"
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: "2px 6px", fontSize: 10 }}
+                          >
+                            Telegram
+                          </a>
+                        </div>
+                      )}
+                      {!r.seller_name && !r.seller_contact && !r.seller_telegram && (
+                        <span className="muted" style={{ fontSize: 12 }}>—</span>
+                      )}
                     </div>
                   </td>
 

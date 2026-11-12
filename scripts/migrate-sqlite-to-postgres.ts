@@ -45,6 +45,26 @@ const TABLES = [
   "reviews",
 ];
 
+// Columns that were added after the initial schema. These are applied to
+// both SQLite and Postgres databases so existing rows get the new fields.
+const SCHEMA_MIGRATIONS: { table: string; sql: string; pgSql: string }[] = [
+  {
+    table: "deals",
+    sql: `ALTER TABLE deals ADD COLUMN seller_name TEXT NOT NULL DEFAULT ''`,
+    pgSql: `ALTER TABLE deals ADD COLUMN IF NOT EXISTS seller_name TEXT NOT NULL DEFAULT ''`,
+  },
+  {
+    table: "deals",
+    sql: `ALTER TABLE deals ADD COLUMN seller_contact TEXT NOT NULL DEFAULT ''`,
+    pgSql: `ALTER TABLE deals ADD COLUMN IF NOT EXISTS seller_contact TEXT NOT NULL DEFAULT ''`,
+  },
+  {
+    table: "deals",
+    sql: `ALTER TABLE deals ADD COLUMN seller_telegram TEXT NOT NULL DEFAULT ''`,
+    pgSql: `ALTER TABLE deals ADD COLUMN IF NOT EXISTS seller_telegram TEXT NOT NULL DEFAULT ''`,
+  },
+];
+
 interface SQLiteRow {
   [key: string]: unknown;
   rowid?: number;
@@ -322,11 +342,31 @@ async function verifyMigration() {
   log("Migration verification complete ✓");
 }
 
+async function runSchemaMigrations() {
+  // Apply additive column migrations to the existing SQLite database so
+  // the Postgres schema (which is derived from SQLite's pragma) includes them.
+  for (const m of SCHEMA_MIGRATIONS) {
+    try {
+      sqlite.exec(m.sql);
+      if (isVerbose) log(`Applied migration: ${m.table}.${m.sql.split("ADD COLUMN")[1]?.split(" ")[1]}`);
+    } catch (e) {
+      // Column already exists — that's fine.
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!msg.includes("duplicate column") && !msg.includes("already exists")) {
+        error(`Migration failed for ${m.table}: ${msg}`);
+      }
+    }
+  }
+}
+
 async function migrateAll() {
   log(`Starting SQLite to PostgreSQL migration${isDryRun ? " (DRY RUN)" : ""}`);
   log(`SQLite path: ${SQLITE_DB_PATH}`);
 
   await connectPostgres();
+
+  // Apply additive column migrations to SQLite before deriving Postgres schema
+  runSchemaMigrations();
 
   // Create schema
   log("Creating PostgreSQL schema...");

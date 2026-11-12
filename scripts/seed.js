@@ -71,6 +71,9 @@ db.exec(`
     approved_at TEXT NOT NULL DEFAULT '',
     mediator_commission_amount REAL NOT NULL DEFAULT 0,
     less_amount REAL NOT NULL DEFAULT 0,
+    seller_name TEXT NOT NULL DEFAULT '',
+    seller_contact TEXT NOT NULL DEFAULT '',
+    seller_telegram TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );

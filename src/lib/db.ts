@@ -42,6 +42,33 @@ function getSqliteDb(): Database.Database {
 }
 
 /**
+ * Auto-migrate schema: add any columns that are missing from the live database.
+ *
+ * This runs once on the first DB access after a deploy. It is intentionally
+ * idempotent and cheap — it only inspects the deals table for the three seller
+ * contact columns and ALTERs them in if they are absent. No data is touched.
+ */
+function ensureSchema(db: Database.Database): void {
+  const cols = new Set(
+    (db.prepare("PRAGMA table_info(deals)").all() as { name: string }[]).map((c) => c.name)
+  );
+  const additions: { name: string; sql: string }[] = [
+    { name: "seller_name", sql: "ALTER TABLE deals ADD COLUMN seller_name TEXT NOT NULL DEFAULT ''" },
+    { name: "seller_contact", sql: "ALTER TABLE deals ADD COLUMN seller_contact TEXT NOT NULL DEFAULT ''" },
+    { name: "seller_telegram", sql: "ALTER TABLE deals ADD COLUMN seller_telegram TEXT NOT NULL DEFAULT ''" },
+  ];
+  for (const { name, sql } of additions) {
+    if (cols.has(name)) continue;
+    try {
+      db.exec(sql);
+    } catch (e) {
+      // If the column already exists (race between two workers) just skip it.
+      if (!(e as Error).message.includes("duplicate column")) throw e;
+    }
+  }
+}
+
+/**
  * Database class - SQLite synchronous implementation
  */
 class DbClass {
@@ -50,6 +77,7 @@ class DbClass {
   get db(): Database.Database {
     if (!this.#db) {
       this.#db = getSqliteDb();
+      ensureSchema(this.#db);
     }
     return this.#db;
   }

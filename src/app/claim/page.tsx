@@ -3,8 +3,8 @@ import ClaimRefundForm from "@/components/ClaimRefundForm";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Submit Feedback | Brand Deals Hub",
-  description: "Share your feedback about your deal purchase. Your input helps us improve deal quality.",
+  title: "Submit Order Details | Brand Deals Hub",
+  description: "Submit your order proof and feedback screenshots to receive your savings payout.",
 };
 
 export default function ClaimPage() {
@@ -15,10 +15,10 @@ export default function ClaimPage() {
       </div>
 
       <div className="section-head">
-        <span className="badge badge-outline">Feedback form</span>
-        <h1 style={{ margin: "12px 0 10px" }}>Share your feedback</h1>
+        <span className="badge badge-outline">Order proof form</span>
+        <h1 style={{ margin: "12px 0 10px" }}>Submit order details</h1>
         <p className="muted" style={{ maxWidth: 600, margin: "0 auto", fontSize: 15 }}>
-          Tell us about your deal purchase experience. Feedback helps us improve deal quality and sharing.
+          Submit your order proof and feedback screenshots to receive your savings payout.
         </p>
       </div>
 

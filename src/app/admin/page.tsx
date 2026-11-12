@@ -85,7 +85,8 @@ export default function AdminDashboard() {
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const shareLinks = [
-    { label: "Submit feedback", url: `${baseUrl}/claim`, desc: "Order proof submission form" },
+    { label: "Submit order details", url: `${baseUrl}/claim`, desc: "Order proof submission form" },
+    { label: "Submit refund", url: `${baseUrl}/refund`, desc: "Refund / savings claim form" },
     { label: "Track savings", url: `${baseUrl}/track`, desc: "Track order verification and payouts" },
     { label: "Home", url: baseUrl, desc: "Main website" },
   ];

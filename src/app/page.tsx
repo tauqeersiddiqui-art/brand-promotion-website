@@ -55,64 +55,61 @@ export default function HomePage() {
       <section className="hero">
         <div className="container">
           <span className="badge badge-brand">
-            Brand promotion &amp; review refunds
+            Brand deals &amp; instant savings
           </span>
 
           <h1>
-            Buy great products. Share honest reviews.<br />
-            Get 100% refunds straight to your UPI.
+            Find hot deals on Amazon, Flipkart &amp; brand stores.<br />
+            Save up to 100% with verified offers.
           </h1>
 
           <p className="sub">
-            Join verified reviewers earning refunds on Amazon, Flipkart and
-            direct brand stores. Purchase, post your proof, and get paid —
-            with UTR tracking on every payout.
+            Browse featured deals on India's leading marketplaces. Purchase
+            directly on the store's website with exclusive savings.
           </p>
 
           <div className="stats-row">
             <div className="stat-card">
-              <div className="stat-num" style={{ color: "var(--brand)" }}>
-                ₹{totals.disbursed.toLocaleString("en-IN")}+
-              </div>
-              <div className="stat-label">Paid out to reviewers</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-num">{totals.orders}+</div>
-              <div className="stat-label">Order proofs tracked</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-num">{totals.deals}+</div>
-              <div className="stat-label">Live brand campaigns</div>
-            </div>
-            <div className="stat-card">
               <div className="stat-num" style={{ color: "var(--accent)" }}>
+                {totals.deals.toLocaleString("en-IN")}
+              </div>
+              <div className="stat-label">Live deals</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-num">{totals.orders.toLocaleString("en-IN")}</div>
+              <div className="stat-label">Orders placed</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-num">₹{totals.disbursed.toLocaleString("en-IN")}+</div>
+              <div className="stat-label">Saved by users</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-num" style={{ color: "var(--brand)" }}>
                 100%
               </div>
-              <div className="stat-label">Guaranteed payouts</div>
+              <div className="stat-label">Verified deals</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Assurance bar */}
+      {/* Trust bar */}
       <div className="assurance-bar">
         <div className="container assurance-inner">
-          <span className="trust-item">100% guaranteed refunds</span>
-          <span className="trust-item">UPI payouts with UTR</span>
-          <span className="trust-item">Brand-funded campaigns</span>
-          <span className="trust-item">Verified reviewer slots</span>
+          <span className="trust-item">Verified deals</span>
+          <span className="trust-item">Direct store links</span>
+          <span className="trust-item">Instant savings</span>
+          <span className="trust-item">Category selection</span>
         </div>
       </div>
 
-      {/* One featured deal at a time, rotated deterministically per day.
-         Using a day-bucket index keeps the card stable all day instead of
-         swapping every time a new campaign is created. */}
+      {/* Featured deals, rotated per day */}
       {featured.length > 0 && (
         <section className="container section" style={{ paddingBottom: 24 }}>
           <div className="section-head" style={{ textAlign: "center", justifyContent: "center" }}>
-            <h2>Deal of the day</h2>
+            <h2>Featured deal</h2>
             <p className="muted" style={{ margin: "6px auto 0", maxWidth: 560, textAlign: "center" }}>
-              Hand-picked brand deal with open reviewer slots. New deal every day.
+              Hand-picked deal from our top brands. New deals added regularly.
             </p>
           </div>
           <div style={{ maxWidth: 560, margin: "0 auto" }}>
@@ -121,35 +118,30 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* How it works */}
-      <section id="how-it-works" className="container section" style={{ marginTop: 8 }}>
+      {/* How to shop */}
+      <section id="how-to-shop" className="container section" style={{ marginTop: 8 }}>
         <div className="section-head" style={{ textAlign: "center", justifyContent: "center" }}>
-          <h2>How it works</h2>
+          <h2>How to shop deals</h2>
           <p className="muted" style={{ margin: "6px auto 0", maxWidth: 620, textAlign: "center" }}>
-            Four steps from purchase to refund in your UPI handle.
+            Three simple steps to get your savings.
           </p>
         </div>
         <div className="steps-grid">
           {[
             {
               num: "01",
-              title: "Pick a deal",
-              desc: "Choose a live deal with open slots and search the target keyword on Amazon or Flipkart.",
+              title: "Browse deals",
+              desc: "Explore verified deals on Amazon, Flipkart, and brand stores. Check the savings.",
             },
             {
               num: "02",
-              title: "Order & submit proof",
-              desc: "Buy at retail price and upload your order confirmation screenshot.",
+              title: "Shop directly",
+              desc: "Click 'Shop on' to visit the store. Use the deal code for instant savings.",
             },
             {
               num: "03",
-              title: "Post your review",
-              desc: "Publish a genuine 5-star review with product photos on the marketplace.",
-            },
-            {
-              num: "04",
-              title: "Get paid via UPI",
-              desc: "Submit your live review link and UPI ID. Refund is disbursed with a bank UTR reference.",
+              title: "Enjoy your purchase",
+              desc: "Complete checkout on the store's site. Deal prices apply automatically.",
             },
           ].map((s) => (
             <div className="step-card" key={s.num}>
@@ -163,7 +155,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Telegram channel */}
+      {/* Category feed */}
       {settings.telegram && (
         <section className="container" style={{ paddingBottom: 10 }}>
           <div
@@ -179,17 +171,16 @@ export default function HomePage() {
             }}
           >
             <div>
-              <span className="badge badge-brand">Telegram community</span>
+              <span className="badge badge-brand">Category feed</span>
               <h3 style={{ margin: "10px 0 6px", fontSize: 20 }}>
-                Get every new deal on Telegram first
+                Get new deals on Telegram first
               </h3>
               <p
                 className="muted"
                 style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.6, maxWidth: 560 }}
               >
-                New campaigns are posted to our channel the moment they go live.
-                Scan the QR code or tap the button to join and grab reviewer
-                slots before they fill up.
+                New deals are posted to our channel the moment they go live.
+                Scan the QR code or tap the button to join and never miss a deal.
               </p>
               <a
                 href={telegramLink(settings.telegram)}
@@ -222,37 +213,36 @@ export default function HomePage() {
       <section className="container section">
         <div className="card trust-banner" style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 30, alignItems: "center" }}>
           <div>
-            <span className="badge badge-brand">Reviewer protection</span>
-            <h3 style={{ margin: "10px 0 8px", fontSize: 20 }}>Payout security with UTR tracking</h3>
+            <span className="badge badge-brand">Deal guarantee</span>
+            <h3 style={{ margin: "10px 0 8px", fontSize: 20 }}>Verified deals with direct store shopping</h3>
             <p className="muted" style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6 }}>
-              Every campaign is pre-funded by brands and mediators. Once your
-              review goes live, proof is verified and the payout is sent
-              directly to your UPI ID with a valid bank UTR reference.
+              Every deal is verified for authenticity. Click through to shop directly on
+              the marketplace or brand store. Savings are applied automatically.
             </p>
             <div style={{ marginTop: 22, display: "flex", gap: 10, flexWrap: "wrap" }}>
               {settings.whatsapp && (
                 <a
-                  href={whatsappLink(settings.whatsapp, "Hi, I have a question about my refund payout.")}
+                  href={whatsappLink(settings.whatsapp, "Hi, I have a question about a deal.")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-sm"
                   style={{ background: "#25d366" }}
                 >
-                  WhatsApp helpdesk
+                  WhatsApp support
                 </a>
               )}
               <Link href="/terms" className="btn btn-outline btn-sm">
-                Campaign rules
+                Deal terms
               </Link>
             </div>
           </div>
           <div style={{ background: "var(--card)", padding: 20, borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
-            <h4 style={{ margin: "0 0 10px", fontSize: 15, color: "var(--ink)" }}>Campaign guidelines:</h4>
+            <h4 style={{ margin: "0 0 10px", fontSize: 15, color: "var(--ink)" }}>How to shop:</h4>
             <ul style={{ margin: 0, paddingLeft: 18, color: "var(--ink-soft)", fontSize: 13.5, display: "flex", flexDirection: "column", gap: 7 }}>
-              <li>Do not cancel or return the product after reimbursement.</li>
-              <li>Order ID and amount must match your invoice screenshots.</li>
-              <li>Post genuine 5-star reviews with at least 1–2 product photos.</li>
-              <li>Double-check your UPI ID before submitting a claim.</li>
+              <li>Click "Shop on" to visit the store directly.</li>
+              <li>Use the deal code at checkout for savings.</li>
+              <li>Save the product page for easy access.</li>
+              <li>Check stock availability before purchasing.</li>
             </ul>
           </div>
         </div>
@@ -266,20 +256,20 @@ export default function HomePage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
           {[
             {
-              q: "How does 100% refund work?",
-              a: "Brands fund promotion budgets to get genuine product reviews. You buy the product on Amazon or Flipkart, submit your order proof, post a review after delivery, and receive 100% of your purchase amount back via UPI.",
+              q: "How do I get the deal price?",
+              a: "Click 'Shop on' to visit the store directly. The deal discount applies at checkout. No separate refund process needed.",
             },
             {
-              q: "When do I receive my payout?",
-              a: "Once your review proof is verified, refunds are processed within 10-15 days and sent to your UPI ID with a UTR reference.",
+              q: "What deal codes are available?",
+              a: "Each deal page shows a unique coupon code. Apply it during checkout on the store's site for instant savings.",
             },
             {
-              q: "Can I track without an account?",
-              a: "Tracking is private, so you need a free account. Log in, then open the Track Status page and search with your marketplace Order ID or BP tracking code to see the live order and payout status.",
+              q: "Can I track my order?",
+              a: "Order tracking is handled by the store. You need a free account to access deal history and saved items.",
             },
             {
-              q: "What if all slots are full?",
-              a: "Each campaign has a capped number of reviewer slots. Follow our Telegram channel for slot refills and new campaign drops.",
+              q: "What if a deal is sold out?",
+              a: "Deal inventory is limited. Check back later or join our Telegram channel for new deal alerts and inventory updates.",
             },
           ].map((faq, i) => (
             <div className="card" key={i}>

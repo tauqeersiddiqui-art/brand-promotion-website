@@ -50,7 +50,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
           <div className="deal-placeholder">—</div>
         )}
         {isFullRefund ? (
-          <span className="deal-tag deal-tag-refund">Full refund after review</span>
+          <span className="deal-tag deal-tag-deal">Instant savings</span>
         ) : disc > 0 ? (
           <span className="deal-tag deal-tag-discount">{disc}% off</span>
         ) : null}
@@ -61,7 +61,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </span>
         )}
 
-        {deal.featured === 1 && <span className="deal-tag" style={{ background: "var(--warn)", color: "#ffffff" }}>★ Hot</span>}
+        {deal.featured === 1 && <span className="deal-tag" style={{ background: "var(--warn)", color: "#ffffff" }}>★ Deal</span>}
       </Link>
 
       <div className="deal-body">
@@ -82,7 +82,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
         <div style={{ margin: "4px 0 2px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: remainingSlots <= 5 ? "var(--danger)" : "var(--muted)" }}>
-            <span className="slot-label">{remainingSlots > 0 ? `${remainingSlots} slots left` : "Slots full"}</span>
+            <span className="slot-label">{remainingSlots > 0 ? `${remainingSlots} deals available` : "Deal sold out"}</span>
             <span className="slot-count">{claimedSlots} / {totalSlots} claimed</span>
           </div>
           <div className="slot-bar-wrap">
@@ -96,8 +96,8 @@ export default function DealCard({ deal }: { deal: Deal }) {
             <span className="price-was">₹{deal.price_original.toLocaleString("en-IN")}</span>
           )}
           {isFullRefund && (
-            <span className="pill pill-delivered deal-free" style={{ marginLeft: "auto", fontSize: 11.5 }}>
-              Free after review
+            <span className="pill pill-deal deal-free" style={{ marginLeft: "auto", fontSize: 11.5 }}>
+              Special offer
             </span>
           )}
         </div>
@@ -119,15 +119,10 @@ export default function DealCard({ deal }: { deal: Deal }) {
               alignItems: "center",
             }}
           >
-            <span>You pay</span>
+            <span>Deal saves</span>
             <strong>₹{deal.price_sale.toLocaleString("en-IN")}</strong>
             <span>→</span>
-            <span>get back</span>
-            <strong style={{ color: "var(--brand)" }}>₹{deal.refund_amount.toLocaleString("en-IN")}</strong>
-            <span>→</span>
-            <span style={{ color: "var(--brand)" }}>
-              net ₹{Math.max(0, deal.price_sale - deal.refund_amount).toLocaleString("en-IN")} after review
-            </span>
+            <strong style={{ color: "var(--accent)" }}>₹{deal.refund_amount.toLocaleString("en-IN")}</strong>
           </div>
         )}
 

@@ -3,6 +3,11 @@ import ContactClient from "./ContactClient";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Contact Us | Brand Deals Hub",
+  description: "Contact our support team for help with deals, store access, and account questions.",
+};
+
 export default function ContactPage() {
   const settings = getSettings();
 
@@ -10,7 +15,7 @@ export default function ContactPage() {
     <ContactClient
       whatsappHref={
         settings.whatsapp
-          ? whatsappLink(settings.whatsapp, "Hi, I have a question about my deal refund.")
+          ? whatsappLink(settings.whatsapp, "Hi, I have a question about a deal.")
           : ""
       }
       telegramHref={settings.telegram ? telegramLink(settings.telegram) : ""}

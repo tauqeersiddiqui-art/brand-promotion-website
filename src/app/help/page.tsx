@@ -4,8 +4,8 @@ import HelpClient from "./HelpClient";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Need Help? | Brand Promotion",
-  description: "Get support for brand deals, refund claims, order tracking, and more.",
+  title: "Help & Support | Brand Deals Hub",
+  description: "Get support for deals, store access, and account questions.",
 };
 
 export default function HelpPage() {

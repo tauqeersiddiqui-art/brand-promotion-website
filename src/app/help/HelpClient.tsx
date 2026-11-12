@@ -9,56 +9,59 @@ export default function HelpClient({ settings }: { settings: SiteSettings }) {
 
   const faqs = [
     {
-      q: "How do I submit my order proof?",
-      a: "Go to any live deal and click 'Submit Order'. Fill in your details, upload your order screenshot and price breakup screenshot, then submit. Our OCR system will verify the order automatically.",
+      q: "How do I shop a deal?",
+      a: "Click on any deal to view details. Click 'Shop on' to visit the store directly. Apply the deal code at checkout for your savings.",
     },
     {
-      q: "How long does refund reimbursement take?",
-      a: "After your review is approved, refunds are processed within 24–48 hours. You'll receive a UTR reference number in your account dashboard.",
+      q: "What if the deal code doesn't work?",
+      a: "Deal codes are verified daily. If expired, the price may have updated. Check the deal page for the latest details or try another active deal.",
     },
     {
-      q: "What screenshots do I need to upload?",
-      a: "You need two screenshots: (1) Order confirmation page showing the order ID and total amount, and (2) Price breakup/screenshot showing item price, taxes, and final amount paid.",
+      q: "Are these real discounts?",
+      a: "Yes! All deals are verified by our team. We confirm each discount is legitimate and available on the store's website.",
     },
     {
-      q: "Can I cancel my order after submission?",
-      a: "Yes. Go to Cancel → Search your order code → Click 'Request Cancellation'. Note: cancellations are only allowed before delivery.",
+      q: "How do I verify a deal?",
+      a: "Visit the store through our 'Shop on' link, search for the product, or apply the provided code to see the discounted price.",
     },
     {
-      q: "What is a mediator?",
-      a: "Mediators are support representatives who help you with deal submissions, verification, and payout issues. You can contact them via WhatsApp or Telegram.",
+      q: "Who handles my order?",
+      a: "Orders are processed directly by the marketplace or brand store. They handle shipping, returns, and refunds according to their policies.",
     },
     {
-      q: "How do I track my order status?",
-      a: "Use the Track Status page — enter your order code and email to see real-time progress of verification and payout.",
+      q: "Can I track my order?",
+      a: "Order tracking is handled by the store where you purchased. Use the order ID from your confirmation email.",
     },
     {
       q: "Is this platform free to use?",
-      a: "Yes! There's no subscription fee. You earn refunds by completing deals — brands pay for reviews, and you share a portion as refunds.",
+      a: "Yes! There are no fees to browse deals. All deal links lead to free shopping on partner stores.",
     },
     {
-      q: "Why was my order rejected?",
-      a: "Common reasons: unclear screenshots, wrong deal selection, expired coupon, or mismatched amounts. Our team will notify you with a reason when rejection occurs.",
+      q: "Why is a deal sold out?",
+      a: "Deal inventory is limited and shared across users. If sold out, check back later or browse other available deals.",
     },
   ];
 
   return (
     <div className="container" style={{ paddingTop: 40, paddingBottom: 60, maxWidth: 860 }}>
       <nav style={{ marginBottom: 24, fontSize: 14 }}>
-        <Link href="/">Home</Link> {" > "} <span style={{ color: "var(--ink-soft)" }}>Need Help?</span>
+        <Link href="/">Home</Link> {" > "} <span style={{ color: "var(--ink-soft)" }}>Help &amp; Support</span>
       </nav>
 
       <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", marginBottom: 8 }}>
-        Need Help?
+        Help &amp; Support
       </h1>
       <p style={{ fontSize: 17, color: "var(--ink-soft)", marginBottom: 40, maxWidth: 600 }}>
-        Find answers to common questions or contact our support team directly.
+        Find answers to common questions about deals or contact our support team.
       </p>
 
       {/* Quick Actions */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 40 }}>
-        <Link href="/track" className="btn btn-outline">
-          Track Order
+        <Link href="/browse" className="btn btn-outline">
+          Browse Deals
+        </Link>
+        <Link href="/account" className="btn btn-outline">
+          My Account
         </Link>
         {settings.whatsapp && (
           <a
@@ -117,7 +120,7 @@ export default function HelpClient({ settings }: { settings: SiteSettings }) {
 
       {/* Still need help? */}
       <div style={{ marginTop: 40, background: "var(--brand-soft)", borderRadius: "var(--radius-lg)", padding: 28, textAlign: "center" }}>
-        <h3 style={{ marginBottom: 8 }}>Still need help?</h3>
+        <h3 style={{ marginBottom: 8 }}>Need more help?</h3>
         <p style={{ margin: "0 0 16px", color: "var(--ink-soft)", fontSize: 14 }}>
           Our support team is available 24/7 via WhatsApp and Telegram.
         </p>

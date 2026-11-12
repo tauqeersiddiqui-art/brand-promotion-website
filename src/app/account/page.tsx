@@ -89,17 +89,17 @@ export default function AccountPage() {
     <div className="container" style={{ paddingTop: 36, paddingBottom: 60 }}>
       <div className="admin-head">
         <div>
-          <h1>Reviewer dashboard</h1>
+          <h1>Account dashboard</h1>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-            Manage your submitted campaign orders, review proofs, and track UPI refund disbursements.
+            Manage your saved deals, view purchase history, and track deal notifications.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <Link href="/browse" className="btn btn-secondary btn-sm">
-            🔥 Live Deals
+            🔥 Browse Deals
           </Link>
           <Link href="/track" className="btn btn-sm">
-            🔍 Track by Order ID
+            🔍 Track History
           </Link>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default function AccountPage() {
           onClick={() => setActiveTab("orders")}
           style={{ width: "auto" }}
         >
-          My orders ({orders?.length ?? 0})
+          Purchase history ({orders?.length ?? 0})
         </button>
         <button
           type="button"
@@ -126,7 +126,7 @@ export default function AccountPage() {
           onClick={() => setActiveTab("reimbursements")}
           style={{ width: "auto" }}
         >
-          Refunds &amp; payouts ({reimbursements.length})
+          Savings &amp; payouts ({reimbursements.length})
         </button>
         <button
           type="button"
@@ -134,7 +134,7 @@ export default function AccountPage() {
           onClick={() => setActiveTab("new_claim")}
           style={{ width: "auto" }}
         >
-          Submit refund request
+          Submit feedback
         </button>
       </div>
 
@@ -143,14 +143,14 @@ export default function AccountPage() {
           {loadError ? (
             <div className="alert alert-error">{loadError}</div>
           ) : orders === null ? (
-            <p className="muted">Loading your campaign orders…</p>
+            <p className="muted">Loading your purchase history…</p>
           ) : orders.length === 0 ? (
               <div className="card" style={{ textAlign: "center", padding: 48 }}>
                 <div className="muted" style={{ fontSize: 34, marginBottom: 10, display: "block" }}>—</div>
-                <h3>No submitted orders yet</h3>
-              <p className="muted">Claim a slot from our live deals and submit your order screenshot!</p>
+                <h3>No purchase history yet</h3>
+              <p className="muted">Start by browsing our deals and making purchases!</p>
               <Link href="/browse" className="btn mt">
-                🔥 Browse Live Deals
+                🔥 Browse Deals
               </Link>
             </div>
           ) : (
@@ -208,9 +208,9 @@ export default function AccountPage() {
                               className="btn btn-secondary btn-sm"
                               style={{ fontSize: 12, padding: "5px 10px" }}
                             >
-                              🔍 Track
+                              🔍 Details
                             </a>
-                            {!reviewEligible && o.status === "confirmed" && !activeRefund && (
+                            {o.status === "completed" && !activeRefund && (
                               <button
                                 className="btn btn-ghost btn-sm"
                                 style={{ fontSize: 12, padding: "5px 10px" }}
@@ -219,7 +219,7 @@ export default function AccountPage() {
                                   setMsg(null);
                                 }}
                               >
-                                Request refund
+                                Submit feedback
                               </button>
                             )}
                           </div>
@@ -239,16 +239,16 @@ export default function AccountPage() {
           {reimbursements.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: 48 }}>
               <div className="muted" style={{ fontSize: 34, marginBottom: 10, display: "block" }}>—</div>
-              <h3>No refund claims recorded yet</h3>
+              <h3>No savings recorded yet</h3>
               <p className="muted">
-                Once you post your 5-star review on Amazon/Flipkart, claim your refund here.
+                Track your deal savings after completing purchases.
               </p>
                 <button
                   type="button"
                   className="btn mt"
                   onClick={() => setActiveTab("new_claim")}
                 >
-                  Submit refund request
+                  Submit feedback
                 </button>
             </div>
           ) : (
@@ -308,7 +308,7 @@ export default function AccountPage() {
         </div>
       )}
 
-      {/* Refund Modal */}
+      {/* Feedback Modal */}
       {refundFor && (
         <div
           style={{
@@ -328,7 +328,7 @@ export default function AccountPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h3 style={{ margin: 0 }}>Submit refund form</h3>
+              <h3 style={{ margin: 0 }}>Submit feedback</h3>
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
@@ -339,7 +339,7 @@ export default function AccountPage() {
               </button>
             </div>
             <p className="muted" style={{ margin: "0 0 16px", fontSize: 13.5 }}>
-              {refundFor.deal_title} — Order {refundFor.external_order_id || refundFor.order_code} · ₹{refundFor.total.toLocaleString("en-IN")}. Post your review on Amazon/Flipkart, then submit the order, review and seller feedback screenshots below.
+              {refundFor.deal_title} — Order {refundFor.external_order_id || refundFor.order_code} · ₹{refundFor.total.toLocaleString("en-IN")}. Share your feedback about this purchase.
             </p>
             <ClaimRefundForm
               initialOrderId={refundFor.external_order_id || refundFor.order_code}

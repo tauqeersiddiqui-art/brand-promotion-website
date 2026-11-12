@@ -3,9 +3,9 @@ import { queryDeals } from "@/lib/deals-query";
 import BrowseClient from "./BrowseClient";
 
 export const metadata: Metadata = {
-  title: "Live brand campaigns & deals",
+  title: "Verified Deals & Discounts",
   description:
-    "Explore live 100% refund brand campaigns across Amazon, Flipkart, Myntra and direct brand stores. Buy with a keyword, post a review, get reimbursed.",
+    "Explore verified live deals across Amazon, Flipkart, Myntra and direct brand stores. Save with exclusive discount codes.",
   alternates: { canonical: "/browse" },
 };
 
@@ -38,18 +38,18 @@ export default async function BrowsePage({
       <div className="section-head" style={{ marginTop: 0 }}>
         <div>
           <h1 style={{ fontSize: "1.55rem", margin: 0 }}>
-            Live brand campaigns &amp; deals
+            Verified Deals &amp; Discounts
           </h1>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>
-            Explore 100% refund deals across Amazon, Flipkart, Myntra and direct brand stores.
+            Explore verified live deals across Amazon, Flipkart, Myntra and direct brand stores.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <span className="muted" style={{ fontSize: 14 }}>
             {initial.total} deals found
           </span>
-          <a className="btn btn-sm btn-outline" href="/#how-it-works">
-            How deals work
+          <a className="btn btn-sm btn-outline" href="/#how-to-shop">
+            How to shop
           </a>
         </div>
       </div>

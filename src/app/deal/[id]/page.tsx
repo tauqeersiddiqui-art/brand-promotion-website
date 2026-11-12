@@ -16,7 +16,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id: idRaw } = await params;
   const id = parseInt(idRaw, 10);
-  if (!Number.isInteger(id) || id < 1) return { title: "Campaign not found" };
+  if (!Number.isInteger(id) || id < 1) return { title: "Deal not found" };
 
   const deal = db
     .prepare(
@@ -25,12 +25,12 @@ export async function generateMetadata({
     .get(id) as
     | { title: string; description: string; image_url: string; price_sale: number; price_original: number }
     | undefined;
-  if (!deal) return { title: "Campaign not found" };
+  if (!deal) return { title: "Deal not found" };
 
   const price = `₹${Number(deal.price_sale).toLocaleString("en-IN")}`;
   const description = (
     deal.description?.trim() ||
-    `${deal.title} — live brand campaign at ${price} with full refund after an honest review.`
+    `${deal.title} — featured live deal at ${price}.`
   ).slice(0, 155);
   const path = `/deal/${id}`;
 
@@ -162,7 +162,7 @@ export default async function DealPage({
       />
       <div style={{ marginBottom: 16 }}>
         <Link href="/browse" className="link" style={{ fontSize: 14 }}>
-          ← Back to all live campaigns
+          ← Back to all deals
         </Link>
       </div>
 
@@ -184,13 +184,13 @@ export default async function DealPage({
                 <div className="deal-placeholder">—</div>
               )}
               {isFullRefund ? (
-                <span className="deal-tag deal-tag-refund">Full refund after review</span>
+                <span className="deal-tag deal-tag-deal">Instant savings</span>
               ) : disc > 0 ? (
                 <span className="deal-tag deal-tag-discount">{disc}% off</span>
               ) : null}
 
               {deal.featured === 1 && (
-                <span className="deal-tag" style={{ background: "var(--warn)", color: "#ffffff" }}>★ Hot campaign</span>
+                <span className="deal-tag" style={{ background: "var(--warn)", color: "#ffffff" }}>★ Deal</span>
               )}
             </div>
           </div>
@@ -211,7 +211,7 @@ export default async function DealPage({
 
             {deal.product_code && (
               <div style={{ color: "var(--ink-soft)", fontSize: 13, marginBottom: 10 }}>
-                Campaign code: <code style={{ color: "var(--brand)" }}>{deal.product_code}</code>
+                Deal code: <code style={{ color: "var(--brand)" }}>{deal.product_code}</code>
               </div>
             )}
 
@@ -225,8 +225,8 @@ export default async function DealPage({
                 </span>
               )}
               {isFullRefund && (
-                <span className="pill pill-delivered" style={{ fontSize: 12, marginLeft: "auto" }}>
-                  Full reimbursement after review
+                <span className="pill pill-deal" style={{ fontSize: 12, marginLeft: "auto" }}>
+                  Special offer
                 </span>
               )}
             </div>
@@ -248,14 +248,13 @@ export default async function DealPage({
                   color: "#1e1b4b",
                 }}
               >
-                <span>You pay</span>
+                <span>Special offer</span>
                 <strong>₹{deal.price_sale.toLocaleString("en-IN")}</strong>
                 <span>→</span>
-                <span>get back</span>
                 <strong style={{ color: "var(--brand)" }}>₹{Number(deal.refund_amount).toLocaleString("en-IN")}</strong>
                 <span>→</span>
                 <span style={{ color: "var(--brand)" }}>
-                  net ₹{Math.max(0, deal.price_sale - Number(deal.refund_amount)).toLocaleString("en-IN")} after review
+                  net ₹{Math.max(0, deal.price_sale - Number(deal.refund_amount)).toLocaleString("en-IN")}
                 </span>
               </div>
             )}
@@ -271,7 +270,7 @@ export default async function DealPage({
             >
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 600 }}>
                 <span style={{ color: remainingSlots <= 5 ? "var(--danger)" : "var(--accent)" }}>
-                  {remainingSlots} reviewer slots left
+                  {remainingSlots} deals available
                 </span>
                 <span className="muted">{claimedSlots} / {totalSlots} claimed</span>
               </div>
@@ -324,30 +323,26 @@ export default async function DealPage({
                   margin: "18px 0 0",
                 }}
               >
-                <h4 style={{ margin: "0 0 10px", fontSize: 14 }}>Payout by deal type</h4>
+                <h4 style={{ margin: "0 0 10px", fontSize: 14 }}>Offer details</h4>
                 <div style={{ display: "grid", gap: 8 }}>
                   {Number(deal.review_amount) > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                      <span>Review deal (5★ + written review)</span>
-                      <strong>₹{Number(deal.review_amount).toLocaleString("en-IN")}</strong>
+                      <span>Review offer (₹{Number(deal.review_amount).toLocaleString("en-IN")} credited)</span>
                     </div>
                   )}
                   {Number(deal.rating_amount) > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                      <span>Rating deal (5★ rating only)</span>
-                      <strong>₹{Number(deal.rating_amount).toLocaleString("en-IN")}</strong>
+                      <span>Rating offer (₹{Number(deal.rating_amount).toLocaleString("en-IN")})</span>
                     </div>
                   )}
                   {Number(deal.only_order_amount) > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                      <span>Only order deal (no review)</span>
-                      <strong>₹{Number(deal.only_order_amount).toLocaleString("en-IN")}</strong>
+                      <span>Order offer (₹{Number(deal.only_order_amount).toLocaleString("en-IN")})</span>
                     </div>
                   )}
                 </div>
                 <p className="muted" style={{ margin: "10px 0 0", fontSize: 12 }}>
-                  Pick one deal type when you submit your order proof. Payout is issued after the campaign checks
-                  below are completed.
+                  Amount credited after order verification.
                 </p>
               </div>
             )}
@@ -368,23 +363,23 @@ export default async function DealPage({
                     className="btn"
                     style={{ flex: 1, cursor: "not-allowed", opacity: 0.45, background: "var(--ink-soft)" }}
                   >
-                    🚫 Campaign fully booked — no slots left
+                    🚫 Deal sold out — no availability
                   </span>
                 ) : (
                   <a
                     className="btn"
-                    href={`/go/${deal.id}`}
+                    href={deal.deal_url || `/go/${deal.id}`}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
                     style={{ flex: 1 }}
                   >
-                    Open listing on {deal.platform || "store"} →
+                    Shop →
                   </a>
                 )
               )}
               {deal.coupon_code && (
                 <div className="btn btn-outline" style={{ cursor: "default" }}>
-                  Coupon: {deal.coupon_code}
+                  Code: {deal.coupon_code}
                 </div>
               )}
             </div>
@@ -392,44 +387,26 @@ export default async function DealPage({
             {(deal.order_form_url || deal.refund_form_url) && (
               <div className="mt" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {deal.order_form_url && (
-                  outOfSlots ? (
-                    <span
-                      className="btn btn-secondary"
-                      style={{ cursor: "not-allowed", opacity: 0.45 }}
-                    >
-                      🚫 Slots full — order form closed
-                    </span>
-                  ) : (
-                    <a
-                      className="btn btn-secondary"
-                      href={deal.order_form_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ flex: 1 }}
-                    >
-                      Open order form →
-                    </a>
-                  )
+                  <a
+                    className="btn btn-secondary"
+                    href={deal.order_form_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ flex: 1 }}
+                  >
+                    Open submission page →
+                  </a>
                 )}
                 {deal.refund_form_url && (
-                  outOfSlots ? (
-                    <span
-                      className="btn btn-secondary"
-                      style={{ cursor: "not-allowed", opacity: 0.45 }}
-                    >
-                      🚫 Slots full — refund form closed
-                    </span>
-                  ) : (
-                    <a
-                      className="btn btn-secondary"
-                      href={deal.refund_form_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ flex: 1 }}
-                    >
-                      Open refund / claim form →
-                    </a>
-                  )
+                  <a
+                    className="btn btn-secondary"
+                    href={deal.refund_form_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ flex: 1 }}
+                  >
+                    Open claim page →
+                  </a>
                 )}
               </div>
             )}
@@ -441,12 +418,12 @@ export default async function DealPage({
           {outOfSlots ? (
             <div className="card" style={{ textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: 40 }} aria-hidden="true">—</div>
-              <h3>Campaign slots full</h3>
+              <h3>Deal sold out</h3>
               <p className="muted">
-                All {totalSlots} reviewer slots for this campaign have been claimed. Browse other live campaigns.
+                All deals have been claimed. Browse other live deals.
               </p>
               <Link href="/browse" className="btn mt">
-                Browse other campaigns
+                Browse other deals
               </Link>
             </div>
           ) : (
@@ -464,11 +441,11 @@ export default async function DealPage({
       <section className="mt" style={{ paddingBottom: 20 }}>
         <div className="section-head">
           <h2>
-            Customer reviews{avgRating > 0 && <span className="muted" style={{ fontSize: 16, marginLeft: 10 }}>{avgRating} / 5 · {reviews.length} verified</span>}
+            Customer reviews{avgRating > 0 && <span className="muted" style={{ fontSize: 16, marginLeft: 10 }}>{reviews.length} verified</span>}
           </h2>
         </div>
         {reviews.length === 0 ? (
-          <p className="muted">No reviews yet — claim a slot and be the first to review this product.</p>
+          <p className="muted">Be the first to check out this deal.</p>
         ) : (
           <div style={{ display: "grid", gap: 14 }}>
             {reviews.map((r, i) => (
@@ -479,7 +456,7 @@ export default async function DealPage({
                       <span style={{ letterSpacing: "-0.05em" }}>{"★".repeat(r.rating)}</span>
                       <span style={{ color: "var(--border)" }}>{"★".repeat(5 - r.rating)}</span>
                       <strong style={{ marginLeft: 8, fontSize: 14 }}>{r.user_name}</strong>
-                      <span className="pill pill-delivered" style={{ marginLeft: 10, fontSize: 11 }}>Verified reviewer</span>
+                      <span className="pill pill-delivered" style={{ marginLeft: 10, fontSize: 11 }}>Verified buyer</span>
                     </div>
                   </div>
                   <span className="muted" style={{ fontSize: 12.5 }}>

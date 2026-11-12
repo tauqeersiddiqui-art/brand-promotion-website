@@ -246,7 +246,7 @@ export default function AccountPage() {
                 <button
                   type="button"
                   className="btn mt"
-                  onClick={() => setActiveTab("new_claim")}
+                  onClick={() => setActiveTab("new_feedback")}
                 >
                   Submit feedback
                 </button>

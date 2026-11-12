@@ -198,6 +198,19 @@ db.exec(`
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL
   );
 
+  CREATE TABLE IF NOT EXISTS contact_inquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    inquiry_code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    subject TEXT NOT NULL DEFAULT 'Deal / Store Question',
+    order_id TEXT NOT NULL DEFAULT '',
+    message TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','viewed','responded','closed')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE INDEX IF NOT EXISTS idx_deals_active ON deals(active, featured);
   CREATE INDEX IF NOT EXISTS idx_deals_code ON deals(product_code);
   CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);

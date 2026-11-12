@@ -266,7 +266,7 @@ export default function SignupPage() {
                   OTP sent to <strong>{formatPhoneDisplay(rawPhone)}</strong>
                   {otpCountdown > 0 && <span style={{ marginLeft: 8, color: "var(--brand)" }}>Resend in {otpCountdown}s</span>}
                 </p>
-                {/* Dev-only OTP display - only in development */
+                {/* Dev-only OTP display - only in development */}
                 {process.env.NODE_ENV === "development" && debugCode && (
                   <div className="alert alert-warning" style={{ background: "rgba(255, 153, 0, 0.1)", border: "1px solid rgba(255, 153, 0, 0.3)", marginBottom: 8 }}>
                     <strong>Debug OTP:</strong> {debugCode}
